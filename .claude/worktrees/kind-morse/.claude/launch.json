@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vyzor-dev",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--dir", "/Users/mooradam/Projects/Vyzor", "dev"],
+      "port": 3000
+    }
+  ]
+}

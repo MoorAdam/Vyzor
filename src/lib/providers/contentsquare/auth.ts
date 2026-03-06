@@ -1,4 +1,5 @@
 import { env } from "@/lib/config/env";
+import { endpoints } from "@/lib/config/endpoints";
 import type { CSTokenResponse } from "./types";
 
 export class ContentSquareAuthManager {
@@ -41,7 +42,7 @@ export class ContentSquareAuthManager {
     }
 
     const response = await fetch(
-      "https://api.contentsquare.com/v1/oauth/token",
+      endpoints.contentsquare.tokenUrl,
       {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded" },

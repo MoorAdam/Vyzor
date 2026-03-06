@@ -1,9 +1,19 @@
 import { z } from "zod/v4";
 
-export const clarityMetricInfoSchema = z.object({
-  metricName: z.string(),
-  metricValue: z.union([z.string(), z.number()]),
-}).passthrough();
+/**
+ * Clarity API returns different fields per metric type in the `information`
+ * array, so we use a flexible record schema rather than fixed field names.
+ *
+ * Examples:
+ *   DeadClickCount → { sessionsCount, sessionsWithMetricPercentage, ... }
+ *   ScrollDepth    → { averageScrollDepth }
+ *   PopularPages   → { url, visitsCount }
+ *   ReferrerUrl    → { name, sessionsCount }
+ */
+export const clarityMetricInfoSchema = z.record(
+  z.string(),
+  z.union([z.string(), z.number(), z.null()]),
+);
 
 export const clarityMetricGroupSchema = z.object({
   metricName: z.string(),

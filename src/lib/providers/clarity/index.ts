@@ -10,9 +10,7 @@ import type { ClarityInsightsParams, ClarityResponse } from "./types";
 import { CLARITY_DIMENSIONS, CLARITY_METRICS } from "./types";
 import { clarityResponseSchema } from "./schemas";
 import { env } from "@/lib/config/env";
-
-const CLARITY_API_BASE =
-  "https://www.clarity.ms/export-data/api/v1";
+import { endpoints } from "@/lib/config/endpoints";
 
 export class ClarityProvider extends BaseProvider {
   meta: ProviderMeta = {
@@ -69,8 +67,9 @@ export class ClarityProvider extends BaseProvider {
     if (params.dimension2) searchParams.set("dimension2", params.dimension2);
     if (params.dimension3) searchParams.set("dimension3", params.dimension3);
 
+    const base = endpoints.clarity.apiBase.replace(/\/+$/, "");
     const data = await this.apiFetch<ClarityResponse>(
-      `${CLARITY_API_BASE}/project-live-insights?${searchParams}`,
+      `${base}/project-live-insights?${searchParams}`,
       {},
       clarityResponseSchema,
     );
@@ -93,17 +92,45 @@ export class ClarityProvider extends BaseProvider {
       : {};
   }
 
+  /**
+   * The Clarity API returns different fields per metric type. We pick a
+   * primary value using known field names and store the rest as dimensions.
+   */
   private normalizeResponse(data: ClarityResponse): NormalizedMetric[] {
+    const primaryValueKeys = [
+      "sessionsWithMetricPercentage",
+      "averageScrollDepth",
+      "averageEngagementTime",
+      "visitsCount",
+      "sessionsCount",
+      "subTotal",
+    ];
+
     return data.flatMap((group) =>
-      group.information.map((info) => ({
-        name: group.metricName,
-        value: info.metricValue,
-        dimensions: Object.fromEntries(
-          Object.entries(info).filter(
-            ([key]) => key !== "metricName" && key !== "metricValue",
-          ),
-        ) as Record<string, string>,
-      })),
+      group.information.map((info) => {
+        let primaryValue: string | number = "";
+        let primaryKey = "";
+        for (const key of primaryValueKeys) {
+          if (key in info && info[key] != null) {
+            primaryValue = info[key] as string | number;
+            primaryKey = key;
+            break;
+          }
+        }
+
+        const dimensions: Record<string, string> = {};
+        for (const [key, val] of Object.entries(info)) {
+          if (key !== primaryKey && val != null) {
+            dimensions[key] = String(val);
+          }
+        }
+
+        return {
+          name: group.metricName,
+          value: primaryValue,
+          dimensions,
+        };
+      }),
     );
   }
 }

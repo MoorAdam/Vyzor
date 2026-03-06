@@ -8,6 +8,8 @@ const navItems = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/clarity", label: "Microsoft Clarity" },
   { href: "/dashboard/contentsquare", label: "ContentSquare" },
+  { href: "/dashboard/clarity-demo-1", label: "Clarity Demo 1" },
+  { href: "/dashboard/clarity-demo-2", label: "Clarity Demo 2" },
 ];
 
 export function Sidebar() {

@@ -34,11 +34,12 @@ export interface ClarityInsightsParams {
   dimension3?: ClarityDimension;
 }
 
-export interface ClarityMetricInfo {
-  metricName: string;
-  metricValue: string | number;
-  [key: string]: unknown;
-}
+/**
+ * Each information item is a flexible record — the Clarity API returns
+ * different fields per metric type (e.g. sessionsCount, averageScrollDepth,
+ * url, visitsCount, name, etc.).
+ */
+export type ClarityMetricInfo = Record<string, string | number | null>;
 
 export interface ClarityMetricGroup {
   metricName: string;
