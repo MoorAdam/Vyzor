@@ -1,0 +1,15 @@
+services:
+  vyzor-db:
+    image: postgres:15
+    container_name: vyzor-db
+    environment:
+      POSTGRES_USER: vyzor
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: vyzor
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
