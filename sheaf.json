@@ -27,6 +27,30 @@
         },
         "avatar": {
             "installationTime": 1774252702
+        },
+        "card": {
+            "installationTime": 1774269680
+        },
+        "input": {
+            "installationTime": 1774269848
+        },
+        "field": {
+            "installationTime": 1774269745
+        },
+        "label": {
+            "installationTime": 1774269806
+        },
+        "fieldset": {
+            "installationTime": 1774270182
+        },
+        "select": {
+            "installationTime": 1774270249
+        },
+        "popup": {
+            "installationTime": 1774270249
+        },
+        "text": {
+            "installationTime": 1774270250
         }
     }
 }

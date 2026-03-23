@@ -1,13 +1,23 @@
 {
-    "files": [],
-    "helpers": [],
+    "files": {
+        "resources/js/components/select.js": [
+            "select"
+        ]
+    },
+    "helpers": {
+        "popup": [
+            "select"
+        ]
+    },
     "internalDependencies": {
         "icon": [
             "button",
             "badge",
             "navlist",
             "sidebar",
-            "navbar"
+            "navbar",
+            "input",
+            "select"
         ],
         "button": [
             "badge",
@@ -21,6 +31,9 @@
         ],
         "navlist": [
             "sidebar"
+        ],
+        "text": [
+            "select"
         ]
     }
 }

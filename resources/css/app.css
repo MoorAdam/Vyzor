@@ -9,3 +9,21 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Sheaf UI Theme */
+@theme inline {
+    --color-primary: var(--color-neutral-800);
+    --color-primary-content: var(--color-neutral-800);
+    --color-primary-fg: var(--color-white);
+
+    --radius-field: 0.25rem;
+    --radius-box: 0.5rem;
+}
+
+@layer theme {
+    .dark {
+        --color-primary: var(--color-white);
+        --color-primary-content: var(--color-white);
+        --color-primary-fg: var(--color-neutral-800);
+    }
+}

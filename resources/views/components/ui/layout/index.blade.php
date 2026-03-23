@@ -6,7 +6,7 @@
 @php
     $basePath = 'ui.layout.variant';
     $variantPath = match($variant) {
-        'sidebar-main', 'header-sidebar' => "{$basePath}.{$variant}",
+        'sidebar-main', 'header-sidebar', 'bare' => "{$basePath}.{$variant}",
         default => "{$basePath}.sidebar-main",
     };
 @endphp
