@@ -18,7 +18,8 @@
             "navbar",
             "input",
             "select",
-            "radio"
+            "radio",
+            "dropdown"
         ],
         "button": [
             "badge",

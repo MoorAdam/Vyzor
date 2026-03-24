@@ -26,7 +26,7 @@
                 </x-slot:brand>
 
                 <x-ui.navbar>
-
+                    <x-ui.navbar.item label="New Project" href="/new-project" />
                 </x-ui.navbar>
 
                 <div class="ml-auto flex items-center gap-4">
@@ -41,6 +41,7 @@
             <x-ui.sidebar>
                 <x-ui.navlist>
                     <x-ui.navlist.item label="Dashboard" icon="home" href="/dashboard" />
+                    <x-ui.navlist.item label="Users" icon="users" href="/users" />
                     <x-ui.navlist.item label="Settings" icon="cog" href="/settings" />
                 </x-ui.navlist>
             </x-ui.sidebar>
