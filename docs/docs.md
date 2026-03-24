@@ -13,6 +13,7 @@
 | PHP | ^8.2 | Backend language |
 | Laravel | ^12.0 | Backend framework |
 | Livewire | ^4.2 | Reactive frontend components |
+| Sheaf UI | — | Blade UI component library (in-house) |
 | Tailwind CSS | ^4.0.0 | Utility-first CSS framework |
 | Vite | ^7.0.7 | Asset bundler |
 | Axios | ^1.11.0 | HTTP client (frontend) |
@@ -115,13 +116,33 @@ Vyzor/
 
 ---
 
+## Authentication
+
+Session-based authentication using Laravel's built-in `Auth` facade and Livewire components.
+
+### Flow
+- **Login**: `GET /login` — Livewire component with email/password/remember-me. Validates credentials via `Auth::attempt()`, regenerates session, redirects to dashboard.
+- **Logout**: `POST /logout` — Invalidates session, regenerates CSRF token, redirects to login.
+- **Guest middleware**: `/login` is only accessible to unauthenticated users. Authenticated users are redirected to `/dashboard`.
+- **Auth middleware**: `/dashboard` (and future authenticated routes) require login. Guests are redirected to `/login`.
+- **Root redirect**: `GET /` redirects to dashboard (if authenticated) or login (if guest).
+
+### Configuration (`bootstrap/app.php`)
+- `redirectGuestsTo('/login')` — unauthenticated users are sent to login
+- `redirectUsersTo('/dashboard')` — authenticated users hitting guest routes are sent to dashboard
+
+---
+
 ## Routes
 
 ### Web Routes (`routes/web.php`)
 
-| Method | URI | Action |
-|---|---|---|
-| GET | `/` | Returns `welcome` view |
+| Method | URI | Middleware | Action |
+|---|---|---|---|
+| GET | `/` | — | Redirects to dashboard or login |
+| GET | `/login` | guest | Livewire login component |
+| GET | `/dashboard` | auth | Livewire dashboard component |
+| POST | `/logout` | auth | Logs out and redirects to login |
 
 ### Artisan Commands (`routes/console.php`)
 

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->foreignId('owner_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
+            $table->foreignId('customer_id')->constrained('users')->onDelete('cascade');
             $table->string('status')->default('active');
             $table->string('domain');
             $table->timestamps();

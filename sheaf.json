@@ -51,6 +51,12 @@
         },
         "text": {
             "installationTime": 1774270250
+        },
+        "checkbox": {
+            "installationTime": 1774273798
+        },
+        "radio": {
+            "installationTime": 1774274971
         }
     }
 }

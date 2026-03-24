@@ -19,3 +19,8 @@
 ## Frontend (JavaScript)
 - Use the newest ECMAScript syntax and features available (ES2024+).
 - Prefer native language features over external libraries where practical.
+
+## UI Components
+- Use **Sheaf UI** (`resources/views/components/ui/`) for all UI elements.
+- Never introduce external UI libraries or write raw HTML when a Sheaf UI component exists.
+- Components are prefixed with `x-ui.` (e.g., `<x-ui.button>`, `<x-ui.input>`, `<x-ui.fieldset>`).

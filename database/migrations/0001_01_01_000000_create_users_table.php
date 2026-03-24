@@ -13,11 +13,26 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('type')->default('user');
+            $table->string('name')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->rememberToken();
+            $table->timestamps();
+        });
+
+        Schema::create('user_profiles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->timestamps();
+        });
+
+        Schema::create('customer_profiles', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('company_name');
+            $table->string('phone')->nullable();
             $table->timestamps();
         });
 
@@ -42,6 +57,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::dropIfExists('customer_profiles');
+        Schema::dropIfExists('user_profiles');
         Schema::dropIfExists('users');
         Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');

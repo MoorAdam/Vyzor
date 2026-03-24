@@ -31,6 +31,10 @@
 
                 <div class="ml-auto flex items-center gap-4">
                     <x-ui.avatar/>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <x-ui.button type="submit">Logout</x-ui.button>
+                    </form>
                 </div>
             </x-ui.layout.header>
 
