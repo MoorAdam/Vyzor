@@ -18,18 +18,24 @@
     // Resolve component name
     $componentName = match (true) {
         $isPhosphorSet => match ($variant) {
-            'thin', 'light', 'fill', 'regular', 'duotone', 'bold' => "phosphor.icons::{$variant}.{$iconName}",
-            default => "phosphor.icons::regular.{$iconName}",
+            'bold' => "phosphor-{$iconName}-bold",
+            'thin' => "phosphor-{$iconName}-thin",
+            'light' => "phosphor-{$iconName}-light",
+            'fill' => "phosphor-{$iconName}-fill",
+            'duotone' => "phosphor-{$iconName}-duotone",
+            default => "phosphor-{$iconName}",
         },
         $isHeroiconsSet => match ($variant) {
-            'solid', 'outline' => "heroicons::{$variant}.{$iconName}",
-            'mini', 'micro' => "heroicons::{$variant}.solid.{$iconName}",
-            default => "heroicons::outline.{$iconName}",
+            'solid' => "heroicon-s-{$iconName}",
+            'outline' => "heroicon-o-{$iconName}",
+            'mini' => "heroicon-m-{$iconName}",
+            'micro' => "heroicon-c-{$iconName}",
+            default => "heroicon-o-{$iconName}",
         },
     };
 
-    /* PHOSPHOR ICONS AREN'T STYLED WE size-6 AS A FALLBACK */
-    if ($isPhosphorSet && ! str($attributes->get('class'))->contains(['size-', 'w-', 'h-'])) {
+    /* Apply size-6 fallback if no explicit size class is provided */
+    if (! str($attributes->get('class'))->contains(['size-', 'w-', 'h-'])) {
         $attributes = $attributes->class('size-6');
     }
 @endphp

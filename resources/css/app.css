@@ -12,8 +12,8 @@
 
 /* Sheaf UI Theme */
 @theme inline {
-    --color-primary: var(--color-neutral-800);
-    --color-primary-content: var(--color-neutral-800);
+    --color-primary: var(--color-green-600);
+    --color-primary-content: var(--color-green-600);
     --color-primary-fg: var(--color-white);
 
     --radius-field: 0.25rem;
@@ -22,8 +22,8 @@
 
 @layer theme {
     .dark {
-        --color-primary: var(--color-white);
-        --color-primary-content: var(--color-white);
-        --color-primary-fg: var(--color-neutral-800);
+        --color-primary: var(--color-green-400);
+        --color-primary-content: var(--color-green-400);
+        --color-primary-fg: var(--color-white);
     }
 }

@@ -108,7 +108,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ $user->email }}</p>
                             </div>
                         </div>
-                        <x-ui.button size="xs" variant="outline" icon="pencil" wire:click="startEditing({{ $user->id }})">Edit</x-ui.button>
+                        <x-ui.button size="xs" variant="ghost" icon="pencil" wire:click="startEditing({{ $user->id }})">Edit</x-ui.button>
                     @endif
                 </div>
             @empty
@@ -159,7 +159,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 @endif
                             </div>
                         </div>
-                        <x-ui.button size="xs" variant="outline" icon="pencil" wire:click="startEditing({{ $customer->id }})">Edit</x-ui.button>
+                        <x-ui.button size="xs" variant="ghost" icon="pencil" wire:click="startEditing({{ $customer->id }})">Edit</x-ui.button>
                     @endif
                 </div>
             @empty

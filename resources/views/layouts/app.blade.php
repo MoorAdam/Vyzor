@@ -7,6 +7,7 @@
 
     <title>{{ $title ?? config('app.name') }}</title>
 
+    @livewireScriptConfig
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @livewireStyles
@@ -29,8 +30,13 @@
                     <x-ui.navbar.item label="New Project" href="/new-project" />
                 </x-ui.navbar>
 
-                <div class="ml-auto flex items-center gap-4">
-                    <x-ui.avatar/>
+                <div class="ml-auto flex items-center gap-6">
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium text-neutral-500 dark:text-neutral-400 whitespace-nowrap">Project:</span>
+                        <livewire:project-select />
+                    </div>
+
+                    <x-ui.avatar />
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <x-ui.button type="submit">Logout</x-ui.button>
@@ -53,7 +59,7 @@
             </x-ui.layout.main>
         </x-ui.layout>
     @endif
-    @livewireScripts
+
 </body>
 
 </html>
