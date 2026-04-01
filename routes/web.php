@@ -25,6 +25,9 @@ Route::middleware('auth')->group(function () {
         Route::livewire('/projects', 'pages::project.list')->name('projects');
         Route::livewire('/clarity/snapshot', 'pages::clarity-snapshot')->name('clarity.snapshot');
         Route::livewire('/clarity/trends', 'pages::clarity-trends')->name('clarity.trends');
+        Route::livewire('/ai-reports', 'pages::ai-reports')->name('ai-reports');
+        Route::livewire('/reports', 'pages::reports')->name('reports');
+        Route::livewire('/reports/{report}', 'pages::report-view')->name('report.view');
         Route::livewire('/users', 'pages::users')->name('users');
         Route::livewire('/register', 'pages::auth.register')->name('register');
     });
