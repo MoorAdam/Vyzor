@@ -19,7 +19,8 @@ new #[Layout('layouts.app')] class extends Component {
     {
         $this->projectQuery()->findOrFail($projectId);
         session(['current_project_id' => $projectId]);
-        $this->dispatch('current-project-changed', projectId: $projectId);
+        $this->js("localStorage.setItem('current_project_" . auth()->id() . "', '" . $projectId . "')");
+        $this->js("window.location.reload()");
     }
 
     #[On('current-project-changed')]

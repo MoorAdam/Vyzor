@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ClarityFetchCounter;
 use App\Models\ClarityInsight;
 use App\Models\Project;
 use Illuminate\Console\Command;
@@ -73,8 +74,35 @@ class FetchClarity extends Command
 
         $this->saveToDatabase($project, $data, $days, $dimension1, $dimension2, $dimension3);
 
+        $this->onUpCounter();
+
         $this->info('Clarity data extraction completed successfully.');
         return self::SUCCESS;
+    }
+
+    private function onUpCounter(): void
+    {
+        $projectId = $this->argument('project');
+        $today = now()->toDateString();
+
+        $counter = ClarityFetchCounter::where('project_id', $projectId)
+            ->where('date', $today)
+            ->first();
+
+        if ($counter) {
+            ClarityFetchCounter::where('project_id', $projectId)
+                 ->where('date', $today)
+                ->where('id', $counter->id)
+                ->increment('fetch_count');
+        } else {
+            ClarityFetchCounter::insert([
+                'project_id' => $projectId,
+                'date' => $today,
+                'fetch_count' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
     }
 
     private function fetchClarityData(string $token, int $days, ?string $dimension1, ?string $dimension2, ?string $dimension3): ?array

@@ -16,29 +16,6 @@ new #[Layout('layouts.app')] class extends Component {
         $this->datetime = now()->startOfHour()->format('Y-m-d\TH:i');
     }
 
-    public function fetchInfo(): void
-    {
-        $projectId = session('current_project_id');
-
-        if (!$projectId) {
-            $this->error = 'No project selected. Please select a project first.';
-            return;
-        }
-
-        $this->error = null;
-
-        $exitCode = Artisan::call('app:fetch-clarity', [
-            'project' => $projectId,
-        ]);
-
-        if ($exitCode !== 0) {
-            $this->error = trim(Artisan::output());
-            return;
-        }
-
-        $this->redirect(route('clarity.snapshot'), navigate: true);
-    }
-
     #[On('current-project-changed')]
     public function onProjectChanged()
     {
@@ -80,9 +57,7 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
         <div class="flex items-center gap-3">
             {{-- <x-ui.date-picker type="datetime-local" wire:model.live="datetime" class="w-60" /> --}}
-            <x-ui.button variant="primary" icon="arrow-clockwise" wire:click="fetchInfo" wire:loading.attr="loading">
-                Fetch info
-            </x-ui.button>
+            <livewire:clarity-fetch-button />
         </div>
     </div>
 

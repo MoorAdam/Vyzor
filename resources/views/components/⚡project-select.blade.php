@@ -56,7 +56,7 @@ new class extends Component {
         $id = (int) $value;
         session(['current_project_id' => $id]);
         $this->js("localStorage.setItem('" . $this->storageKey() . "', '" . $id . "')");
-        $this->dispatch('current-project-changed', projectId: $id);
+        $this->js("window.location.reload()");
     }
 
     #[On('current-project-changed')]
