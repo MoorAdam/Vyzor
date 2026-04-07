@@ -1,59 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Vyzor
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Web analytics and AI-powered reporting platform built on Laravel. Vyzor aggregates data from Microsoft Clarity and generates intelligent reports using multiple LLM providers, designed for agencies and consultants delivering data-driven insights to clients.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- **Microsoft Clarity Integration** — Fetch live insights, trends, and metrics with built-in rate limiting
+- **AI-Powered Reports** — Generate analytical reports using OpenAI, Anthropic, Gemini, Groq, and more
+- **Customizable AI Contexts** — Define reusable prompts, preset analysis templates, and instructions
+- **Heatmap Analysis** — Upload CSV heatmap data and include it in AI report generation
+- **Multi-Project Management** — Manage multiple projects with per-project Clarity API keys and settings
+- **Role-Based Access** — Admin, web user, and customer roles with scoped dashboards
+- **Async Report Generation** — Queue-driven AI report generation with status tracking
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Tech Stack
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Layer     | Technology                                      |
+|-----------|------------------------------------------------|
+| Backend   | Laravel 12, PHP 8.2+                           |
+| Frontend  | Livewire, Tailwind CSS v4, Vite                |
+| Database  | SQLite (dev), PostgreSQL 15 (production/Docker) |
+| AI        | Prism PHP — OpenAI, Anthropic, Gemini, Groq, and more |
+| Queue     | Database / Redis / SQS                         |
 
-## Learning Laravel
+## Prerequisites
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- PHP 8.2+
+- Composer
+- Node.js & npm
+- A Microsoft Clarity API key
+- At least one AI provider API key (OpenAI, Anthropic, etc.)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation
 
-## Laravel Sponsors
+```bash
+git clone https://github.com/your-username/Vyzor.git
+cd Vyzor
+composer setup
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+The `composer setup` command will:
+1. Install PHP dependencies
+2. Copy `.env.example` to `.env`
+3. Generate the application key
+4. Run database migrations
+5. Install Node dependencies
+6. Build frontend assets
 
-### Premium Partners
+Then configure your `.env` file:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```env
+CLARITY_KEY=your-clarity-api-key
+OPENAI_API_KEY=your-openai-key
+# and/or
+ANTHROPIC_API_KEY=your-anthropic-key
+```
 
-## Contributing
+## Development
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+composer dev
+```
 
-## Code of Conduct
+This starts all development services concurrently:
+- Laravel dev server at `http://localhost:8000`
+- Queue worker for async jobs
+- Log viewer (Laravel Pail)
+- Vite dev server with hot reload
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Production (Docker)
 
-## Security Vulnerabilities
+A `docker-compose.yaml` is included for PostgreSQL:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bash
+docker compose up -d
+```
+
+Update `.env` to use PostgreSQL:
+
+```env
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5433
+DB_DATABASE=vyzor
+DB_USERNAME=vyzor
+DB_PASSWORD=secret
+```
+
+## Testing
+
+```bash
+composer test
+```
+
+## Project Structure
+
+```
+app/
+├── Ai/Agents/          # AI agent implementations (ReportAnalyst)
+├── Models/              # Eloquent models
+├── Services/            # Business logic (ReportGeneratorService)
+├── Jobs/                # Queued jobs (GenerateAiReport)
+├── Livewire/            # Livewire components
+└── Http/                # Controllers & middleware
+resources/
+├── views/               # Blade templates
+├── ai-prompts/          # AI prompt templates & presets
+├── js/                  # JavaScript entry points
+└── css/                 # Tailwind CSS
+```
+
+## AI Report Presets
+
+Vyzor ships with built-in analysis templates:
+- Traffic Overview
+- Weekly Summary
+- Content Performance
+- UX Issues
+- Device & Browser Analysis
+- And more via custom contexts
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Proprietary software. All rights reserved.
