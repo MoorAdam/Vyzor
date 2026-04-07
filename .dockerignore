@@ -1,0 +1,17 @@
+node_modules
+vendor
+.env
+.env.local
+.env.production
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+tests
+.git
+.github
+docker-compose*.yml
+docker-compose*.yaml
+*.md
+.phpunit*
+phpunit.xml
