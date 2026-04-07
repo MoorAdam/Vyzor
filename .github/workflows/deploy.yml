@@ -54,12 +54,13 @@ jobs:
           command_timeout: 30m
           envs: GH_PAT,DEPLOY_DIR,REPO_NAME
           script: |
-            cd "$DEPLOY_DIR"
-
             # ── First deployment: clone if not exists ──
-            if [ ! -d ".git" ]; then
+            if [ ! -d "$DEPLOY_DIR/.git" ]; then
+              mkdir -p "$(dirname "$DEPLOY_DIR")"
               git clone "https://${GH_PAT}@github.com/${REPO_NAME}.git" "$DEPLOY_DIR"
             fi
+
+            cd "$DEPLOY_DIR"
 
             # ── Ensure .env exists ──
             if [ ! -f ".env" ]; then
