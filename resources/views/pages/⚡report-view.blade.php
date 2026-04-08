@@ -91,7 +91,7 @@ new #[Layout('layouts.app')] class extends Component {
                         <span class="inline-flex items-center gap-1">
                             @if ($report->contextPreset)
                                 <x-ui.icon :name="$report->contextPreset->icon" class="size-3.5" style="color: {{ $report->contextPreset->label_color }}" />
-                                {{ $report->contextPreset->name }}
+                                {{ $report->contextPreset->localizedName() }}
                             @else
                                 <x-ui.icon name="tag" class="size-3.5" />
                                 {{ \Illuminate\Support\Str::title(str_replace('-', ' ', $report->preset)) }}

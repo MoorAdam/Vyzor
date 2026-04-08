@@ -61,7 +61,7 @@ new #[Layout('layouts.app')] class extends Component {
         $preset = AiContext::where('slug', $slug)->first();
         if ($preset) {
             $this->presetPreviewContent = $preset->context;
-            $this->presetPreviewName = $preset->name;
+            $this->presetPreviewName = $preset->localizedName();
             $this->showPresetPreview = true;
         }
     }
@@ -250,8 +250,8 @@ new #[Layout('layouts.app')] class extends Component {
                                             <x-ui.icon :name="$presetOption->icon" class="size-5" />
                                         </div>
                                         <div class="flex-1 min-w-0">
-                                            <span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ $presetOption->name }}</span>
-                                            <span class="block text-xs text-neutral-400 mt-0.5">{{ $presetOption->description }}</span>
+                                            <span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ $presetOption->localizedName() }}</span>
+                                            <span class="block text-xs text-neutral-400 mt-0.5">{{ $presetOption->localizedDescription() }}</span>
                                         </div>
                                         @if ($preset === $presetOption->slug)
                                             <button
@@ -426,7 +426,7 @@ new #[Layout('layouts.app')] class extends Component {
                                             <span class="inline-flex items-center gap-1">
                                                 @if ($report->contextPreset)
                                                     <x-ui.icon :name="$report->contextPreset->icon" class="size-3" style="color: {{ $report->contextPreset->label_color }}" />
-                                                    {{ $report->contextPreset->name }}
+                                                    {{ $report->contextPreset->localizedName() }}
                                                 @else
                                                     <x-ui.icon name="tag" class="size-3" />
                                                     {{ Str::title(str_replace('-', ' ', $report->preset)) }}

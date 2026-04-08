@@ -62,7 +62,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function getPresetsProperty()
     {
-        return AiContext::active()->ofType(AiContextType::PRESET)->ordered()->pluck('name', 'slug');
+        return AiContext::active()->ofType(AiContextType::PRESET)->ordered()->get()->mapWithKeys(fn ($c) => [$c->slug => $c->localizedName()]);
     }
 
     public function with(): array
@@ -168,7 +168,7 @@ new #[Layout('layouts.app')] class extends Component {
                         <x-ui.select wire:model.live="filterPreset" :placeholder="__('All Presets')">
                             <x-ui.select.option value="">{{ __('All Presets') }}</x-ui.select.option>
                             @foreach ($this->presets as $slug => $title)
-                                <x-ui.select.option :value="$slug">{{ $title }}</x-ui.select.option>
+                                <x-ui.select.option :value="$slug" :label="$title">{{ $title }}</x-ui.select.option>
                             @endforeach
                         </x-ui.select>
                     </x-ui.field>
@@ -246,7 +246,7 @@ new #[Layout('layouts.app')] class extends Component {
                                         <span class="inline-flex items-center gap-1">
                                             @if ($report->contextPreset)
                                                 <x-ui.icon :name="$report->contextPreset->icon" class="size-3" style="color: {{ $report->contextPreset->label_color }}" />
-                                                {{ $report->contextPreset->name }}
+                                                {{ $report->contextPreset->localizedName() }}
                                             @else
                                                 <x-ui.icon name="tag" class="size-3" />
                                                 {{ Str::title(str_replace('-', ' ', $report->preset)) }}
