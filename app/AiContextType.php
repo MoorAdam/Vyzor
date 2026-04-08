@@ -11,9 +11,9 @@ enum AiContextType: string
     public function label(): string
     {
         return match ($this) {
-            self::PRESET => 'Preset',
-            self::SYSTEM => 'System',
-            self::INSTRUCTION => 'Instruction',
+            self::PRESET => __('Preset'),
+            self::SYSTEM => __('System'),
+            self::INSTRUCTION => __('Instruction'),
         };
     }
 

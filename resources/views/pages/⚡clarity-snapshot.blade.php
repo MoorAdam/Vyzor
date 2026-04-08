@@ -52,8 +52,8 @@ new #[Layout('layouts.app')] class extends Component {
 <div class="p-6 space-y-6">
     <div class="flex items-center justify-between">
         <div>
-            <x-ui.heading level="h1" size="xl">Clarity Snapshot</x-ui.heading>
-            <x-ui.description class="mt-1">Single point-in-time Microsoft Clarity data for the current project.</x-ui.description>
+            <x-ui.heading level="h1" size="xl">{{ __('Clarity Snapshot') }}</x-ui.heading>
+            <x-ui.description class="mt-1">{{ __('Single point-in-time Microsoft Clarity data for the current project.') }}</x-ui.description>
         </div>
         <div class="flex items-center gap-3">
             <x-ui.input type="datetime-local" wire:model.live="datetime" class="w-60" />
@@ -72,13 +72,13 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.empty>
                 <x-ui.empty.contents>
                     <x-ui.icon name="chart-bar" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>No data available for {{ \Carbon\Carbon::parse($datetime)->format('M d, Y H:i') }}.</x-ui.text>
+                    <x-ui.text>{{ __('No data available for') }} {{ \Carbon\Carbon::parse($datetime)->format('M d, Y H:i') }}.</x-ui.text>
                 </x-ui.empty.contents>
             </x-ui.empty>
         </x-ui.card>
     @else
 
-        <x-ui.heading level="h3" size="md" class="mb-3">Overview</x-ui.heading>
+        <x-ui.heading level="h3" size="md" class="mb-3">{{ __('Overview') }}</x-ui.heading>
 
         {{-- Overview Cards --}}
         <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
@@ -87,22 +87,22 @@ new #[Layout('layouts.app')] class extends Component {
                 <x-ui.card size="full" class="border-l-4 border-l-blue-500">
                     <div class="flex items-center gap-2 mb-1">
                         <x-ui.icon name="users" class="size-4 text-blue-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">Sessions</x-ui.description>
+                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Sessions') }}</x-ui.description>
                     </div>
                     <x-ui.heading level="h3" size="xl">{{ number_format($t['totalSessionCount'] ?? 0) }}</x-ui.heading>
-                    <x-ui.description class="text-xs! mt-1">{{ number_format($t['totalBotSessionCount'] ?? 0) }} bots</x-ui.description>
+                    <x-ui.description class="text-xs! mt-1">{{ number_format($t['totalBotSessionCount'] ?? 0) }} {{ __('bots') }}</x-ui.description>
                 </x-ui.card>
                 <x-ui.card size="full" class="border-l-4 border-l-violet-500">
                     <div class="flex items-center gap-2 mb-1">
                         <x-ui.icon name="user" class="size-4 text-violet-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">Unique Users</x-ui.description>
+                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Unique Users') }}</x-ui.description>
                     </div>
                     <x-ui.heading level="h3" size="xl">{{ number_format($t['distinctUserCount'] ?? 0) }}</x-ui.heading>
                 </x-ui.card>
                 <x-ui.card size="full" class="border-l-4 border-l-emerald-500">
                     <div class="flex items-center gap-2 mb-1">
                         <x-ui.icon name="copy" class="size-4 text-emerald-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">Pages / Session</x-ui.description>
+                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Pages / Session') }}</x-ui.description>
                     </div>
                     <x-ui.heading level="h3" size="xl">{{ number_format($t['pagesPerSessionPercentage'] ?? 0, 2) }}</x-ui.heading>
                 </x-ui.card>
@@ -113,14 +113,14 @@ new #[Layout('layouts.app')] class extends Component {
                 <x-ui.card size="full" class="border-l-4 border-l-amber-500">
                     <div class="flex items-center gap-2 mb-1">
                         <x-ui.icon name="arrows-down-up" class="size-4 text-amber-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">Avg Scroll Depth</x-ui.description>
+                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Avg Scroll Depth') }}</x-ui.description>
                     </div>
                     <x-ui.heading level="h3" size="xl">{{ number_format($s['averageScrollDepth'] ?? 0, 1) }}%</x-ui.heading>
                 </x-ui.card>
             @endif
         </div>
 
-        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">User Engagement</x-ui.heading>
+        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">{{ __('User Engagement') }}</x-ui.heading>
 
         {{-- Engagement --}}
         @if ($engagement = $insights->get('EngagementTime'))
@@ -129,14 +129,14 @@ new #[Layout('layouts.app')] class extends Component {
                 <x-ui.card size="full" class="border-l-4 border-l-cyan-500">
                     <div class="flex items-center gap-2 mb-1">
                         <x-ui.icon name="clock" class="size-4 text-cyan-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">Total Time</x-ui.description>
+                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Total Time') }}</x-ui.description>
                     </div>
                     <x-ui.heading level="h3" size="xl">{{ $e['totalTime'] ?? 0 }}s</x-ui.heading>
                 </x-ui.card>
                 <x-ui.card size="full" class="border-l-4 border-l-teal-500">
                     <div class="flex items-center gap-2 mb-1">
                         <x-ui.icon name="timer" class="size-4 text-teal-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">Active Time</x-ui.description>
+                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Active Time') }}</x-ui.description>
                     </div>
                     <x-ui.heading level="h3" size="xl">{{ $e['activeTime'] ?? 0 }}s</x-ui.heading>
                 </x-ui.card>
@@ -146,19 +146,19 @@ new #[Layout('layouts.app')] class extends Component {
         {{-- UX Signals --}}
         @php
             $signals = [
-                'DeadClickCount'   => ['label' => 'Dead Clicks',      'color' => 'orange', 'icon' => 'cursor-click'],
-                'RageClickCount'   => ['label' => 'Rage Clicks',      'color' => 'red',    'icon' => 'warning'],
-                'QuickbackClick'   => ['label' => 'Quick Backs',      'color' => 'amber',  'icon' => 'arrow-u-up-left'],
-                'ExcessiveScroll'  => ['label' => 'Excessive Scroll', 'color' => 'yellow', 'icon' => 'arrows-down-up'],
-                'ScriptErrorCount' => ['label' => 'Script Errors',    'color' => 'rose',   'icon' => 'code'],
-                'ErrorClickCount'  => ['label' => 'Error Clicks',     'color' => 'pink',   'icon' => 'x-circle'],
+                'DeadClickCount'   => ['label' => __('Dead Clicks'),      'color' => 'orange', 'icon' => 'cursor-click'],
+                'RageClickCount'   => ['label' => __('Rage Clicks'),      'color' => 'red',    'icon' => 'warning'],
+                'QuickbackClick'   => ['label' => __('Quick Backs'),      'color' => 'amber',  'icon' => 'arrow-u-up-left'],
+                'ExcessiveScroll'  => ['label' => __('Excessive Scroll'), 'color' => 'yellow', 'icon' => 'arrows-down-up'],
+                'ScriptErrorCount' => ['label' => __('Script Errors'),    'color' => 'rose',   'icon' => 'code'],
+                'ErrorClickCount'  => ['label' => __('Error Clicks'),     'color' => 'pink',   'icon' => 'x-circle'],
             ];
             $hasSignals = $insights->keys()->intersect(array_keys($signals))->isNotEmpty();
         @endphp
 
         @if ($hasSignals)
             <div>
-                <x-ui.heading level="h2" size="md" class="mb-3">UX Signals</x-ui.heading>
+                <x-ui.heading level="h2" size="md" class="mb-3">{{ __('UX Signals') }}</x-ui.heading>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                     @foreach ($signals as $key => $config)
                         @if ($metric = $insights->get($key))
@@ -176,7 +176,7 @@ new #[Layout('layouts.app')] class extends Component {
                                     <div class="w-full h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
                                         <div class="h-1.5 rounded-full bg-{{ $config['color'] }}-500" style="width: {{ min($pct, 100) }}%"></div>
                                     </div>
-                                    <x-ui.description class="text-xs! mt-1">{{ $pct }}% of sessions</x-ui.description>
+                                    <x-ui.description class="text-xs! mt-1">{{ $pct }}% {{ __('of sessions') }}</x-ui.description>
                                 </div>
                             </x-ui.card>
                         @endif
@@ -188,15 +188,15 @@ new #[Layout('layouts.app')] class extends Component {
         {{-- Breakdowns --}}
         @php
             $dimensions = [
-                'Browser'     => ['label' => 'Browsers',          'icon' => 'globe',         'color' => 'blue'],
-                'Device'      => ['label' => 'Devices',           'icon' => 'device-mobile', 'color' => 'violet'],
-                'OS'          => ['label' => 'Operating Systems', 'icon' => 'desktop',       'color' => 'emerald'],
-                'Country'     => ['label' => 'Countries',         'icon' => 'map-pin',       'color' => 'amber'],
-                'ReferrerUrl' => ['label' => 'Referrers',         'icon' => 'link',           'color' => 'cyan'],
+                'Browser'     => ['label' => __('Browsers'),          'icon' => 'globe',         'color' => 'blue'],
+                'Device'      => ['label' => __('Devices'),           'icon' => 'device-mobile', 'color' => 'violet'],
+                'OS'          => ['label' => __('Operating Systems'), 'icon' => 'desktop',       'color' => 'emerald'],
+                'Country'     => ['label' => __('Countries'),         'icon' => 'map-pin',       'color' => 'amber'],
+                'ReferrerUrl' => ['label' => __('Referrers'),         'icon' => 'link',           'color' => 'cyan'],
             ];
             $pageTables = [
-                'PopularPages' => ['label' => 'Popular Pages', 'icon' => 'chart-bar', 'color' => 'blue',   'col' => 'URL',   'metric' => 'Visits'],
-                'PageTitle'    => ['label' => 'Page Titles',   'icon' => 'text-aa',   'color' => 'violet', 'col' => 'Title', 'metric' => 'Sessions'],
+                'PopularPages' => ['label' => __('Popular Pages'), 'icon' => 'chart-bar', 'color' => 'blue',   'col' => __('URL'),   'metric' => __('Visits')],
+                'PageTitle'    => ['label' => __('Page Titles'),   'icon' => 'text-aa',   'color' => 'violet', 'col' => __('Title'), 'metric' => __('Sessions')],
             ];
         @endphp
 

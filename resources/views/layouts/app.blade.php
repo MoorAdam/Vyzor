@@ -32,10 +32,27 @@
                 <div class="ml-auto flex items-center gap-6">
                     <div class="flex items-center gap-2">
                         <span
-                            class="text-sm font-medium text-neutral-500 dark:text-neutral-400 whitespace-nowrap">Project:</span>
+                            class="text-sm font-medium text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{{ __('Project:') }}</span>
                         <livewire:project-select />
                         <x-ui.button variant="outline" color="neutral" icon="plus-circle" class="rounded-lg" size="icon"
                             href="/new-project" />
+                    </div>
+
+                    <x-ui.separator class="my-1" vertical />
+
+                    <div class="flex items-center gap-1">
+                        <form method="POST" action="{{ route('locale.switch', 'en') }}">
+                            @csrf
+                            <button type="submit" class="px-2 py-1 text-xs font-semibold rounded transition-colors {{ app()->getLocale() === 'en' ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
+                                EN
+                            </button>
+                        </form>
+                        <form method="POST" action="{{ route('locale.switch', 'hu') }}">
+                            @csrf
+                            <button type="submit" class="px-2 py-1 text-xs font-semibold rounded transition-colors {{ app()->getLocale() === 'hu' ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
+                                HU
+                            </button>
+                        </form>
                     </div>
 
                     <x-ui.separator class="my-1" vertical />
@@ -47,7 +64,7 @@
 
                         <x-slot:menu class="min-w-48">
                             <div class="px-2 py-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-                                Signed in as
+                                {{ __('Signed in as') }}
                                 <span
                                     class="block font-medium text-neutral-900 dark:text-neutral-100">{{ auth()->user()->name }}</span>
                             </div>
@@ -56,7 +73,7 @@
 
                             <div>
                                 <x-ui.dropdown.item icon="gear" href="/settings">
-                                    Settings
+                                    {{ __('Settings') }}
                                 </x-ui.dropdown.item>
                             </div>
 
@@ -65,7 +82,7 @@
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <x-ui.dropdown.item icon="sign-out" variant="danger" type="submit" as="button">
-                                    Logout
+                                    {{ __('Logout') }}
                                 </x-ui.dropdown.item>
                             </form>
                         </x-slot:menu>
@@ -75,34 +92,34 @@
 
             <x-ui.sidebar>
                 <x-ui.navlist>
-                    <x-ui.navlist.group label="General">
-                        <x-ui.navlist.item label="Projects" icon="check-square" href="/projects" />
+                    <x-ui.navlist.group :label="__('General')">
+                        <x-ui.navlist.item :label="__('Projects')" icon="check-square" href="/projects" />
                     </x-ui.navlist.group>
-                    <x-ui.navlist.group label="Project">
-                        <x-ui.navlist.group label="Clarity" variant="compact">
-                            <x-ui.navlist.item label="Snapshot" icon="camera" href="/clarity/snapshot"
+                    <x-ui.navlist.group :label="__('Project')">
+                        <x-ui.navlist.group :label="__('Clarity')" variant="compact">
+                            <x-ui.navlist.item :label="__('Snapshot')" icon="camera" href="/clarity/snapshot"
                                 :active="request()->is('clarity/snapshot')" />
-                            <x-ui.navlist.item label="Trends" icon="chart-line-up" href="/clarity/trends"
+                            <x-ui.navlist.item :label="__('Trends')" icon="chart-line-up" href="/clarity/trends"
                                 :active="request()->is('clarity/trends')" />
                         </x-ui.navlist.group>
-                        <x-ui.navlist.group label="Reports" variant="compact">
-                            <x-ui.navlist.item label="New Report" icon="plus-circle" href="/ai-reports"
+                        <x-ui.navlist.group :label="__('Reports')" variant="compact">
+                            <x-ui.navlist.item :label="__('New Report')" icon="plus-circle" href="/ai-reports"
                                 :active="request()->is('ai-reports')" />
-                            <x-ui.navlist.item label="All Reports" icon="book-bookmark" href="/reports"
+                            <x-ui.navlist.item :label="__('All Reports')" icon="book-bookmark" href="/reports"
                                 :active="request()->is('reports') || request()->is('reports/*')" />
                         </x-ui.navlist.group>
-                        <x-ui.navlist.group label="Heatmaps" variant="compact">
-                            <x-ui.navlist.item label="Upload" icon="upload-simple" href="/heatmaps/upload"
+                        <x-ui.navlist.group :label="__('Heatmaps')" variant="compact">
+                            <x-ui.navlist.item :label="__('Upload')" icon="upload-simple" href="/heatmaps/upload"
                                 :active="request()->is('heatmaps/upload')" />
-                            <x-ui.navlist.item label="All Heatmaps" icon="fire" href="/heatmaps"
+                            <x-ui.navlist.item :label="__('All Heatmaps')" icon="fire" href="/heatmaps"
                                 :active="request()->is('heatmaps') && !request()->is('heatmaps/*')" />
                         </x-ui.navlist.group>
-                        <x-ui.navlist.item disabled label="Pezentations" icon="projector-screen-chart" />
+                        <x-ui.navlist.item disabled :label="__('Presentations')" icon="projector-screen-chart" />
                     </x-ui.navlist.group>
-                    <x-ui.navlist.group label="System">
-                        <x-ui.navlist.item label="Users | Customers" icon="users" href="/users" />
-                        <x-ui.navlist.group label="Settings" icon="gear" variant="compact" href="/settings" :active="request()->is('settings')">
-                            <x-ui.navlist.item label="Contexts" icon="tag" href="/settings/contexts"
+                    <x-ui.navlist.group :label="__('System')">
+                        <x-ui.navlist.item :label="__('Users | Customers')" icon="users" href="/users" />
+                        <x-ui.navlist.group :label="__('Settings')" icon="gear" variant="compact" href="/settings" :active="request()->is('settings')">
+                            <x-ui.navlist.item :label="__('Contexts')" icon="tag" href="/settings/contexts"
                                 :active="request()->is('settings/contexts')" />
                         </x-ui.navlist.group>
                     </x-ui.navlist.group>

@@ -22,6 +22,23 @@
             </x-slot:brand>
 
             <div class="ml-auto flex items-center gap-6">
+                <div class="flex items-center gap-1">
+                    <form method="POST" action="{{ route('locale.switch', 'en') }}">
+                        @csrf
+                        <button type="submit" class="px-2 py-1 text-xs font-semibold rounded transition-colors {{ app()->getLocale() === 'en' ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
+                            EN
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('locale.switch', 'hu') }}">
+                        @csrf
+                        <button type="submit" class="px-2 py-1 text-xs font-semibold rounded transition-colors {{ app()->getLocale() === 'hu' ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
+                            HU
+                        </button>
+                    </form>
+                </div>
+
+                <x-ui.separator class="my-1" vertical />
+
                 <x-ui.dropdown position="bottom-end">
                     <x-slot:button>
                         <x-ui.avatar class="cursor-pointer" />
@@ -29,7 +46,7 @@
 
                     <x-slot:menu class="min-w-48">
                         <div class="px-2 py-1.5 text-sm text-neutral-500 dark:text-neutral-400">
-                            Signed in as
+                            {{ __('Signed in as') }}
                             <span
                                 class="block font-medium text-neutral-900 dark:text-neutral-100">{{ auth()->user()->customerProfile?->company_name ?? auth()->user()->email }}</span>
                         </div>
@@ -39,7 +56,7 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
                             <x-ui.dropdown.item icon="sign-out" variant="danger" type="submit" as="button">
-                                Logout
+                                {{ __('Logout') }}
                             </x-ui.dropdown.item>
                         </form>
                     </x-slot:menu>
@@ -49,9 +66,9 @@
 
         <x-ui.sidebar>
             <x-ui.navlist>
-                <x-ui.navlist.group label="General">
-                    <x-ui.navlist.item disabled label="Dashboard" icon="house" href="/customer/dashboard" />
-                    <x-ui.navlist.item disabled label="Projects" icon="check-square" href="/customer/projects" />
+                <x-ui.navlist.group :label="__('General')">
+                    <x-ui.navlist.item disabled :label="__('Dashboard')" icon="house" href="/customer/dashboard" />
+                    <x-ui.navlist.item disabled :label="__('Projects')" icon="check-square" href="/customer/projects" />
                 </x-ui.navlist.group>
             </x-ui.navlist>
         </x-ui.sidebar>

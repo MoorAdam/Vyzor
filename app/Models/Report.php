@@ -22,6 +22,7 @@ class Report extends Model
         'aspect_date_to',
         'ai_model_name',
         'status',
+        'language',
     ];
 
     protected function casts(): array

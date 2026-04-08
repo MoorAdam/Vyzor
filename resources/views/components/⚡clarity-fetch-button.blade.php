@@ -23,7 +23,7 @@ new class extends Component {
         $projectId = session('current_project_id');
 
         if (!$projectId) {
-            $this->error = 'No project selected. Please select a project first.';
+            $this->error = __('No project selected. Please select a project first.');
             return;
         }
 
@@ -46,6 +46,6 @@ new class extends Component {
 <div class="flex items-center gap-2">
     <x-ui.label class="opacity-50">{{ ($this->counter->fetch_count ?? 0) }} / {{ $this->counterMax }}</x-ui.label>
     <x-ui.button variant="primary" icon="arrow-clockwise" wire:click="fetchInfo" wire:loading.attr="loading">
-        Fetch info
+        {{ __('Fetch info') }}
     </x-ui.button>
 </div>

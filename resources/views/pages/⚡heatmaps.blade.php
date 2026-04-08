@@ -116,11 +116,11 @@ new #[Layout('layouts.app')] class extends Component {
 <div class="p-6 space-y-6">
     <div class="flex items-center justify-between">
         <div>
-            <x-ui.heading level="h1" size="xl">Heatmaps</x-ui.heading>
-            <x-ui.description class="mt-1">Browse and manage uploaded heatmap CSVs for the current project.</x-ui.description>
+            <x-ui.heading level="h1" size="xl">{{ __('Heatmaps') }}</x-ui.heading>
+            <x-ui.description class="mt-1">{{ __('Browse and manage uploaded heatmap CSVs for the current project.') }}</x-ui.description>
         </div>
         <x-ui.button color="blue" icon="upload-simple" href="/heatmaps/upload">
-            Upload Heatmap
+            {{ __('Upload Heatmap') }}
         </x-ui.button>
     </div>
 
@@ -129,7 +129,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.empty>
                 <x-ui.empty.contents>
                     <x-ui.icon name="fire" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>No project selected. Please select a project first.</x-ui.text>
+                    <x-ui.text>{{ __('No project selected. Please select a project first.') }}</x-ui.text>
                 </x-ui.empty.contents>
             </x-ui.empty>
         </x-ui.card>
@@ -139,28 +139,28 @@ new #[Layout('layouts.app')] class extends Component {
             <div class="flex flex-wrap items-end gap-4">
                 <div class="flex-1 min-w-48">
                     <x-ui.field>
-                        <x-ui.label>Search</x-ui.label>
-                        <x-ui.input wire:model.live.debounce.300ms="search" placeholder="Search by filename..." leftIcon="magnifying-glass" />
+                        <x-ui.label>{{ __('Search') }}</x-ui.label>
+                        <x-ui.input wire:model.live.debounce.300ms="search" :placeholder="__('Search by filename...')" leftIcon="magnifying-glass" />
                     </x-ui.field>
                 </div>
 
                 <div class="w-52">
                     <x-ui.field>
-                        <x-ui.label>Date From</x-ui.label>
+                        <x-ui.label>{{ __('Date From') }}</x-ui.label>
                         <x-ui.date-picker wire:model.live="filterDateFrom" class="w-full" />
                     </x-ui.field>
                 </div>
 
                 <div class="w-52">
                     <x-ui.field>
-                        <x-ui.label>Date To</x-ui.label>
+                        <x-ui.label>{{ __('Date To') }}</x-ui.label>
                         <x-ui.date-picker wire:model.live="filterDateTo" class="w-full" />
                     </x-ui.field>
                 </div>
 
                 @if ($filterDateFrom || $filterDateTo || $search)
                     <x-ui.button variant="outline" color="neutral" size="sm" wire:click="clearFilters">
-                        Clear filters
+                        {{ __('Clear filters') }}
                     </x-ui.button>
                 @endif
             </div>
@@ -172,7 +172,7 @@ new #[Layout('layouts.app')] class extends Component {
                 <x-ui.empty>
                     <x-ui.empty.contents>
                         <x-ui.icon name="fire" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                        <x-ui.text>No heatmaps found. Upload one to get started.</x-ui.text>
+                        <x-ui.text>{{ __('No heatmaps found. Upload one to get started.') }}</x-ui.text>
                     </x-ui.empty.contents>
                 </x-ui.empty>
             </x-ui.card>
@@ -185,19 +185,19 @@ new #[Layout('layouts.app')] class extends Component {
                             <div class="flex flex-wrap items-end gap-4">
                                 <div class="flex-1 min-w-48">
                                     <x-ui.field>
-                                        <x-ui.label>Filename</x-ui.label>
+                                        <x-ui.label>{{ __('Filename') }}</x-ui.label>
                                         <x-ui.input wire:model="editFilename" />
                                     </x-ui.field>
                                 </div>
                                 <div class="w-52">
                                     <x-ui.field>
-                                        <x-ui.label>Date</x-ui.label>
+                                        <x-ui.label>{{ __('Date') }}</x-ui.label>
                                         <x-ui.date-picker wire:model="editDate" class="w-full" />
                                     </x-ui.field>
                                 </div>
                                 <div class="flex gap-2">
-                                    <x-ui.button size="sm" color="green" wire:click="saveEdit">Save</x-ui.button>
-                                    <x-ui.button size="sm" variant="outline" color="neutral" wire:click="cancelEdit">Cancel</x-ui.button>
+                                    <x-ui.button size="sm" color="green" wire:click="saveEdit">{{ __('Save') }}</x-ui.button>
+                                    <x-ui.button size="sm" variant="outline" color="neutral" wire:click="cancelEdit">{{ __('Cancel') }}</x-ui.button>
                                 </div>
                             </div>
                         @else
@@ -213,7 +213,7 @@ new #[Layout('layouts.app')] class extends Component {
                                             <div class="text-sm text-neutral-500 dark:text-neutral-400 mt-0.5">
                                                 {{ $heatmap->date->format('M d, Y') }}
                                                 &middot;
-                                                Uploaded by {{ $heatmap->user->name ?? 'Unknown' }}
+                                                {{ __('Uploaded by') }} {{ $heatmap->user->name ?? __('Unknown') }}
                                                 &middot;
                                                 {{ $heatmap->created_at->diffForHumans() }}
                                             </div>
@@ -222,15 +222,15 @@ new #[Layout('layouts.app')] class extends Component {
                                 </div>
                                 <div class="flex items-center gap-2 ml-4 shrink-0">
                                     <x-ui.button size="sm" variant="outline" color="blue" wire:click="downloadCsv({{ $heatmap->id }})">
-                                        Download
+                                        {{ __('Download') }}
                                     </x-ui.button>
                                     <x-ui.button size="sm" variant="outline" color="neutral" wire:click="startEdit({{ $heatmap->id }})">
-                                        Edit
+                                        {{ __('Edit') }}
                                     </x-ui.button>
                                     <x-ui.button size="sm" variant="outline" color="red"
                                         wire:click="deleteHeatmap({{ $heatmap->id }})"
-                                        wire:confirm="Are you sure you want to delete this heatmap?">
-                                        Delete
+                                        wire:confirm="{{ __('Are you sure you want to delete this heatmap?') }}">
+                                        {{ __('Delete') }}
                                     </x-ui.button>
                                 </div>
                             </div>

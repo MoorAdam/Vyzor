@@ -23,7 +23,7 @@ new #[Layout('layouts.app')] class extends Component {
         if ($this->csvFile) {
             $ext = strtolower($this->csvFile->getClientOriginalExtension());
             if (!in_array($ext, ['csv', 'txt'])) {
-                $this->addError('csvFile', 'The file must be a CSV or TXT file.');
+                $this->addError('csvFile', __('The file must be a CSV or TXT file.'));
                 $this->csvFile = null;
             }
         }
@@ -53,12 +53,12 @@ new #[Layout('layouts.app')] class extends Component {
         $projectId = session('current_project_id');
 
         if (!$projectId) {
-            $this->errorMessage = 'Please select a project first.';
+            $this->errorMessage = __('Please select a project first.');
             return;
         }
 
         if (!$this->csvFile) {
-            $this->errorMessage = 'Please select a file first.';
+            $this->errorMessage = __('Please select a file first.');
             return;
         }
 
@@ -67,7 +67,7 @@ new #[Layout('layouts.app')] class extends Component {
         try {
             $ext = strtolower($this->csvFile->getClientOriginalExtension());
             if (!in_array($ext, ['csv', 'txt'])) {
-                $this->errorMessage = 'The file must be a CSV or TXT file.';
+                $this->errorMessage = __('The file must be a CSV or TXT file.');
                 return;
             }
 
@@ -76,7 +76,7 @@ new #[Layout('layouts.app')] class extends Component {
 
             $date = $this->parseDateFromCsv($content);
             if (!$date) {
-                $this->errorMessage = 'Could not find a valid "Date range" row in the CSV file.';
+                $this->errorMessage = __('Could not find a valid "Date range" row in the CSV file.');
                 return;
             }
 
@@ -90,7 +90,7 @@ new #[Layout('layouts.app')] class extends Component {
 
             $this->redirect(route('heatmaps'), navigate: true);
         } catch (\Throwable $e) {
-            $this->errorMessage = 'Failed to upload heatmap: ' . $e->getMessage();
+            $this->errorMessage = __('Failed to upload heatmap: ') . $e->getMessage();
         }
     }
 };
@@ -98,12 +98,12 @@ new #[Layout('layouts.app')] class extends Component {
 
 <div
     x-data="{ fileSelected: false, uploadError: null }"
-    x-on:livewire-upload-error.window="uploadError = 'File upload failed. Please re-select the file and try again.'"
+    x-on:livewire-upload-error.window="uploadError = '{{ __('File upload failed. Please re-select the file and try again.') }}'"
     x-on:livewire-upload-start.window="uploadError = null"
 >
     <div class="flex items-center justify-center p-6">
         <form wire:submit="save">
-            <x-ui.fieldset label="Upload Heatmap CSV" class="w-150">
+            <x-ui.fieldset :label="__('Upload Heatmap CSV')" class="w-150">
 
                 @if ($errorMessage)
                     <x-ui.card size="full" class="border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-950">
@@ -118,7 +118,7 @@ new #[Layout('layouts.app')] class extends Component {
                 </template>
 
                 <x-ui.field required>
-                    <x-ui.label>CSV File</x-ui.label>
+                    <x-ui.label>{{ __('CSV File') }}</x-ui.label>
                     <input type="file" wire:model="csvFile" accept=".csv,.txt"
                             x-on:change="fileSelected = $event.target.files.length > 0; uploadError = null"
                             class="block w-full text-sm text-neutral-500 dark:text-neutral-400
@@ -132,14 +132,14 @@ new #[Layout('layouts.app')] class extends Component {
                     <x-ui.error name="csvFile" />
 
                     <div wire:loading wire:target="csvFile" class="mt-2">
-                        <x-ui.text class="text-sm text-neutral-500">Uploading file...</x-ui.text>
+                        <x-ui.text class="text-sm text-neutral-500">{{ __('Uploading file...') }}</x-ui.text>
                     </div>
                 </x-ui.field>
 
                 @if ($csvFile)
                     <x-ui.card size="full" class="bg-neutral-50 dark:bg-neutral-900">
                         <div class="text-sm text-neutral-600 dark:text-neutral-400">
-                            <span class="font-medium">Selected:</span> {{ $csvFile->getClientOriginalName() }}
+                            <span class="font-medium">{{ __('Selected:') }}</span> {{ $csvFile->getClientOriginalName() }}
                             ({{ number_format($csvFile->getSize() / 1024, 1) }} KB)
                         </div>
                     </x-ui.card>
@@ -149,7 +149,7 @@ new #[Layout('layouts.app')] class extends Component {
 
                 <x-ui.field class="mt-4">
                     <x-ui.button type="submit" variant="primary" color="blue" icon="upload-simple" wire:target="save" x-bind:disabled="!fileSelected">
-                        Upload Heatmap
+                        {{ __('Upload Heatmap') }}
                     </x-ui.button>
                 </x-ui.field>
             </x-ui.fieldset>
