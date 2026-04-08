@@ -78,7 +78,7 @@ services:
     restart: unless-stopped
     networks:
       - vyzor-internal
-      - proxy_network
+      - proxy-network
 
 volumes:
   vyzor_pgdata:
@@ -86,6 +86,6 @@ volumes:
 networks:
   vyzor-internal:
     driver: bridge
-  proxy_network:
+  proxy-network:
     external: true
-    name: proxy_network
+    name: proxy-network
