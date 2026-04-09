@@ -63,10 +63,10 @@ new #[Layout('layouts.app')] class extends Component {
 <div class="p-6 space-y-6">
     <div class="flex items-center justify-between">
         <div>
-            <x-ui.heading level="h1" size="xl">Projects</x-ui.heading>
-            <x-ui.description class="mt-1">All projects assigned to you.</x-ui.description>
+            <x-ui.heading level="h1" size="xl">{{ __('Projects') }}</x-ui.heading>
+            <x-ui.description class="mt-1">{{ __('All projects assigned to you.') }}</x-ui.description>
         </div>
-        <x-ui.button variant="primary" icon="plus" as="a" href="/new-project">New Project</x-ui.button>
+        <x-ui.button variant="primary" icon="plus" as="a" href="/new-project">{{ __('New Project') }}</x-ui.button>
     </div>
 
     <x-ui.card class="overflow-hidden p-0! max-w-full!">
@@ -74,21 +74,21 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.empty>
                 <x-ui.empty.contents>
                     <x-ui.icon name="folder-open" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>No projects found.</x-ui.text>
-                    <x-ui.button variant="outline" color="neutral" as="a" href="/new-project" class="mt-2">Create your first project</x-ui.button>
+                    <x-ui.text>{{ __('No projects found.') }}</x-ui.text>
+                    <x-ui.button variant="outline" color="neutral" as="a" href="/new-project" class="mt-2">{{ __('Create your first project') }}</x-ui.button>
                 </x-ui.empty.contents>
             </x-ui.empty>
         @else
             <table class="w-full text-sm text-left">
                 <thead class="text-xs text-neutral-500 dark:text-neutral-400 border-b border-neutral-200 dark:border-neutral-800">
                     <tr>
-                        <th class="px-4 py-3 font-medium">Name</th>
-                        <th class="px-4 py-3 font-medium">Domain</th>
-                        <th class="px-4 py-3 font-medium">Customer</th>
-                        <th class="px-4 py-3 font-medium">Status</th>
-                        <th class="px-4 py-3 font-medium">Created</th>
-                        <th class="px-4 py-3 font-medium w-36">Updated</th>
-                        <th class="px-4 py-3 font-medium w-0">Actions</th>
+                        <th class="px-4 py-3 font-medium">{{ __('Name') }}</th>
+                        <th class="px-4 py-3 font-medium">{{ __('Domain') }}</th>
+                        <th class="px-4 py-3 font-medium">{{ __('Customer') }}</th>
+                        <th class="px-4 py-3 font-medium">{{ __('Status') }}</th>
+                        <th class="px-4 py-3 font-medium">{{ __('Created') }}</th>
+                        <th class="px-4 py-3 font-medium w-36">{{ __('Updated') }}</th>
+                        <th class="px-4 py-3 font-medium w-0">{{ __('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
@@ -147,19 +147,19 @@ new #[Layout('layouts.app')] class extends Component {
                                         wire:click="setActiveProject({{ $project->id }})"
                                         :disabled="$isActive"
                                     >
-                                        Set Active
+                                        {{ __('Set Active') }}
                                     </x-ui.button>
-                                    <x-ui.button size="xs" variant="soft" icon="pencil-simple" as="a" href="{{ route('project.edit', $project) }}" wire:navigate>Edit</x-ui.button>
+                                    <x-ui.button size="xs" variant="soft" icon="pencil-simple" as="a" href="{{ route('project.edit', $project) }}" wire:navigate>{{ __('Edit') }}</x-ui.button>
                                     <x-ui.modal.trigger :id="'delete-project-' . $project->id">
                                         <x-ui.button size="xs" variant="soft" icon="trash">
-                                            Delete
+                                            {{ __('Delete') }}
                                         </x-ui.button>
                                     </x-ui.modal.trigger>
-                                    <x-ui.modal :id="'delete-project-' . $project->id" title="Delete Project" size="sm" centered>
-                                        <x-ui.text>Are you sure you want to delete <strong>{{ $project->name }}</strong>?</x-ui.text>
+                                    <x-ui.modal :id="'delete-project-' . $project->id" :title="__('Delete Project')" size="sm" centered>
+                                        <x-ui.text>{!! __('Are you sure you want to delete <strong>:name</strong>?', ['name' => $project->name]) !!}</x-ui.text>
                                         <x-slot:footer>
-                                            <x-ui.button variant="ghost" x-on:click="isOpen = false">Cancel</x-ui.button>
-                                            <x-ui.button variant="danger" wire:click="deleteProject({{ $project->id }})" x-on:click="isOpen = false">Delete</x-ui.button>
+                                            <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
+                                            <x-ui.button variant="danger" wire:click="deleteProject({{ $project->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
                                         </x-slot:footer>
                                     </x-ui.modal>
                                 </div>

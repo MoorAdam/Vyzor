@@ -95,7 +95,7 @@ new #[Layout('layouts.app')] class extends Component {
 ?>
 
 <div class="p-6">
-    <x-ui.link href="{{ route('register') }}" variant="outline">Add new user / customer</x-ui.link>
+    <x-ui.link href="{{ route('register') }}" variant="outline">{{ __('Add new user / customer') }}</x-ui.link>
 
     <x-ui.separator class="my-4"/>
 
@@ -104,7 +104,7 @@ new #[Layout('layouts.app')] class extends Component {
         <x-ui.card size="2xl">
             <div class="flex items-center gap-2 mb-4">
                 <x-ui.icon name="users" />
-                <x-ui.heading level="h2" size="sm">Users</x-ui.heading>
+                <x-ui.heading level="h2" size="sm">{{ __('Users') }}</x-ui.heading>
                 <x-ui.badge variant="solid" color="blue" size="sm">{{ $users->count() }}</x-ui.badge>
             </div>
 
@@ -114,30 +114,30 @@ new #[Layout('layouts.app')] class extends Component {
                     @if ($editingId === $user->id)
                         <form wire:submit="saveEdit" class="flex-1 space-y-3">
                             <x-ui.field>
-                                <x-ui.label>Name</x-ui.label>
-                                <x-ui.input wire:model="editName" placeholder="Name..." :invalid="$errors->has('editName')" />
+                                <x-ui.label>{{ __('Name') }}</x-ui.label>
+                                <x-ui.input wire:model="editName" :placeholder="__('Name...')" :invalid="$errors->has('editName')" />
                                 <x-ui.error name="editName" />
                             </x-ui.field>
                             <x-ui.field>
-                                <x-ui.label>Email</x-ui.label>
-                                <x-ui.input wire:model="editEmail" type="email" placeholder="Email..."
+                                <x-ui.label>{{ __('Email') }}</x-ui.label>
+                                <x-ui.input wire:model="editEmail" type="email" :placeholder="__('Email...')"
                                     :invalid="$errors->has('editEmail')" />
                                 <x-ui.error name="editEmail" />
                             </x-ui.field>
                             <x-ui.field>
-                                <x-ui.label>New Password</x-ui.label>
-                                <x-ui.input wire:model="editPassword" type="password" placeholder="Leave blank to keep current..."
+                                <x-ui.label>{{ __('New Password') }}</x-ui.label>
+                                <x-ui.input wire:model="editPassword" type="password" :placeholder="__('Leave blank to keep current...')"
                                     :invalid="$errors->has('editPassword')" />
                                 <x-ui.error name="editPassword" />
                             </x-ui.field>
                             <x-ui.field>
-                                <x-ui.label>Confirm Password</x-ui.label>
-                                <x-ui.input wire:model="editPassword_confirmation" type="password" placeholder="Confirm password..." />
+                                <x-ui.label>{{ __('Confirm Password') }}</x-ui.label>
+                                <x-ui.input wire:model="editPassword_confirmation" type="password" :placeholder="__('Confirm password...')" />
                             </x-ui.field>
                             <div class="flex gap-2">
-                                <x-ui.button type="submit" size="xs" variant="primary">Save</x-ui.button>
+                                <x-ui.button type="submit" size="xs" variant="primary">{{ __('Save') }}</x-ui.button>
                                 <x-ui.button type="button" size="xs" variant="ghost"
-                                    wire:click="cancelEditing">Cancel</x-ui.button>
+                                    wire:click="cancelEditing">{{ __('Cancel') }}</x-ui.button>
                             </div>
                         </form>
                     @else
@@ -150,25 +150,25 @@ new #[Layout('layouts.app')] class extends Component {
                         </div>
                         <div class="flex shrink-0 gap-1">
                             <x-ui.button size="xs" variant="ghost" icon="pencil"
-                                wire:click="startEditing({{ $user->id }})">Edit</x-ui.button>
+                                wire:click="startEditing({{ $user->id }})">{{ __('Edit') }}</x-ui.button>
                             <x-ui.modal.trigger :id="'delete-user-' . $user->id">
-                                <x-ui.button size="xs" variant="ghost" icon="trash" color="red">Delete</x-ui.button>
+                                <x-ui.button size="xs" variant="ghost" icon="trash" color="red">{{ __('Delete') }}</x-ui.button>
                             </x-ui.modal.trigger>
                         </div>
                     @endif
                 </div>
 
-                <x-ui.modal :id="'delete-user-' . $user->id" title="Delete User" size="sm" centered>
-                    <x-ui.text>Are you sure you want to delete <strong>{{ $user->name }}</strong>?</x-ui.text>
+                <x-ui.modal :id="'delete-user-' . $user->id" :title="__('Delete User')" size="sm" centered>
+                    <x-ui.text>{!! __('Are you sure you want to delete <strong>:name</strong>?', ['name' => $user->name]) !!}</x-ui.text>
                     <x-slot:footer>
-                        <x-ui.button variant="ghost" x-on:click="isOpen = false">Cancel</x-ui.button>
-                        <x-ui.button variant="danger" wire:click="deleteUser({{ $user->id }})" x-on:click="isOpen = false">Delete</x-ui.button>
+                        <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
+                        <x-ui.button variant="danger" wire:click="deleteUser({{ $user->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
             @empty
                 <x-ui.empty>
                     <x-ui.empty.contents>
-                        <x-ui.text>No users found.</x-ui.text>
+                        <x-ui.text>{{ __('No users found.') }}</x-ui.text>
                     </x-ui.empty.contents>
                 </x-ui.empty>
             @endforelse
@@ -178,7 +178,7 @@ new #[Layout('layouts.app')] class extends Component {
         <x-ui.card size="2xl">
             <div class="flex items-center gap-2 mb-4">
                 <x-ui.icon name="ps:buildings" />
-                <x-ui.heading level="h2" size="sm">Customers</x-ui.heading>
+                <x-ui.heading level="h2" size="sm">{{ __('Customers') }}</x-ui.heading>
                 <x-ui.badge variant="solid" color="emerald" size="sm">{{ $customers->count() }}</x-ui.badge>
             </div>
 
@@ -188,36 +188,36 @@ new #[Layout('layouts.app')] class extends Component {
                     @if ($editingId === $customer->id)
                         <form wire:submit="saveEdit" class="flex-1 space-y-3">
                             <x-ui.field>
-                                <x-ui.label>Company Name</x-ui.label>
-                                <x-ui.input wire:model="editCompanyName" placeholder="Company name..."
+                                <x-ui.label>{{ __('Company Name') }}</x-ui.label>
+                                <x-ui.input wire:model="editCompanyName" :placeholder="__('Company name...')"
                                     :invalid="$errors->has('editCompanyName')" />
                                 <x-ui.error name="editCompanyName" />
                             </x-ui.field>
                             <x-ui.field>
-                                <x-ui.label>Email</x-ui.label>
-                                <x-ui.input wire:model="editEmail" type="email" placeholder="Email..."
+                                <x-ui.label>{{ __('Email') }}</x-ui.label>
+                                <x-ui.input wire:model="editEmail" type="email" :placeholder="__('Email...')"
                                     :invalid="$errors->has('editEmail')" />
                                 <x-ui.error name="editEmail" />
                             </x-ui.field>
                             <x-ui.field>
-                                <x-ui.label>Phone</x-ui.label>
-                                <x-ui.input wire:model="editPhone" type="tel" placeholder="Phone..." />
+                                <x-ui.label>{{ __('Phone') }}</x-ui.label>
+                                <x-ui.input wire:model="editPhone" type="tel" :placeholder="__('Phone...')" />
                                 <x-ui.error name="editPhone" />
                             </x-ui.field>
                             <x-ui.field>
-                                <x-ui.label>New Password</x-ui.label>
-                                <x-ui.input wire:model="editPassword" type="password" placeholder="Leave blank to keep current..."
+                                <x-ui.label>{{ __('New Password') }}</x-ui.label>
+                                <x-ui.input wire:model="editPassword" type="password" :placeholder="__('Leave blank to keep current...')"
                                     :invalid="$errors->has('editPassword')" />
                                 <x-ui.error name="editPassword" />
                             </x-ui.field>
                             <x-ui.field>
-                                <x-ui.label>Confirm Password</x-ui.label>
-                                <x-ui.input wire:model="editPassword_confirmation" type="password" placeholder="Confirm password..." />
+                                <x-ui.label>{{ __('Confirm Password') }}</x-ui.label>
+                                <x-ui.input wire:model="editPassword_confirmation" type="password" :placeholder="__('Confirm password...')" />
                             </x-ui.field>
                             <div class="flex gap-2">
-                                <x-ui.button type="submit" size="xs" variant="primary">Save</x-ui.button>
+                                <x-ui.button type="submit" size="xs" variant="primary">{{ __('Save') }}</x-ui.button>
                                 <x-ui.button type="button" size="xs" variant="ghost"
-                                    wire:click="cancelEditing">Cancel</x-ui.button>
+                                    wire:click="cancelEditing">{{ __('Cancel') }}</x-ui.button>
                             </div>
                         </form>
                     @else
@@ -235,25 +235,25 @@ new #[Layout('layouts.app')] class extends Component {
                         </div>
                         <div class="flex shrink-0 gap-1">
                             <x-ui.button size="xs" variant="ghost" icon="pencil"
-                                wire:click="startEditing({{ $customer->id }})">Edit</x-ui.button>
+                                wire:click="startEditing({{ $customer->id }})">{{ __('Edit') }}</x-ui.button>
                             <x-ui.modal.trigger :id="'delete-customer-' . $customer->id">
-                                <x-ui.button size="xs" variant="ghost" icon="trash" color="red">Delete</x-ui.button>
+                                <x-ui.button size="xs" variant="ghost" icon="trash" color="red">{{ __('Delete') }}</x-ui.button>
                             </x-ui.modal.trigger>
                         </div>
                     @endif
                 </div>
 
-                <x-ui.modal :id="'delete-customer-' . $customer->id" title="Delete Customer" size="sm" centered>
-                    <x-ui.text>Are you sure you want to delete <strong>{{ $customer->customerProfile?->company_name ?? $customer->name }}</strong>?</x-ui.text>
+                <x-ui.modal :id="'delete-customer-' . $customer->id" :title="__('Delete Customer')" size="sm" centered>
+                    <x-ui.text>{!! __('Are you sure you want to delete <strong>:name</strong>?', ['name' => $customer->customerProfile?->company_name ?? $customer->name]) !!}</x-ui.text>
                     <x-slot:footer>
-                        <x-ui.button variant="ghost" x-on:click="isOpen = false">Cancel</x-ui.button>
-                        <x-ui.button variant="danger" wire:click="deleteUser({{ $customer->id }})" x-on:click="isOpen = false">Delete</x-ui.button>
+                        <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
+                        <x-ui.button variant="danger" wire:click="deleteUser({{ $customer->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
                     </x-slot:footer>
                 </x-ui.modal>
             @empty
                 <x-ui.empty>
                     <x-ui.empty.contents>
-                        <x-ui.text>No customers found.</x-ui.text>
+                        <x-ui.text>{{ __('No customers found.') }}</x-ui.text>
                     </x-ui.empty.contents>
                 </x-ui.empty>
             @endforelse

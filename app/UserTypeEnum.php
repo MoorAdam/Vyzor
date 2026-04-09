@@ -11,9 +11,9 @@ enum UserTypeEnum: string
     public function label(): string
     {
         return match ($this) {
-            self::WEB => 'User',
-            self::CUSTOMER => 'Customer',
-            self::ADMIN => 'Admin',
+            self::WEB => __('User'),
+            self::CUSTOMER => __('Customer'),
+            self::ADMIN => __('Admin'),
         };
     }
 }

@@ -62,7 +62,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function getPresetsProperty()
     {
-        return AiContext::active()->ofType(AiContextType::PRESET)->ordered()->pluck('name', 'slug');
+        return AiContext::active()->ofType(AiContextType::PRESET)->ordered()->get()->mapWithKeys(fn ($c) => [$c->slug => $c->localizedName()]);
     }
 
     public function with(): array
@@ -120,11 +120,11 @@ new #[Layout('layouts.app')] class extends Component {
 >
     <div class="flex items-center justify-between">
         <div>
-            <x-ui.heading level="h1" size="xl">All Reports</x-ui.heading>
-            <x-ui.description class="mt-1">Browse and manage all reports for the current project.</x-ui.description>
+            <x-ui.heading level="h1" size="xl">{{ __('All Reports') }}</x-ui.heading>
+            <x-ui.description class="mt-1">{{ __('Browse and manage all reports for the current project.') }}</x-ui.description>
         </div>
         <x-ui.button color="blue" icon="plus" href="/ai-reports">
-            New Report
+            {{ __('New Report') }}
         </x-ui.button>
     </div>
 
@@ -133,7 +133,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.empty>
                 <x-ui.empty.contents>
                     <x-ui.icon name="book-bookmark" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>No project selected. Please select a project first.</x-ui.text>
+                    <x-ui.text>{{ __('No project selected. Please select a project first.') }}</x-ui.text>
                 </x-ui.empty.contents>
             </x-ui.empty>
         </x-ui.card>
@@ -144,19 +144,19 @@ new #[Layout('layouts.app')] class extends Component {
                 {{-- Search --}}
                 <div class="flex-1 min-w-48">
                     <x-ui.field>
-                        <x-ui.label>Search</x-ui.label>
-                        <x-ui.input wire:model.live.debounce.300ms="search" placeholder="Search reports..." leftIcon="magnifying-glass" />
+                        <x-ui.label>{{ __('Search') }}</x-ui.label>
+                        <x-ui.input wire:model.live.debounce.300ms="search" :placeholder="__('Search reports...')" leftIcon="magnifying-glass" />
                     </x-ui.field>
                 </div>
 
                 {{-- Type Filter --}}
                 <div class="w-36">
                     <x-ui.field>
-                        <x-ui.label>Type</x-ui.label>
-                        <x-ui.select wire:model.live="filterType" placeholder="All">
-                            <x-ui.select.option value="">All</x-ui.select.option>
-                            <x-ui.select.option value="ai">AI Reports</x-ui.select.option>
-                            <x-ui.select.option value="manual">Manual</x-ui.select.option>
+                        <x-ui.label>{{ __('Type') }}</x-ui.label>
+                        <x-ui.select wire:model.live="filterType" :placeholder="__('All')">
+                            <x-ui.select.option value="">{{ __('All') }}</x-ui.select.option>
+                            <x-ui.select.option value="ai">{{ __('AI Reports') }}</x-ui.select.option>
+                            <x-ui.select.option value="manual">{{ __('Manual') }}</x-ui.select.option>
                         </x-ui.select>
                     </x-ui.field>
                 </div>
@@ -164,11 +164,11 @@ new #[Layout('layouts.app')] class extends Component {
                 {{-- Preset Filter --}}
                 <div class="w-64">
                     <x-ui.field>
-                        <x-ui.label>Preset</x-ui.label>
-                        <x-ui.select wire:model.live="filterPreset" placeholder="All Presets">
-                            <x-ui.select.option value="">All Presets</x-ui.select.option>
+                        <x-ui.label>{{ __('Preset') }}</x-ui.label>
+                        <x-ui.select wire:model.live="filterPreset" :placeholder="__('All Presets')">
+                            <x-ui.select.option value="">{{ __('All Presets') }}</x-ui.select.option>
                             @foreach ($this->presets as $slug => $title)
-                                <x-ui.select.option :value="$slug">{{ $title }}</x-ui.select.option>
+                                <x-ui.select.option :value="$slug" :label="$title">{{ $title }}</x-ui.select.option>
                             @endforeach
                         </x-ui.select>
                     </x-ui.field>
@@ -177,9 +177,9 @@ new #[Layout('layouts.app')] class extends Component {
                 {{-- Status Filter --}}
                 <div class="w-36">
                     <x-ui.field>
-                        <x-ui.label>Status</x-ui.label>
-                        <x-ui.select wire:model.live="filterStatus" placeholder="All">
-                            <x-ui.select.option value="">All</x-ui.select.option>
+                        <x-ui.label>{{ __('Status') }}</x-ui.label>
+                        <x-ui.select wire:model.live="filterStatus" :placeholder="__('All')">
+                            <x-ui.select.option value="">{{ __('All') }}</x-ui.select.option>
                             @foreach (App\ReportStatusEnum::cases() as $status)
                                 <x-ui.select.option :value="$status->value">{{ $status->label() }}</x-ui.select.option>
                             @endforeach
@@ -190,13 +190,13 @@ new #[Layout('layouts.app')] class extends Component {
                 {{-- Date Range --}}
                 <div class="w-36">
                     <x-ui.field>
-                        <x-ui.label>Aspect From</x-ui.label>
+                        <x-ui.label>{{ __('Aspect From') }}</x-ui.label>
                         <x-ui.input type="date" wire:model.live="filterDateFrom" />
                     </x-ui.field>
                 </div>
                 <div class="w-36">
                     <x-ui.field>
-                        <x-ui.label>Aspect To</x-ui.label>
+                        <x-ui.label>{{ __('Aspect To') }}</x-ui.label>
                         <x-ui.input type="date" wire:model.live="filterDateTo" />
                     </x-ui.field>
                 </div>
@@ -204,7 +204,7 @@ new #[Layout('layouts.app')] class extends Component {
                 {{-- Clear --}}
                 @if ($filterPreset || $filterType || $filterStatus || $filterDateFrom || $filterDateTo || $search)
                     <x-ui.button variant="outline" color="neutral" size="sm" wire:click="clearFilters">
-                        Clear filters
+                        {{ __('Clear filters') }}
                     </x-ui.button>
                 @endif
             </div>
@@ -216,7 +216,7 @@ new #[Layout('layouts.app')] class extends Component {
                 <x-ui.empty>
                     <x-ui.empty.contents>
                         <x-ui.icon name="book-bookmark" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                        <x-ui.text>No reports found matching your filters.</x-ui.text>
+                        <x-ui.text>{{ __('No reports found matching your filters.') }}</x-ui.text>
                     </x-ui.empty.contents>
                 </x-ui.empty>
             </x-ui.card>
@@ -246,7 +246,7 @@ new #[Layout('layouts.app')] class extends Component {
                                         <span class="inline-flex items-center gap-1">
                                             @if ($report->contextPreset)
                                                 <x-ui.icon :name="$report->contextPreset->icon" class="size-3" style="color: {{ $report->contextPreset->label_color }}" />
-                                                {{ $report->contextPreset->name }}
+                                                {{ $report->contextPreset->localizedName() }}
                                             @else
                                                 <x-ui.icon name="tag" class="size-3" />
                                                 {{ Str::title(str_replace('-', ' ', $report->preset)) }}
@@ -267,7 +267,7 @@ new #[Layout('layouts.app')] class extends Component {
                                     @endif
                                     <span class="inline-flex items-center gap-1">
                                         <x-ui.icon name="user" class="size-3" />
-                                        {{ $report->user->name ?? 'Unknown' }}
+                                        {{ $report->user->name ?? __('Unknown') }}
                                     </span>
                                     <span>{{ $report->created_at->diffForHumans() }}</span>
                                 </div>
@@ -284,11 +284,11 @@ new #[Layout('layouts.app')] class extends Component {
                         </div>
                     </x-ui.card>
 
-                    <x-ui.modal :id="'delete-report-' . $report->id" title="Delete Report" size="sm" centered>
-                        <x-ui.text>Are you sure you want to delete <strong>{{ $report->title }}</strong>?</x-ui.text>
+                    <x-ui.modal :id="'delete-report-' . $report->id" :title="__('Delete Report')" size="sm" centered>
+                        <x-ui.text>{{ __('Are you sure you want to delete') }} <strong>{{ $report->title }}</strong>?</x-ui.text>
                         <x-slot:footer>
-                            <x-ui.button variant="ghost" x-on:click="isOpen = false">Cancel</x-ui.button>
-                            <x-ui.button variant="danger" wire:click="deleteReport({{ $report->id }})" x-on:click="isOpen = false">Delete</x-ui.button>
+                            <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
+                            <x-ui.button variant="danger" wire:click="deleteReport({{ $report->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
                         </x-slot:footer>
                     </x-ui.modal>
                 @endforeach

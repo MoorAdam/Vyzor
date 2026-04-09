@@ -18,11 +18,11 @@ new #[Layout('layouts.app')] class extends Component {
 
 <div>
     <div class="h-screen flex items-center justify-center">
-        <x-ui.fieldset label="Register" class="w-100">
+        <x-ui.fieldset :label="__('Register')" class="w-100">
             <x-ui.field>
                 <x-ui.radio.group wire:model.live="type" direction="horizontal">
-                    <x-ui.radio.item value="web" label="User" />
-                    <x-ui.radio.item value="customer" label="Customer" />
+                    <x-ui.radio.item value="web" :label="__('User')" />
+                    <x-ui.radio.item value="customer" :label="__('Customer')" />
                 </x-ui.radio.group>
             </x-ui.field>
 

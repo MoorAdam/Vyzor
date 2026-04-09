@@ -104,6 +104,13 @@ class ReportGeneratorService
             }
         }
 
+        // Add language instruction
+        $languageNames = ['en' => 'English', 'hu' => 'Hungarian'];
+        $langName = $languageNames[$report->language ?? 'en'] ?? 'English';
+        if (($report->language ?? 'en') !== 'en') {
+            $parts[] = "\n## Language Instruction\nYou MUST write the entire report in {$langName}. All headings, analysis, recommendations, and conclusions must be in {$langName}.";
+        }
+
         // Add output format instructions
         $outputFormat = AiContext::active()
             ->ofType(AiContextType::INSTRUCTION)

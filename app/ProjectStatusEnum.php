@@ -13,11 +13,11 @@ enum ProjectStatusEnum: string
     public function label(): string
     {
         return match ($this) {
-            self::ACTIVE => 'Active',
-            self::ABORTED => 'Aborted',
-            self::POSTPONED => 'Postponed',
-            self::PRESENTATION => 'Presentation',
-            self::COMPLETED => 'Completed',
+            self::ACTIVE => __('Active'),
+            self::ABORTED => __('Aborted'),
+            self::POSTPONED => __('Postponed'),
+            self::PRESENTATION => __('Presentation'),
+            self::COMPLETED => __('Completed'),
         };
     }
 

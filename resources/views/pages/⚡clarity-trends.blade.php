@@ -142,19 +142,33 @@ new #[Layout('layouts.app')] class extends Component {
 };
 ?>
 
-<div class="p-6 space-y-6" id="clarity-trends-root" data-chart='@json($chartData)'>
+<div class="p-6 space-y-6" id="clarity-trends-root" data-chart='@json($chartData)'
+     data-i18n-sessions="{{ __('Sessions') }}"
+     data-i18n-unique-users="{{ __('Unique Users') }}"
+     data-i18n-bot-sessions="{{ __('Bot Sessions') }}"
+     data-i18n-pages-per-session="{{ __('Pages / Session') }}"
+     data-i18n-total-time="{{ __('Total Time') }}"
+     data-i18n-active-time="{{ __('Active Time') }}"
+     data-i18n-avg-scroll-depth="{{ __('Avg Scroll Depth %') }}"
+     data-i18n-dead-clicks="{{ __('Dead Clicks') }}"
+     data-i18n-rage-clicks="{{ __('Rage Clicks') }}"
+     data-i18n-quick-backs="{{ __('Quick Backs') }}"
+     data-i18n-excessive-scroll="{{ __('Excessive Scroll') }}"
+     data-i18n-script-errors="{{ __('Script Errors') }}"
+     data-i18n-error-clicks="{{ __('Error Clicks') }}"
+>
     <div class="flex items-center justify-between">
         <div>
-            <x-ui.heading level="h1" size="xl">Clarity Trends</x-ui.heading>
-            <x-ui.description class="mt-1">Clarity data trends for the current project.</x-ui.description>
+            <x-ui.heading level="h1" size="xl">{{ __('Clarity Trends') }}</x-ui.heading>
+            <x-ui.description class="mt-1">{{ __('Clarity data trends for the current project.') }}</x-ui.description>
         </div>
         <div class="flex items-center gap-3">
             <x-ui.field>
-                <x-ui.label>From</x-ui.label>
+                <x-ui.label>{{ __('From') }}</x-ui.label>
                 <x-ui.input type="date" wire:model.live="dateFrom" />
             </x-ui.field>
             <x-ui.field>
-                <x-ui.label>To</x-ui.label>
+                <x-ui.label>{{ __('To') }}</x-ui.label>
                 <x-ui.input type="date" wire:model.live="dateTo" />
             </x-ui.field>
         </div>
@@ -165,7 +179,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.empty>
                 <x-ui.empty.contents>
                     <x-ui.icon name="chart-line-up" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>No project selected. Please select a project first.</x-ui.text>
+                    <x-ui.text>{{ __('No project selected. Please select a project first.') }}</x-ui.text>
                 </x-ui.empty.contents>
             </x-ui.empty>
         </x-ui.card>
@@ -174,18 +188,18 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.empty>
                 <x-ui.empty.contents>
                     <x-ui.icon name="chart-line-up" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>No trend data available yet. Fetch Clarity data multiple times from the Snapshot page to build up trend history.</x-ui.text>
+                    <x-ui.text>{{ __('No trend data available yet. Fetch Clarity data multiple times from the Snapshot page to build up trend history.') }}</x-ui.text>
                 </x-ui.empty.contents>
             </x-ui.empty>
         </x-ui.card>
     @else
         {{-- Traffic Over Time --}}
-        <x-ui.heading level="h3" size="md" class="mb-3">Traffic Over Time</x-ui.heading>
+        <x-ui.heading level="h3" size="md" class="mb-3">{{ __('Traffic Over Time') }}</x-ui.heading>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <x-ui.card size="full" class="border-l-4 border-l-blue-500">
                 <div class="flex items-center gap-2 mb-4">
                     <x-ui.icon name="users" class="size-5 text-blue-500" />
-                    <x-ui.heading level="h3" size="sm">Sessions & Unique Users</x-ui.heading>
+                    <x-ui.heading level="h3" size="sm">{{ __('Sessions & Unique Users') }}</x-ui.heading>
                 </div>
                 <div class="h-72">
                     <canvas id="sessionsChart"></canvas>
@@ -195,7 +209,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.card size="full" class="border-l-4 border-l-emerald-500">
                 <div class="flex items-center gap-2 mb-4">
                     <x-ui.icon name="copy" class="size-5 text-emerald-500" />
-                    <x-ui.heading level="h3" size="sm">Pages Per Session</x-ui.heading>
+                    <x-ui.heading level="h3" size="sm">{{ __('Pages Per Session') }}</x-ui.heading>
                 </div>
                 <div class="h-72">
                     <canvas id="pagesPerSessionChart"></canvas>
@@ -204,12 +218,12 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
 
         {{-- Engagement Over Time --}}
-        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">Engagement Over Time</x-ui.heading>
+        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">{{ __('Engagement Over Time') }}</x-ui.heading>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <x-ui.card size="full" class="border-l-4 border-l-cyan-500">
                 <div class="flex items-center gap-2 mb-4">
                     <x-ui.icon name="clock" class="size-5 text-cyan-500" />
-                    <x-ui.heading level="h3" size="sm">Engagement Time (seconds)</x-ui.heading>
+                    <x-ui.heading level="h3" size="sm">{{ __('Engagement Time (seconds)') }}</x-ui.heading>
                 </div>
                 <div class="h-72">
                     <canvas id="engagementChart"></canvas>
@@ -219,7 +233,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.card size="full" class="border-l-4 border-l-amber-500">
                 <div class="flex items-center gap-2 mb-4">
                     <x-ui.icon name="arrows-down-up" class="size-5 text-amber-500" />
-                    <x-ui.heading level="h3" size="sm">Average Scroll Depth (%)</x-ui.heading>
+                    <x-ui.heading level="h3" size="sm">{{ __('Average Scroll Depth (%)') }}</x-ui.heading>
                 </div>
                 <div class="h-72">
                     <canvas id="scrollChart"></canvas>
@@ -228,11 +242,11 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
 
         {{-- UX Signals Over Time --}}
-        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">UX Signals Over Time</x-ui.heading>
+        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">{{ __('UX Signals Over Time') }}</x-ui.heading>
         <x-ui.card size="full" class="border-l-4 border-l-red-500">
             <div class="flex items-center gap-2 mb-4">
                 <x-ui.icon name="warning" class="size-5 text-red-500" />
-                <x-ui.heading level="h3" size="sm">UX Issues</x-ui.heading>
+                <x-ui.heading level="h3" size="sm">{{ __('UX Issues') }}</x-ui.heading>
             </div>
             <div class="h-80">
                 <canvas id="signalsChart"></canvas>
@@ -240,12 +254,12 @@ new #[Layout('layouts.app')] class extends Component {
         </x-ui.card>
 
         {{-- Distribution Doughnuts --}}
-        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">Audience Breakdown (Latest Snapshot)</x-ui.heading>
+        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">{{ __('Audience Breakdown (Latest Snapshot)') }}</x-ui.heading>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <x-ui.card size="full" class="border-l-4 border-l-violet-500">
                 <div class="flex items-center gap-2 mb-4">
                     <x-ui.icon name="device-mobile" class="size-5 text-violet-500" />
-                    <x-ui.heading level="h3" size="sm">Devices</x-ui.heading>
+                    <x-ui.heading level="h3" size="sm">{{ __('Devices') }}</x-ui.heading>
                 </div>
                 <div class="h-64 flex items-center justify-center">
                     <canvas id="deviceChart"></canvas>
@@ -255,7 +269,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.card size="full" class="border-l-4 border-l-blue-500">
                 <div class="flex items-center gap-2 mb-4">
                     <x-ui.icon name="globe" class="size-5 text-blue-500" />
-                    <x-ui.heading level="h3" size="sm">Browsers</x-ui.heading>
+                    <x-ui.heading level="h3" size="sm">{{ __('Browsers') }}</x-ui.heading>
                 </div>
                 <div class="h-64 flex items-center justify-center">
                     <canvas id="browserChart"></canvas>
@@ -265,7 +279,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.card size="full" class="border-l-4 border-l-amber-500">
                 <div class="flex items-center gap-2 mb-4">
                     <x-ui.icon name="map-pin" class="size-5 text-amber-500" />
-                    <x-ui.heading level="h3" size="sm">Countries</x-ui.heading>
+                    <x-ui.heading level="h3" size="sm">{{ __('Countries') }}</x-ui.heading>
                 </div>
                 <div class="h-64 flex items-center justify-center">
                     <canvas id="countryChart"></canvas>
@@ -288,6 +302,22 @@ new #[Layout('layouts.app')] class extends Component {
     const chartData = JSON.parse(root.dataset.chart);
 
     if (!chartData || !chartData.labels || chartData.labels.length === 0) return;
+
+    const i18n = {
+        sessions: root.dataset.i18nSessions,
+        uniqueUsers: root.dataset.i18nUniqueUsers,
+        botSessions: root.dataset.i18nBotSessions,
+        pagesPerSession: root.dataset.i18nPagesPerSession,
+        totalTime: root.dataset.i18nTotalTime,
+        activeTime: root.dataset.i18nActiveTime,
+        avgScrollDepth: root.dataset.i18nAvgScrollDepth,
+        deadClicks: root.dataset.i18nDeadClicks,
+        rageClicks: root.dataset.i18nRageClicks,
+        quickBacks: root.dataset.i18nQuickBacks,
+        excessiveScroll: root.dataset.i18nExcessiveScroll,
+        scriptErrors: root.dataset.i18nScriptErrors,
+        errorClicks: root.dataset.i18nErrorClicks,
+    };
 
     const isDark = document.documentElement.classList.contains('dark') ||
         window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -332,21 +362,21 @@ new #[Layout('layouts.app')] class extends Component {
             labels,
             datasets: [
                 {
-                    label: 'Sessions',
+                    label: i18n.sessions,
                     data: chartData.sessions,
                     borderColor: '#3b82f6',
                     backgroundColor: 'rgba(59,130,246,0.1)',
                     fill: true, tension: 0.3,
                 },
                 {
-                    label: 'Unique Users',
+                    label: i18n.uniqueUsers,
                     data: chartData.uniqueUsers,
                     borderColor: '#8b5cf6',
                     backgroundColor: 'rgba(139,92,246,0.1)',
                     fill: true, tension: 0.3,
                 },
                 {
-                    label: 'Bot Sessions',
+                    label: i18n.botSessions,
                     data: chartData.botSessions,
                     borderColor: '#ef4444',
                     backgroundColor: 'rgba(239,68,68,0.05)',
@@ -364,7 +394,7 @@ new #[Layout('layouts.app')] class extends Component {
         data: {
             labels,
             datasets: [{
-                label: 'Pages / Session',
+                label: i18n.pagesPerSession,
                 data: chartData.pagesPerSession,
                 backgroundColor: 'rgba(16,185,129,0.6)',
                 borderColor: '#10b981',
@@ -381,14 +411,14 @@ new #[Layout('layouts.app')] class extends Component {
             labels,
             datasets: [
                 {
-                    label: 'Total Time',
+                    label: i18n.totalTime,
                     data: chartData.totalTime,
                     borderColor: '#06b6d4',
                     backgroundColor: 'rgba(6,182,212,0.1)',
                     fill: true, tension: 0.3,
                 },
                 {
-                    label: 'Active Time',
+                    label: i18n.activeTime,
                     data: chartData.activeTime,
                     borderColor: '#14b8a6',
                     backgroundColor: 'rgba(20,184,166,0.1)',
@@ -405,7 +435,7 @@ new #[Layout('layouts.app')] class extends Component {
         data: {
             labels,
             datasets: [{
-                label: 'Avg Scroll Depth %',
+                label: i18n.avgScrollDepth,
                 data: chartData.scrollDepth,
                 borderColor: '#f59e0b',
                 backgroundColor: 'rgba(245,158,11,0.1)',
@@ -431,12 +461,12 @@ new #[Layout('layouts.app')] class extends Component {
         ErrorClickCount:  { border: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
     };
     const signalLabels = {
-        DeadClickCount: 'Dead Clicks',
-        RageClickCount: 'Rage Clicks',
-        QuickbackClick: 'Quick Backs',
-        ExcessiveScroll: 'Excessive Scroll',
-        ScriptErrorCount: 'Script Errors',
-        ErrorClickCount: 'Error Clicks',
+        DeadClickCount: i18n.deadClicks,
+        RageClickCount: i18n.rageClicks,
+        QuickbackClick: i18n.quickBacks,
+        ExcessiveScroll: i18n.excessiveScroll,
+        ScriptErrorCount: i18n.scriptErrors,
+        ErrorClickCount: i18n.errorClicks,
     };
 
     const signalDatasets = Object.entries(chartData.signals)

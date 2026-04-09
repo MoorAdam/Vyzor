@@ -37,22 +37,22 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
 <div>
     <div class="h-screen flex items-center justify-center">
         <form wire:submit="login">
-            <x-ui.fieldset title="Login" class="w-100">
+            <x-ui.fieldset :title="__('Login')" class="w-100">
                 <x-ui.field required>
-                    <x-ui.label>Email</x-ui.label>
-                    <x-ui.input label="Email" placeholder="E-mail..." type="email" wire:model="email" />
+                    <x-ui.label>{{ __('Email') }}</x-ui.label>
+                    <x-ui.input :label="__('Email')" :placeholder="__('E-mail...')" type="email" wire:model="email" />
                     <x-ui.error name="email" />
                 </x-ui.field>
                 <x-ui.field required>
-                    <x-ui.label>Password</x-ui.label>
-                    <x-ui.input label="Password" placeholder="Password..." type="password" wire:model="password" />
+                    <x-ui.label>{{ __('Password') }}</x-ui.label>
+                    <x-ui.input :label="__('Password')" :placeholder="__('Password...')" type="password" wire:model="password" />
                     <x-ui.error name="password" />
                 </x-ui.field>
                 <x-ui.field>
-                    <x-ui.checkbox size="xs" label="Remember me" wire:model="remember" />
+                    <x-ui.checkbox size="xs" :label="__('Remember me')" wire:model="remember" />
                 </x-ui.field>
                 <x-ui.field>
-                    <x-ui.button type="submit">Login</x-ui.button>
+                    <x-ui.button type="submit">{{ __('Login') }}</x-ui.button>
                 </x-ui.field>
             </x-ui.fieldset>
         </form>

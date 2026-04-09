@@ -43,7 +43,7 @@ new class extends Component {
             ? Project::with('customer')
             : Project::with('customer')->where('owner_id', auth()->id());
 
-        return $query->get()->groupBy(fn($project) => $project->customer?->name ?? 'No Customer');
+        return $query->get()->groupBy(fn($project) => $project->customer?->name ?? __('No Customer'));
     }
 
     public function updatedSelectedProject($value)
@@ -84,7 +84,7 @@ new class extends Component {
         if (stored) $wire.initFromStorage(parseInt(stored));
     "
 >
-    <x-ui.select placeholder="Select a project..." searchable wire:model.live="selectedProject">
+    <x-ui.select :placeholder="__('Select a project...')" searchable wire:model.live="selectedProject">
         @foreach ($this->projects as $customerName => $customerProjects)
             <x-ui.select.group :label="$customerName">
                 @foreach ($customerProjects as $project)

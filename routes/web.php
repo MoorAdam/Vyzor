@@ -39,6 +39,13 @@ Route::middleware('auth')->group(function () {
         Route::livewire('/customer/dashboard', 'pages::customer.dashboard')->name('customer.dashboard');
     });
 
+    Route::post('/locale/{locale}', function (string $locale) {
+        if (in_array($locale, ['en', 'hu'])) {
+            session(['locale' => $locale]);
+        }
+        return back();
+    })->name('locale.switch');
+
     Route::post('/logout', function () {
         Auth::guard('web')->logout();
         session()->invalidate();

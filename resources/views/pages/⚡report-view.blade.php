@@ -80,7 +80,7 @@ new #[Layout('layouts.app')] class extends Component {
                     </div>
                 @else
                     <x-ui.field>
-                        <x-ui.input wire:model="editTitle" placeholder="Report title..." :invalid="$errors->has('editTitle')" />
+                        <x-ui.input wire:model="editTitle" :placeholder="__('Report title...')" :invalid="$errors->has('editTitle')" />
                         <x-ui.error name="editTitle" />
                     </x-ui.field>
                 @endif
@@ -91,7 +91,7 @@ new #[Layout('layouts.app')] class extends Component {
                         <span class="inline-flex items-center gap-1">
                             @if ($report->contextPreset)
                                 <x-ui.icon :name="$report->contextPreset->icon" class="size-3.5" style="color: {{ $report->contextPreset->label_color }}" />
-                                {{ $report->contextPreset->name }}
+                                {{ $report->contextPreset->localizedName() }}
                             @else
                                 <x-ui.icon name="tag" class="size-3.5" />
                                 {{ \Illuminate\Support\Str::title(str_replace('-', ' ', $report->preset)) }}
@@ -112,7 +112,7 @@ new #[Layout('layouts.app')] class extends Component {
                     @endif
                     <span class="inline-flex items-center gap-1">
                         <x-ui.icon name="user" class="size-3.5" />
-                        {{ $report->user->name ?? 'Unknown' }}
+                        {{ $report->user->name ?? __('Unknown') }}
                     </span>
                     <span>{{ $report->created_at->format('M d, Y \a\t H:i') }}</span>
                 </div>
@@ -122,14 +122,14 @@ new #[Layout('layouts.app')] class extends Component {
         <div class="flex items-center gap-2 shrink-0">
             @if ($editing)
                 <x-ui.button color="blue" icon="floppy-disk" wire:click="save">
-                    Save
+                    {{ __('Save') }}
                 </x-ui.button>
                 <x-ui.button variant="outline" color="neutral" wire:click="cancelEditing">
-                    Cancel
+                    {{ __('Cancel') }}
                 </x-ui.button>
             @else
                 <x-ui.button variant="outline" color="neutral" icon="pencil-simple" wire:click="startEditing">
-                    Edit
+                    {{ __('Edit') }}
                 </x-ui.button>
                 <x-ui.modal.trigger id="delete-report-modal">
                     <button class="p-2 text-neutral-400 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20">
@@ -140,11 +140,11 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
     </div>
 
-    <x-ui.modal id="delete-report-modal" title="Delete Report" size="sm" centered>
-        <x-ui.text>Are you sure you want to delete <strong>{{ $report->title }}</strong>? This cannot be undone.</x-ui.text>
+    <x-ui.modal id="delete-report-modal" :title="__('Delete Report')" size="sm" centered>
+        <x-ui.text>{{ __('Are you sure you want to delete') }} <strong>{{ $report->title }}</strong>? {{ __('This cannot be undone.') }}</x-ui.text>
         <x-slot:footer>
-            <x-ui.button variant="ghost" x-on:click="isOpen = false">Cancel</x-ui.button>
-            <x-ui.button variant="danger" wire:click="deleteReport" x-on:click="isOpen = false">Delete</x-ui.button>
+            <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
+            <x-ui.button variant="danger" wire:click="deleteReport" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
         </x-slot:footer>
     </x-ui.modal>
 
@@ -157,13 +157,13 @@ new #[Layout('layouts.app')] class extends Component {
                         <x-ui.icon name="spinner" class="size-5 text-blue-500" />
                     </div>
                     <span class="text-sm font-medium text-blue-600 dark:text-blue-400">
-                        {{ $report->status === ReportStatusEnum::PENDING ? 'Waiting to be processed...' : 'AI is generating this report...' }}
+                        {{ $report->status === ReportStatusEnum::PENDING ? __('Waiting to be processed...') : __('AI is generating this report...') }}
                     </span>
                 </div>
             @endif
             @if ($report->custom_prompt)
                 <div>
-                    <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Additional Instructions</span>
+                    <span class="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">{{ __('Additional Instructions') }}</span>
                     <p class="text-sm text-neutral-700 dark:text-neutral-300 mt-1">{{ $report->custom_prompt }}</p>
                 </div>
             @endif
@@ -174,7 +174,7 @@ new #[Layout('layouts.app')] class extends Component {
         <div class="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
             <div class="flex items-center gap-2">
                 <x-ui.icon name="warning" class="size-5 text-red-600 dark:text-red-400" />
-                <span class="text-sm text-red-700 dark:text-red-300">This report failed to generate. You can try requesting a new one.</span>
+                <span class="text-sm text-red-700 dark:text-red-300">{{ __('This report failed to generate. You can try requesting a new one.') }}</span>
             </div>
         </div>
     @endif
@@ -203,7 +203,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.empty>
                 <x-ui.empty.contents>
                     <x-ui.icon name="article" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>No content yet. This report is {{ $report->status->label() }}.</x-ui.text>
+                    <x-ui.text>{{ __('No content yet. This report is') }} {{ $report->status->label() }}.</x-ui.text>
                 </x-ui.empty.contents>
             </x-ui.empty>
         @endif
