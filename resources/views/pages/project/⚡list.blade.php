@@ -110,7 +110,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 {{ $project->customer?->name ?? '—' }}
                             </td>
                             <td class="px-4 py-3">
-                                <x-ui.dropdown position="bottom-start">
+                                <x-ui.dropdown position="bottom-start" portal>
                                     <x-slot:button>
                                         <x-ui.badge size="sm" class="cursor-pointer" :color="$project->status->color()">
                                             {{ $project->status->label() }}
