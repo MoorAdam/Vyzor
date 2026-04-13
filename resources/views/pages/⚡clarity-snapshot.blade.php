@@ -3,7 +3,6 @@
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
-use Illuminate\Support\Facades\Artisan;
 use App\Models\ClarityInsight;
 
 new #[Layout('layouts.app')] class extends Component {
@@ -20,6 +19,13 @@ new #[Layout('layouts.app')] class extends Component {
     public function onProjectChanged()
     {
         // re-render when project changes
+    }
+
+    #[On('clarity-fetched')]
+    public function onClarityFetched(): void
+    {
+        // snap the selector to "now" so the newly fetched data is shown
+        $this->datetime = now()->startOfHour()->format('Y-m-d\TH:i');
     }
 
     public function with(): array

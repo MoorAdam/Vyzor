@@ -20,6 +20,9 @@ new #[Layout('layouts.app')] class extends Component {
     #[On('current-project-changed')]
     public function onProjectChanged() {}
 
+    #[On('clarity-fetched')]
+    public function onClarityFetched(): void {}
+
     public function with(): array
     {
         $projectId = session('current_project_id');
@@ -162,8 +165,7 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.heading level="h1" size="xl">{{ __('Clarity Trends') }}</x-ui.heading>
             <x-ui.description class="mt-1">{{ __('Clarity data trends for the current project.') }}</x-ui.description>
         </div>
-        <div class="flex items-center gap-3">
-
+        <div class="flex items-end gap-3">
             <div class="w-52">
                 <x-ui.field>
                     <x-ui.label>{{ __('From') }}</x-ui.label>
@@ -176,6 +178,7 @@ new #[Layout('layouts.app')] class extends Component {
                     <x-ui.date-picker wire:model.live="dateTo" class="w-full" />
                 </x-ui.field>
             </div>
+            <livewire:clarity-fetch-button />
         </div>
     </div>
 
