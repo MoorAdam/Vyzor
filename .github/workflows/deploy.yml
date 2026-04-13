@@ -75,6 +75,9 @@ jobs:
             git fetch origin
             git reset --hard origin/main
 
+            # Remove stale dev artifact — if present, @vite serves from dev server instead of built assets
+            rm -f public/hot
+
             # ── Phase 2: Build runtime image & start containers ──
             echo "=== Phase 2: Starting containers ==="
             docker compose -f docker-compose.production.yml build
@@ -115,6 +118,7 @@ jobs:
               echo "Database seeded (first deploy)"
             fi
 
+            docker compose -f docker-compose.production.yml exec -T vyzor-app php artisan optimize:clear
             docker compose -f docker-compose.production.yml exec -T vyzor-app php artisan optimize
             docker compose -f docker-compose.production.yml exec -T vyzor-app php artisan storage:link 2>/dev/null || true
             docker compose -f docker-compose.production.yml exec -T vyzor-app php artisan queue:restart
