@@ -4,6 +4,7 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\ClarityFetchCounter;
 use App\Models\ClarityInsight;
+use App\Models\Project;
 
 new class extends Component {
 
@@ -34,6 +35,11 @@ new class extends Component {
         return max(0, $this->counterMax - $this->used);
     }
 
+    public function getHasClarityKeyProperty(): bool
+    {
+        return (bool) Project::current()?->hasClarityKey();
+    }
+
     public function getRecentFetchesProperty()
     {
         $projectId = session('current_project_id');
@@ -54,10 +60,15 @@ new class extends Component {
 
     public function fetchInfo(): void
     {
-        $projectId = session('current_project_id');
+        $project = Project::current();
 
-        if (!$projectId) {
+        if (!$project) {
             $this->error = __('No project selected. Please select a project first.');
+            return;
+        }
+
+        if (!$project->hasClarityKey()) {
+            $this->error = __('No Clarity API key set for this project.');
             return;
         }
 
@@ -74,7 +85,7 @@ new class extends Component {
         $this->error = null;
 
         $exitCode = Artisan::call('app:fetch-clarity', [
-            'project' => $projectId,
+            'project' => $project->id,
             '--days' => $this->days,
         ]);
 
@@ -95,6 +106,11 @@ new class extends Component {
         {{ $this->used }} / {{ $this->counterMax }}
     </span>
 
+    @if (!$this->hasClarityKey)
+        <x-ui.button variant="primary" icon="arrow-clockwise" disabled :title="__('No Clarity API key set for this project.')">
+            {{ __('Fetch info') }}
+        </x-ui.button>
+    @else
     <x-ui.modal
         :id="$modalId"
         :heading="__('Fetch Clarity Data')"
@@ -184,7 +200,7 @@ new class extends Component {
                 type="button"
                 variant="outline"
                 color="neutral"
-                x-on:click="$modal.close('{{ $modalId }}')"
+                x-on:click="$dispatch('close-modal', { id: '{{ $modalId }}' })"
             >
                 {{ __('Cancel') }}
             </x-ui.button>
@@ -202,4 +218,5 @@ new class extends Component {
             </x-ui.button>
         </x-slot:footer>
     </x-ui.modal>
+    @endif
 </div>

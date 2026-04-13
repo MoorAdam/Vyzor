@@ -35,4 +35,21 @@ class Project extends Model
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
+
+    /**
+     * The currently active project for the session, or null if none is set.
+     * Memoized per-request via once().
+     */
+    public static function current(): ?self
+    {
+        return once(function () {
+            $id = session('current_project_id');
+            return $id ? self::find($id) : null;
+        });
+    }
+
+    public function hasClarityKey(): bool
+    {
+        return filled($this->clarity_api_key);
+    }
 }

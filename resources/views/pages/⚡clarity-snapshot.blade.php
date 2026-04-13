@@ -67,6 +67,8 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
     </div>
 
+    <x-clarity-key-required />
+
     @if ($error)
         <x-ui.card>
             <x-ui.error :messages="[$error]" />

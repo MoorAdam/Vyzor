@@ -182,6 +182,8 @@ new #[Layout('layouts.app')] class extends Component {
         </div>
     </div>
 
+    <x-clarity-key-required />
+
     @if (!$chartData)
         <x-ui.card>
             <x-ui.empty>

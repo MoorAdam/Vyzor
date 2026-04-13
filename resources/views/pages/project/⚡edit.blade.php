@@ -136,7 +136,7 @@ new #[Layout('layouts.app')] class extends Component {
                     <x-ui.error name="domain" />
                 </x-ui.field>
 
-                <x-ui.field>
+                <x-ui.field id="clarity_api_key">
                     <x-ui.label>{{ __('Clarity API Key') }}</x-ui.label>
                     <x-ui.input wire:model.blur="clarity_api_key" :placeholder="__('Paste Clarity API token...')" :invalid="$errors->has('clarity_api_key')" />
                     <x-ui.error name="clarity_api_key" />

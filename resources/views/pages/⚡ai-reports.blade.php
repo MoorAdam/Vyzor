@@ -180,6 +180,8 @@ new #[Layout('layouts.app')] class extends Component {
         </x-ui.button>
     </div>
 
+    <x-clarity-key-required />
+
     @if (session('success'))
         <div class="rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-4">
             <div class="flex items-center gap-2">
