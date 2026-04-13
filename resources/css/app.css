@@ -31,3 +31,20 @@
         --color-primary-fg: var(--color-neutral-800);
     }
 }
+
+/* Danger theme override — applies a red primary palette to descendants.
+   Used by warning banners (e.g. missing Clarity API key) so nested
+   <x-ui.button variant="primary"> renders correctly in both light and dark modes. */
+@layer utilities {
+    .theme-danger {
+        --color-primary: var(--color-red-500);
+        --color-primary-content: var(--color-red-600);
+        --color-primary-fg: var(--color-neutral-50);
+    }
+
+    .dark .theme-danger {
+        --color-primary: var(--color-red-500);
+        --color-primary-content: var(--color-red-400);
+        --color-primary-fg: var(--color-neutral-50);
+    }
+}

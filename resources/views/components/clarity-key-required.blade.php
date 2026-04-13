@@ -4,7 +4,7 @@
 @endphp
 
 @if ($show)
-    <div class="flex items-center justify-between gap-3 p-3 rounded-box border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20">
+    <div class="theme-danger flex items-center justify-between gap-3 p-3 rounded-box border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/20">
         <div class="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
             <x-ui.icon name="warning-circle" class="size-4 shrink-0" />
             <span>{{ __('No Clarity API key set for this project. Fetching is disabled.') }}</span>
