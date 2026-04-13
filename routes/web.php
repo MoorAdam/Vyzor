@@ -19,7 +19,6 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::middleware('user_type:web')->group(function () {
-        Route::livewire('/dashboard', 'pages::dashboard')->name('dashboard');
         Route::livewire('/new-project', 'pages::project.create')->name('new-project');
         Route::livewire('/projects/{project}/edit', 'pages::project.edit')->name('project.edit');
         Route::livewire('/projects', 'pages::project.list')->name('projects');

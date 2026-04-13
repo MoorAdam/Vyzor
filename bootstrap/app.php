@@ -16,7 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo(fn ($request) => $request->user()?->isCustomer()
             ? '/customer/dashboard'
-            : '/dashboard'
+            : '/clarity/snapshot'
         );
         $middleware->alias([
             'user_type' => EnsureUserType::class,

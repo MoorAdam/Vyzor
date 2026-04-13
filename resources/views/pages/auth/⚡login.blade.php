@@ -27,7 +27,7 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
 
         $default = auth()->user()->isCustomer()
             ? route('customer.dashboard')
-            : route('dashboard');
+            : route('clarity.snapshot');
 
         $this->redirectIntended(default: $default, navigate: true);
     }
@@ -35,7 +35,15 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
 ?>
 
 <div>
-    <div class="h-screen flex items-center justify-center">
+    <div class="h-screen flex flex-col items-center justify-center">
+        <div class="mb-14 flex flex-col items-center gap-3">
+            <img src="/favicon.svg" alt="Vyzor Logo" class="h-16 w-auto pl-2 dark:filter-[brightness(0)_invert(1)]" />
+            <div class="text-center">
+                <h1 class="text-3xl font-semibold tracking-tight text-neutral-900 dark:text-white">Vyzor</h1>
+                <span class="text-[10px] text-neutral-400 dark:text-neutral-500 tracking-widest uppercase">By Morgens</span>
+            </div>
+        </div>
+
         <form wire:submit="login">
             <x-ui.fieldset :title="__('Login')" class="w-100">
                 <x-ui.field required>
@@ -56,5 +64,7 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
                 </x-ui.field>
             </x-ui.fieldset>
         </form>
+
+
     </div>
 </div>

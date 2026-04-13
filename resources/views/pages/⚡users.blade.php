@@ -94,14 +94,18 @@ new #[Layout('layouts.app')] class extends Component {
 };
 ?>
 
-<div class="p-6">
-    <x-ui.link href="{{ route('register') }}" variant="outline">{{ __('Add new user / customer') }}</x-ui.link>
+<div class="p-6 space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <x-ui.heading level="h1" size="xl">{{ __('Users & Customers') }}</x-ui.heading>
+            <x-ui.description class="mt-1">{{ __('Manage users and customer accounts.') }}</x-ui.description>
+        </div>
+        <x-ui.button href="{{ route('register') }}" variant="primary" icon="plus-circle" color="neutral">{{ __('Add new') }}</x-ui.button>
+    </div>
 
-    <x-ui.separator class="my-4"/>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
         {{-- Users Column --}}
-        <x-ui.card size="2xl">
+        <x-ui.card size="full">
             <div class="flex items-center gap-2 mb-4">
                 <x-ui.icon name="users" />
                 <x-ui.heading level="h2" size="sm">{{ __('Users') }}</x-ui.heading>
@@ -175,7 +179,7 @@ new #[Layout('layouts.app')] class extends Component {
         </x-ui.card>
 
         {{-- Customers Column --}}
-        <x-ui.card size="2xl">
+        <x-ui.card size="full">
             <div class="flex items-center gap-2 mb-4">
                 <x-ui.icon name="ps:buildings" />
                 <x-ui.heading level="h2" size="sm">{{ __('Customers') }}</x-ui.heading>

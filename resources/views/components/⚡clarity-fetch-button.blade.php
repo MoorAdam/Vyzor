@@ -44,7 +44,7 @@ new class extends Component {
 ?>
 
 <div class="flex items-center gap-2">
-    <x-ui.label class="opacity-50">{{ ($this->counter->fetch_count ?? 0) }} / {{ $this->counterMax }}</x-ui.label>
+    <span class="text-sm font-medium text-neutral-500 dark:text-neutral-400 whitespace-nowrap">{{ ($this->counter->fetch_count ?? 0) }} / {{ $this->counterMax }}</span>
     <x-ui.button variant="primary" icon="arrow-clockwise" wire:click="fetchInfo" wire:loading.attr="loading">
         {{ __('Fetch info') }}
     </x-ui.button>

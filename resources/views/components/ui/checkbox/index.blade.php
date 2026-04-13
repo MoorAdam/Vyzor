@@ -175,7 +175,7 @@
             }
         }
     }"
-    {{ $attributes }}
+    {{ $attributes->whereDoesntStartWith(['wire:model', 'x-model']) }}
 >
     {{-- 
         HIDDEN INPUT FOR FORM COMPATIBILITY

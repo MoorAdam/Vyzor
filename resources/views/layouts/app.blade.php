@@ -10,6 +10,21 @@
     <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
     <link rel="alternate icon" href="/favicon.ico">
 
+    <script>
+        (function() {
+            function applyTheme() {
+                var theme = localStorage.getItem('theme');
+                if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+            applyTheme();
+            document.addEventListener('livewire:navigated', applyTheme);
+        })();
+    </script>
+
     @livewireScriptConfig
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
@@ -26,7 +41,7 @@
 
             <x-ui.layout.header class="px-6">
                 <x-slot:brand>
-                    <x-ui.brand href="/dashboard" name="Vyzor" />
+                    <x-ui.brand href="/clarity/snapshot" name="Vyzor" />
                 </x-slot:brand>
 
                 <div class="ml-auto flex items-center gap-6">
@@ -54,6 +69,18 @@
                             </button>
                         </form>
                     </div>
+
+                    <x-ui.separator class="my-1" vertical />
+
+                    <button
+                        x-data="{ dark: document.documentElement.classList.contains('dark') }"
+                        x-on:click="dark = !dark; document.documentElement.classList.toggle('dark'); localStorage.setItem('theme', dark ? 'dark' : 'light')"
+                        class="p-2 rounded-lg text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                        :title="dark ? '{{ __('Switch to light mode') }}' : '{{ __('Switch to dark mode') }}'"
+                    >
+                        <x-ui.icon x-show="!dark" name="moon" variant="mini" class="size-5" />
+                        <x-ui.icon x-show="dark" name="sun" variant="mini" class="size-5" />
+                    </button>
 
                     <x-ui.separator class="my-1" vertical />
 
