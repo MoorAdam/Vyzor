@@ -129,7 +129,7 @@
         },
     }"
     x-on:keydown.escape.prevent.stop="open = false"
-    {{ $attributes->except(['wire:model', 'wire:model.live', 'wire:model.blur', 'wire:model.defer', 'class'])->class(['relative inline-block']) }}
+    {{ $attributes->except(['wire:model', 'wire:model.live', 'wire:model.blur', 'wire:model.defer', 'class'])->class(['relative inline-block w-full']) }}
 >
     {{-- Trigger button --}}
     <button
