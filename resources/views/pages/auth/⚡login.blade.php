@@ -6,8 +6,8 @@ use Livewire\Attributes\Validate;
 use Illuminate\Support\Facades\Auth;
 
 new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Component {
-    #[Validate('required|email')]
-    public string $email = '';
+    #[Validate('required|string')]
+    public string $name = '';
 
     #[Validate('required')]
     public string $password = '';
@@ -18,8 +18,8 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
     {
         $this->validate();
 
-        if (!Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
-            $this->addError('email', __('auth.failed'));
+        if (!Auth::attempt(['name' => $this->name, 'password' => $this->password], $this->remember)) {
+            $this->addError('name', __('auth.failed'));
             return;
         }
 
@@ -47,9 +47,9 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
         <form wire:submit="login">
             <x-ui.fieldset :title="__('Login')" class="w-100">
                 <x-ui.field required>
-                    <x-ui.label>{{ __('Email') }}</x-ui.label>
-                    <x-ui.input :label="__('Email')" :placeholder="__('E-mail...')" type="email" wire:model="email" />
-                    <x-ui.error name="email" />
+                    <x-ui.label>{{ __('Name') }}</x-ui.label>
+                    <x-ui.input :label="__('Name')" :placeholder="__('Name...')" type="text" wire:model="name" />
+                    <x-ui.error name="name" />
                 </x-ui.field>
                 <x-ui.field required>
                     <x-ui.label>{{ __('Password') }}</x-ui.label>
@@ -60,11 +60,25 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
                     <x-ui.checkbox size="xs" :label="__('Remember me')" wire:model="remember" />
                 </x-ui.field>
                 <x-ui.field>
-                    <x-ui.button type="submit">{{ __('Login') }}</x-ui.button>
+                    <x-ui.button variant="" type="submit">{{ __('Login') }}</x-ui.button>
                 </x-ui.field>
             </x-ui.fieldset>
         </form>
 
+        <div class="flex items-center gap-1 mt-6">
+            <form method="POST" action="{{ route('locale.switch', 'en') }}">
+                @csrf
+                <button type="submit" class="px-2 py-1 text-xs font-semibold rounded transition-colors {{ app()->getLocale() === 'en' ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
+                    EN
+                </button>
+            </form>
+            <form method="POST" action="{{ route('locale.switch', 'hu') }}">
+                @csrf
+                <button type="submit" class="px-2 py-1 text-xs font-semibold rounded transition-colors {{ app()->getLocale() === 'hu' ? 'bg-neutral-900 text-white dark:bg-neutral-100 dark:text-neutral-900' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
+                    HU
+                </button>
+            </form>
+        </div>
 
     </div>
 </div>
