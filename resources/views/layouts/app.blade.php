@@ -93,22 +93,15 @@
                             <div class="px-2 py-1.5 text-sm text-neutral-500 dark:text-neutral-400">
                                 {{ __('Signed in as') }}
                                 <span
-                                    class="block font-medium text-neutral-900 dark:text-neutral-100">{{ auth()->user()->name }}</span>
+                                    class="block font-medium text-neutral-900 dark:text-neutral-100">{{ auth()->user()->name }}
+                                </span>
                             </div>
 
                             <x-ui.dropdown.separator />
 
-                            <div>
-                                <x-ui.dropdown.item icon="gear" href="/settings">
-                                    {{ __('Settings') }}
-                                </x-ui.dropdown.item>
-                            </div>
-
-                            <x-ui.dropdown.separator />
-
-                            <form method="POST" action="{{ route('logout') }}">
+                            <form method="POST" action="{{ route('logout') }}" class="w-full">
                                 @csrf
-                                <x-ui.dropdown.item icon="sign-out" variant="danger" type="submit" as="button">
+                                <x-ui.dropdown.item icon="sign-out" variant="danger" class="w-full" type="submit" as="button">
                                     {{ __('Logout') }}
                                 </x-ui.dropdown.item>
                             </form>
