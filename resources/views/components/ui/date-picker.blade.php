@@ -2,6 +2,7 @@
     'type' => 'date',
     'placeholder' => 'Select date',
     'availableDates' => [],
+    'restrictToAvailable' => true,
 ])
 
 @php
@@ -14,6 +15,7 @@
         open: false,
         value: @entangle($attributes->wire('model')).live,
         availableDates: @js(array_values((array) $availableDates)),
+        restrictToAvailable: @js((bool) $restrictToAvailable),
         viewYear: null,
         viewMonth: null,
         hours: '00',
@@ -112,6 +114,8 @@
 
         isDisabled(day) {
             if (!day.current) return true;
+            // When the caller opts out of restriction, all in-month days stay selectable.
+            if (!this.restrictToAvailable) return false;
             // If no availableDates list is provided, nothing is restricted.
             if (!this.availableDates || this.availableDates.length === 0) return false;
             return !this.hasData(day);

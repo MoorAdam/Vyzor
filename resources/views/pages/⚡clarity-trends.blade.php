@@ -18,18 +18,34 @@ new #[Layout('layouts.app')] class extends Component {
     }
 
     #[On('current-project-changed')]
-    public function onProjectChanged() {}
+    public function onProjectChanged()
+    {
+    }
 
     #[On('clarity-fetched')]
-    public function onClarityFetched(): void {}
+    public function onClarityFetched(): void
+    {
+    }
 
     public function with(): array
     {
         $projectId = session('current_project_id');
 
         if (!$projectId) {
-            return ['chartData' => null];
+            return ['chartData' => null, 'availableDates' => [], 'hasTodayData' => false, 'latestDate' => null];
         }
+
+        // Distinct dates (YYYY-MM-DD) that have data for this project — used to mark
+        // fetch points on both date pickers.
+        $availableDates = ClarityInsight::where('project_id', $projectId)
+            ->selectRaw('DISTINCT DATE(fetched_for) as d')
+            ->pluck('d')
+            ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
+            ->values()
+            ->all();
+
+        $hasTodayData = in_array(now()->format('Y-m-d'), $availableDates, true);
+        $latestDate = !empty($availableDates) ? collect($availableDates)->max() : null;
 
         $start = Carbon::parse($this->dateFrom)->startOfDay();
         $end = Carbon::parse($this->dateTo)->endOfDay();
@@ -118,6 +134,9 @@ new #[Layout('layouts.app')] class extends Component {
                 'browserBreakdown' => $browserBreakdown,
                 'countryBreakdown' => $countryBreakdown,
             ],
+            'availableDates' => $availableDates,
+            'hasTodayData' => $hasTodayData,
+            'latestDate' => $latestDate,
         ];
     }
 
@@ -146,40 +165,41 @@ new #[Layout('layouts.app')] class extends Component {
 ?>
 
 <div class="p-6 space-y-6" id="clarity-trends-root" data-chart='@json($chartData)'
-     data-i18n-sessions="{{ __('Sessions') }}"
-     data-i18n-unique-users="{{ __('Unique Users') }}"
-     data-i18n-bot-sessions="{{ __('Bot Sessions') }}"
-     data-i18n-pages-per-session="{{ __('Pages / Session') }}"
-     data-i18n-total-time="{{ __('Total Time') }}"
-     data-i18n-active-time="{{ __('Active Time') }}"
-     data-i18n-avg-scroll-depth="{{ __('Avg Scroll Depth %') }}"
-     data-i18n-dead-clicks="{{ __('Dead Clicks') }}"
-     data-i18n-rage-clicks="{{ __('Rage Clicks') }}"
-     data-i18n-quick-backs="{{ __('Quick Backs') }}"
-     data-i18n-excessive-scroll="{{ __('Excessive Scroll') }}"
-     data-i18n-script-errors="{{ __('Script Errors') }}"
-     data-i18n-error-clicks="{{ __('Error Clicks') }}"
->
+    data-i18n-sessions="{{ __('Sessions') }}" data-i18n-unique-users="{{ __('Unique Users') }}"
+    data-i18n-bot-sessions="{{ __('Bot Sessions') }}" data-i18n-pages-per-session="{{ __('Pages / Session') }}"
+    data-i18n-total-time="{{ __('Total Time') }}" data-i18n-active-time="{{ __('Active Time') }}"
+    data-i18n-avg-scroll-depth="{{ __('Avg Scroll Depth %') }}" data-i18n-dead-clicks="{{ __('Dead Clicks') }}"
+    data-i18n-rage-clicks="{{ __('Rage Clicks') }}" data-i18n-quick-backs="{{ __('Quick Backs') }}"
+    data-i18n-excessive-scroll="{{ __('Excessive Scroll') }}" data-i18n-script-errors="{{ __('Script Errors') }}"
+    data-i18n-error-clicks="{{ __('Error Clicks') }}">
     <div class="flex items-center justify-between">
         <div>
             <x-ui.heading level="h1" size="xl">{{ __('Clarity Trends') }}</x-ui.heading>
             <x-ui.description class="mt-1">{{ __('Clarity data trends for the current project.') }}</x-ui.description>
         </div>
-        <div class="flex items-end gap-3">
-            <div class="w-52">
-                <x-ui.field>
-                    <x-ui.label>{{ __('From') }}</x-ui.label>
-                    <x-ui.date-picker wire:model.live="dateFrom" class="w-full" />
-                </x-ui.field>
+        <div class="flex items-center gap-3">
+            @if (!$hasTodayData && $latestDate)
+                <div class="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                    <x-ui.icon name="warning" class="size-4 shrink-0" />
+                    <span class="whitespace-nowrap">
+                        {{ __('No data for today (:date)', ['date' => Carbon::now()->format('M d, Y')]) }}
+                    </span>
+                </div>
+            @endif
+            <div class="flex items-center gap-2">
+                <x-ui.label>{{ __('From') }}</x-ui.label>
+                <x-ui.date-picker wire:model.live="dateFrom" :available-dates="$availableDates"
+                    :restrict-to-available="false" class="w-52" />
             </div>
-            <div class="w-52">
-                <x-ui.field>
-                    <x-ui.label>{{ __('To') }}</x-ui.label>
-                    <x-ui.date-picker wire:model.live="dateTo" class="w-full" />
-                </x-ui.field>
+            <div class="flex items-center gap-2">
+                <x-ui.label>{{ __('To') }}</x-ui.label>
+                <x-ui.date-picker wire:model.live="dateTo" :available-dates="$availableDates"
+                    :restrict-to-available="false" class="w-52" />
             </div>
+            <x-ui.separator class="my-1" vertical />
             <livewire:clarity-fetch-button />
         </div>
+        
     </div>
 
     <x-clarity-key-required />
@@ -309,7 +329,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     function destroyCharts() {
         for (const id in charts) {
-            try { charts[id].destroy(); } catch (e) {}
+            try { charts[id].destroy(); } catch (e) { }
             delete charts[id];
         }
     }
@@ -486,12 +506,12 @@ new #[Layout('layouts.app')] class extends Component {
         }
 
         const signalColors = {
-            DeadClickCount:   { border: '#f97316', bg: 'rgba(249,115,22,0.1)' },
-            RageClickCount:   { border: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
-            QuickbackClick:   { border: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
-            ExcessiveScroll:  { border: '#eab308', bg: 'rgba(234,179,8,0.1)' },
+            DeadClickCount: { border: '#f97316', bg: 'rgba(249,115,22,0.1)' },
+            RageClickCount: { border: '#ef4444', bg: 'rgba(239,68,68,0.1)' },
+            QuickbackClick: { border: '#f59e0b', bg: 'rgba(245,158,11,0.1)' },
+            ExcessiveScroll: { border: '#eab308', bg: 'rgba(234,179,8,0.1)' },
             ScriptErrorCount: { border: '#e11d48', bg: 'rgba(225,29,72,0.1)' },
-            ErrorClickCount:  { border: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
+            ErrorClickCount: { border: '#ec4899', bg: 'rgba(236,72,153,0.1)' },
         };
         const signalLabels = {
             DeadClickCount: i18n.deadClicks,
