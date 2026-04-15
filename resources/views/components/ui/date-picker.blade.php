@@ -1,6 +1,7 @@
 @props([
     'type' => 'date',
     'placeholder' => 'Select date',
+    'availableDates' => [],
 ])
 
 @php
@@ -11,7 +12,8 @@
 <div
     x-data="{
         open: false,
-        value: @entangle($attributes->wire('model')),
+        value: @entangle($attributes->wire('model')).live,
+        availableDates: @js(array_values((array) $availableDates)),
         viewYear: null,
         viewMonth: null,
         hours: '00',
@@ -101,8 +103,22 @@
                 && now.getDate() === day.day;
         },
 
+        hasData(day) {
+            if (!day.current || !this.availableDates || this.availableDates.length === 0) return false;
+            const m = String(this.viewMonth + 1).padStart(2, '0');
+            const d = String(day.day).padStart(2, '0');
+            return this.availableDates.includes(this.viewYear + '-' + m + '-' + d);
+        },
+
+        isDisabled(day) {
+            if (!day.current) return true;
+            // If no availableDates list is provided, nothing is restricted.
+            if (!this.availableDates || this.availableDates.length === 0) return false;
+            return !this.hasData(day);
+        },
+
         selectDay(day) {
-            if (!day.current) return;
+            if (this.isDisabled(day)) return;
             const m = String(this.viewMonth + 1).padStart(2, '0');
             const d = String(day.day).padStart(2, '0');
             if ({{ $isDatetime ? 'true' : 'false' }}) {
@@ -187,15 +203,22 @@
                 <button
                     type="button"
                     x-on:click="selectDay(day)"
-                    x-text="day.day"
+                    :disabled="isDisabled(day)"
                     :class="{
-                        'text-neutral-300 dark:text-neutral-600 cursor-default': !day.current,
-                        'hover:bg-neutral-100 dark:hover:bg-neutral-800': day.current && !isSelected(day),
+                        'text-neutral-300 dark:text-neutral-600 cursor-not-allowed': isDisabled(day),
+                        'hover:bg-neutral-100 dark:hover:bg-neutral-800': !isDisabled(day) && !isSelected(day),
                         'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 font-medium': isSelected(day),
                         'ring-1 ring-neutral-400 dark:ring-neutral-500': isToday(day) && !isSelected(day),
                     }"
-                    class="text-center text-sm py-1.5 rounded transition-colors"
-                ></button>
+                    class="relative text-center text-sm py-1.5 rounded transition-colors"
+                >
+                    <span x-text="day.day"></span>
+                    <span
+                        x-show="hasData(day)"
+                        :class="isSelected(day) ? 'bg-white dark:bg-neutral-900' : 'bg-emerald-500'"
+                        class="absolute bottom-0.5 left-1/2 -translate-x-1/2 size-1 rounded-full"
+                    ></span>
+                </button>
             </template>
         </div>
 

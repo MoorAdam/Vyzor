@@ -101,7 +101,7 @@ new class extends Component {
 };
 ?>
 
-<div class="flex items-center gap-2">
+<div class="flex items-center gap-3">
     <span class="text-sm font-medium text-neutral-500 dark:text-neutral-400 whitespace-nowrap">
         {{ $this->used }} / {{ $this->counterMax }}
     </span>

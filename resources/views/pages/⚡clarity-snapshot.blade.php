@@ -12,20 +12,35 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function mount(): void
     {
-        $this->datetime = now()->startOfHour()->format('Y-m-d\TH:i');
+        $this->datetime = $this->defaultDatetime();
     }
 
     #[On('current-project-changed')]
-    public function onProjectChanged()
+    public function onProjectChanged(): void
     {
-        // re-render when project changes
+        // Re-snap to the latest fetch for the newly selected project.
+        $this->datetime = $this->defaultDatetime();
     }
 
     #[On('clarity-fetched')]
     public function onClarityFetched(): void
     {
-        // snap the selector to "now" so the newly fetched data is shown
-        $this->datetime = now()->startOfHour()->format('Y-m-d\TH:i');
+        // Snap the selector to the newest fetch so the freshly fetched data is shown.
+        $this->datetime = $this->defaultDatetime();
+    }
+
+    private function defaultDatetime(): string
+    {
+        $projectId = session('current_project_id');
+
+        if ($projectId) {
+            $latest = ClarityInsight::where('project_id', $projectId)->max('fetched_for');
+            if ($latest) {
+                return \Carbon\Carbon::parse($latest)->format('Y-m-d\TH:i');
+            }
+        }
+
+        return now()->startOfHour()->format('Y-m-d\TH:i');
     }
 
     public function with(): array
@@ -34,6 +49,9 @@ new #[Layout('layouts.app')] class extends Component {
 
         if (!$projectId) {
             $insights = collect();
+            $availableDates = [];
+            $hasTodayData = false;
+            $latestDate = null;
         } else {
             $selectedTime = \Carbon\Carbon::parse($this->datetime)->startOfHour();
 
@@ -48,9 +66,25 @@ new #[Layout('layouts.app')] class extends Component {
                     ->get()
                     ->keyBy('metric_name')
                 : collect();
+
+            // Distinct dates (YYYY-MM-DD) that have data for this project
+            $availableDates = ClarityInsight::where('project_id', $projectId)
+                ->selectRaw('DISTINCT DATE(fetched_for) as d')
+                ->pluck('d')
+                ->map(fn ($d) => \Carbon\Carbon::parse($d)->format('Y-m-d'))
+                ->values()
+                ->all();
+
+            $hasTodayData = in_array(now()->format('Y-m-d'), $availableDates, true);
+            $latestDate = !empty($availableDates) ? collect($availableDates)->max() : null;
         }
 
-        return ['insights' => $insights];
+        return [
+            'insights' => $insights,
+            'availableDates' => $availableDates,
+            'hasTodayData' => $hasTodayData,
+            'latestDate' => $latestDate,
+        ];
     }
 };
 ?>
@@ -62,7 +96,16 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.description class="mt-1">{{ __('Single point-in-time Microsoft Clarity data for the current project.') }}</x-ui.description>
         </div>
         <div class="flex items-center gap-3">
-            <x-ui.input type="datetime-local" wire:model.live="datetime" class="w-60" />
+            @if (!$hasTodayData && $latestDate)
+                <div class="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                    <x-ui.icon name="warning" class="size-4 shrink-0" />
+                    <span class="whitespace-nowrap">
+                        {{ __('No data for today (:date)', ['date' => \Carbon\Carbon::now()->format('M d, Y')]) }}
+                    </span>
+                </div>
+            @endif
+            <x-ui.date-picker type="datetime-local" wire:model.live="datetime" :available-dates="$availableDates" class="w-60" />
+            <x-ui.separator class="my-1" vertical />
             <livewire:clarity-fetch-button />
         </div>
     </div>

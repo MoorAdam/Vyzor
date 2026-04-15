@@ -140,6 +140,7 @@
   "No contexts yet. Create your first one to get started.": "Még nincsenek kontextusok. Hozd létre az elsőt a kezdéshez.",
   "No customers found.": "Nem találhatók ügyfelek.",
   "No data available for": "Nincs elérhető adat ehhez:",
+  "No data for today. Showing :date": "Nincs mai adat (:date)",
   "No heatmaps found. Upload one to get started.": "Nincsenek hőtérképek. Tölts fel egyet a kezdéshez.",
   "No previous fetches for this project.": "Nincsenek korábbi lekérdezések ehhez a projekthez.",
   "No project selected. Please select a project first.": "Nincs kiválasztott projekt. Kérjük, először válassz egy projektet.",
