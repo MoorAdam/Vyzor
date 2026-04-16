@@ -14,6 +14,7 @@ class AiContext extends Model
         'slug',
         'type',
         'models',
+        'tags',
         'icon',
         'label_color',
         'description',
@@ -46,6 +47,7 @@ class AiContext extends Model
         return [
             'type' => AiContextType::class,
             'models' => 'array',
+            'tags' => 'array',
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];

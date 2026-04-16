@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\AiContextType;
+use App\ContextTag;
 use App\Models\AiContext;
 use Illuminate\Database\Seeder;
 
@@ -17,6 +18,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'report-analyst-instructions',
                 'type' => AiContextType::SYSTEM,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'robot',
                 'label_color' => '#8b5cf6',
                 'description' => 'Core system instructions for the AI report analyst agent.',
@@ -30,6 +32,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'heatmap-analysis',
                 'type' => AiContextType::INSTRUCTION,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'fire',
                 'label_color' => '#f97316',
                 'description' => 'Instructions for analysing click/tap heatmap data from Microsoft Clarity.',
@@ -41,6 +44,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'output-format',
                 'type' => AiContextType::INSTRUCTION,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'file-text',
                 'label_color' => '#6b7280',
                 'description' => 'Standard output format instructions for AI-generated reports.',
@@ -54,6 +58,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'traffic-overview',
                 'type' => AiContextType::PRESET,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'chart-line-up',
                 'label_color' => '#3b82f6',
                 'description' => 'Comprehensive overview of website traffic patterns, sessions, and user trends.',
@@ -65,6 +70,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'ux-issues',
                 'type' => AiContextType::PRESET,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'warning',
                 'label_color' => '#f43f5e',
                 'description' => 'Analysis of UX signals like dead clicks, rage clicks, and quick backs.',
@@ -76,6 +82,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'engagement-analysis',
                 'type' => AiContextType::PRESET,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'chart-bar',
                 'label_color' => '#8b5cf6',
                 'description' => 'Deep dive into user engagement metrics and content consumption patterns.',
@@ -87,6 +94,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'device-browser-analysis',
                 'type' => AiContextType::PRESET,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'device-mobile',
                 'label_color' => '#06b6d4',
                 'description' => 'Breakdown of device, browser, and OS usage with compatibility insights.',
@@ -98,6 +106,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'content-performance',
                 'type' => AiContextType::PRESET,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'article',
                 'label_color' => '#f59e0b',
                 'description' => 'Page-level performance analysis including top pages and engagement.',
@@ -109,6 +118,7 @@ class AiContextSeeder extends Seeder
                 'slug' => 'weekly-summary',
                 'type' => AiContextType::PRESET,
                 'models' => ['all'],
+                'tags' => [ContextTag::CLARITY->value],
                 'icon' => 'calendar-check',
                 'label_color' => '#22c55e',
                 'description' => 'Executive-style weekly summary covering all major performance aspects.',

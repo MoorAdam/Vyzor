@@ -4,6 +4,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use App\AiContextType;
+use App\ContextTag;
 use App\Models\AiContext;
 
 new #[Layout('layouts.app')] class extends Component {
@@ -16,6 +17,7 @@ new #[Layout('layouts.app')] class extends Component {
     public string $formDescriptionHu = '';
     public string $formType = 'preset';
     public array $formModels = ['all'];
+    public array $formTags = [];
     public string $formLabelColor = '#3b82f6';
     public string $formIcon = 'file-text';
     public string $formContext = '';
@@ -41,6 +43,7 @@ new #[Layout('layouts.app')] class extends Component {
         $this->formDescriptionHu = $context->description_hu ?? '';
         $this->formType = $context->type->value;
         $this->formModels = $context->models ?? ['all'];
+        $this->formTags = $context->tags ?? [];
         $this->formLabelColor = $context->label_color ?? '#3b82f6';
         $this->formIcon = $context->icon ?? 'file-text';
         $this->formContext = $context->context;
@@ -58,6 +61,7 @@ new #[Layout('layouts.app')] class extends Component {
             'formDescriptionHu' => 'nullable|string|max:500',
             'formType' => 'required|string|in:preset,system,instruction',
             'formModels' => 'required|array|min:1',
+            'formTags' => 'nullable|array',
             'formLabelColor' => 'required|string|max:7',
             'formIcon' => 'required|string|max:100',
             'formContext' => 'required|string',
@@ -71,6 +75,7 @@ new #[Layout('layouts.app')] class extends Component {
             'description_hu' => $this->formDescriptionHu ?: null,
             'type' => $this->formType,
             'models' => $this->formModels,
+            'tags' => $this->formTags ?: null,
             'label_color' => $this->formLabelColor,
             'icon' => $this->formIcon,
             'context' => $this->formContext,
@@ -106,6 +111,15 @@ new #[Layout('layouts.app')] class extends Component {
         $this->resetForm();
     }
 
+    public function toggleTag(string $tag): void
+    {
+        if (in_array($tag, $this->formTags)) {
+            $this->formTags = array_values(array_diff($this->formTags, [$tag]));
+        } else {
+            $this->formTags[] = $tag;
+        }
+    }
+
     public function toggleModel(string $model): void
     {
         if ($model === 'all') {
@@ -135,6 +149,7 @@ new #[Layout('layouts.app')] class extends Component {
         $this->formDescriptionHu = '';
         $this->formType = 'preset';
         $this->formModels = ['all'];
+        $this->formTags = [];
         $this->formLabelColor = '#3b82f6';
         $this->formIcon = 'file-text';
         $this->formContext = '';
@@ -155,6 +170,7 @@ new #[Layout('layouts.app')] class extends Component {
         return [
             'contexts' => $query->get(),
             'types' => AiContextType::cases(),
+            'tags' => ContextTag::cases(),
             'providers' => collect(config('ai.providers', []))
                 ->filter(fn($provider) => !empty($provider['key']))
                 ->keys()
@@ -306,6 +322,27 @@ new #[Layout('layouts.app')] class extends Component {
                                 <x-ui.error name="formModels" />
                             </x-ui.field>
 
+                            {{-- Tags --}}
+                            <x-ui.field>
+                                <x-ui.label>{{ __('Tags') }}</x-ui.label>
+                                <x-ui.description class="mb-2">{{ __('Which features should use this context.') }}</x-ui.description>
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach ($tags as $tag)
+                                        <button
+                                            type="button"
+                                            wire:click="toggleTag('{{ $tag->value }}')"
+                                            @class([
+                                                'px-3 py-1.5 text-xs font-medium rounded-full border transition-colors',
+                                                'bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300' => in_array($tag->value, $formTags),
+                                                'border-black/10 dark:border-white/15 text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300' => !in_array($tag->value, $formTags),
+                                            ])
+                                        >
+                                            {{ $tag->label() }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            </x-ui.field>
+
                             <div class="grid grid-cols-3 gap-4">
                                 <x-ui.field required>
                                     <x-ui.label>{{ __('Color') }}</x-ui.label>
@@ -414,6 +451,11 @@ new #[Layout('layouts.app')] class extends Component {
                                 <div class="flex items-center gap-2">
                                     <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">{{ $context->localizedName() }}</span>
                                     <x-ui.badge size="sm" color="{{ $context->type->color() }}">{{ $context->type->label() }}</x-ui.badge>
+                                    @foreach ($context->tags ?? [] as $tagValue)
+                                        @if ($tagEnum = \App\ContextTag::tryFrom($tagValue))
+                                            <x-ui.badge size="sm" color="{{ $tagEnum->color() }}">{{ $tagEnum->label() }}</x-ui.badge>
+                                        @endif
+                                    @endforeach
                                     @if (!$context->is_active)
                                         <x-ui.badge size="sm" color="neutral">{{ __('Inactive') }}</x-ui.badge>
                                     @endif
