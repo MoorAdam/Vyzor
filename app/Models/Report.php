@@ -17,6 +17,7 @@ class Report extends Model
         'is_ai',
         'preset',
         'custom_prompt',
+        'page_url',
         'include_heatmaps',
         'aspect_date_from',
         'aspect_date_to',

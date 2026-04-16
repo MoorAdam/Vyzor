@@ -41,5 +41,9 @@ return [
         'fetch_daily_limit' => 10
     ],
 
+    'htmlFetcher' => [
+        'timeout' => env('HTML_FETCHER_TIMEOUT', 10),
+        'max_body_bytes' => env('HTML_FETCHER_MAX_BODY_BYTES', 2 * 1024 * 1024), // 2 MB
+    ],
 
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Ai\Agents\PageAnalyst;
 use App\Ai\Agents\ReportAnalyst;
 use App\AiContextType;
 use App\Models\AiContext;
@@ -18,9 +19,14 @@ class ReportGeneratorService
 
         try {
             $prompt = $this->buildPrompt($report);
-
             $provider = config('ai.default', 'openai');
-            $response = ReportAnalyst::make()->prompt($prompt, provider: $provider);
+
+            // Use PageAnalyst for page URL reports, ReportAnalyst for Clarity reports.
+            $agent = $report->page_url
+                ? PageAnalyst::make()
+                : ReportAnalyst::make();
+
+            $response = $agent->prompt($prompt, provider: $provider);
 
             $report->update([
                 'content' => (string) $response,
@@ -39,10 +45,20 @@ class ReportGeneratorService
 
     protected function buildPrompt(Report $report): string
     {
+        // Branch into two distinct flows based on report type.
+        return $report->page_url
+            ? $this->buildPagePrompt($report)
+            : $this->buildClarityPrompt($report);
+    }
+
+    // ── Page Analysis prompt ───────────────────────────────────────
+
+    protected function buildPagePrompt(Report $report): string
+    {
         $provider = config('ai.default', 'openai');
         $parts = [];
 
-        // Add preset context
+        // Preset context (page_analyser-tagged)
         if ($report->preset) {
             $preset = AiContext::active()
                 ->ofType(AiContextType::PRESET)
@@ -55,12 +71,57 @@ class ReportGeneratorService
             }
         }
 
-        // Add custom prompt
+        // The target URL + fetched page content.
+        $parts[] = "\n## Target Page\nAnalyse the following URL: `{$report->page_url}`";
+
+        $html = app(HtmlFetcherService::class)->fetch($report->page_url);
+
+        if ($html) {
+            $parts[] = "\n## Page Content\nBelow is the fetched content of the page:\n\n" . $html;
+        } else {
+            $parts[] = "\n## Note\nThe page could not be fetched. Provide recommendations based on the URL and the preset context.";
+        }
+
+        // Custom prompt
         if ($report->custom_prompt) {
             $parts[] = "\n## Additional Instructions\n" . $report->custom_prompt;
         }
 
-        // Add Clarity data
+        // Language instruction
+        $this->appendLanguageInstruction($parts, $report);
+
+        // Output format (shared between clarity & page)
+        $this->appendOutputFormat($parts, $provider);
+
+        return implode("\n", $parts);
+    }
+
+    // ── Clarity Report prompt ──────────────────────────────────────
+
+    protected function buildClarityPrompt(Report $report): string
+    {
+        $provider = config('ai.default', 'openai');
+        $parts = [];
+
+        // Preset context (clarity-tagged)
+        if ($report->preset) {
+            $preset = AiContext::active()
+                ->ofType(AiContextType::PRESET)
+                ->forModel($provider)
+                ->where('slug', $report->preset)
+                ->first();
+
+            if ($preset) {
+                $parts[] = $preset->context;
+            }
+        }
+
+        // Custom prompt
+        if ($report->custom_prompt) {
+            $parts[] = "\n## Additional Instructions\n" . $report->custom_prompt;
+        }
+
+        // Clarity data for the date range
         $clarityData = ClarityInsight::where('project_id', $report->project_id)
             ->when($report->aspect_date_from, fn($q) => $q->where('date_from', '>=', $report->aspect_date_from))
             ->when($report->aspect_date_to, fn($q) => $q->where('date_to', '<=', $report->aspect_date_to))
@@ -79,7 +140,7 @@ class ReportGeneratorService
                 "Please provide a general analysis framework and recommendations based on the preset context.";
         }
 
-        // Add Heatmap data (only when toggled on)
+        // Heatmap data (only when toggled on)
         if ($report->include_heatmaps) {
             $heatmaps = Heatmap::where('project_id', $report->project_id)
                 ->when($report->aspect_date_from, fn($q) => $q->where('date', '>=', $report->aspect_date_from))
@@ -104,14 +165,29 @@ class ReportGeneratorService
             }
         }
 
-        // Add language instruction
+        // Language instruction
+        $this->appendLanguageInstruction($parts, $report);
+
+        // Output format
+        $this->appendOutputFormat($parts, $provider);
+
+        return implode("\n", $parts);
+    }
+
+    // ── Shared helpers ─────────────────────────────────────────────
+
+    protected function appendLanguageInstruction(array &$parts, Report $report): void
+    {
         $languageNames = ['en' => 'English', 'hu' => 'Hungarian'];
         $langName = $languageNames[$report->language ?? 'en'] ?? 'English';
+
         if (($report->language ?? 'en') !== 'en') {
             $parts[] = "\n## Language Instruction\nYou MUST write the entire report in {$langName}. All headings, analysis, recommendations, and conclusions must be in {$langName}.";
         }
+    }
 
-        // Add output format instructions
+    protected function appendOutputFormat(array &$parts, string $provider): void
+    {
         $outputFormat = AiContext::active()
             ->ofType(AiContextType::INSTRUCTION)
             ->forModel($provider)
@@ -121,7 +197,5 @@ class ReportGeneratorService
         if ($outputFormat) {
             $parts[] = "\n" . $outputFormat->context;
         }
-
-        return implode("\n", $parts);
     }
 }
