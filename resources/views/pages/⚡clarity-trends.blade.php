@@ -5,6 +5,7 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use App\Models\ClarityInsight;
 use Carbon\Carbon;
+use App\PermissionEnum;
 
 new #[Layout('layouts.app')] class extends Component {
 
@@ -13,6 +14,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function mount(): void
     {
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::VIEW_CLARITY_TRENDS, \App\Models\Project::current()]), 403);
         $this->dateFrom = now()->subDays(3)->format('Y-m-d');
         $this->dateTo = now()->format('Y-m-d');
     }

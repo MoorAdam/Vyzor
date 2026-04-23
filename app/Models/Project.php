@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\ProjectStatusEnum;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -35,6 +36,28 @@ class Project extends Model
     public function owner(): HasOneThrough
     {
         return $this->hasOneThrough(User::class, ProjectPermission::class, 'project_id', 'id', 'id', 'owner_id');
+    }
+
+    public function scopeAccessibleBy(Builder $query, User $user): Builder
+    {
+        if ($user->isAdmin()) {
+            return $query;
+        }
+
+        return $query->whereHas('permission', function ($q) use ($user) {
+            $q->where('owner_id', $user->id)
+              ->orWhereJsonContains('collaborators', $user->id);
+        });
+    }
+
+    public function scopeOwnedBy(Builder $query, User $user): Builder
+    {
+        return $query->whereHas('permission', fn ($q) => $q->where('owner_id', $user->id));
+    }
+
+    public function scopeCollaboratingWith(Builder $query, User $user): Builder
+    {
+        return $query->whereHas('permission', fn ($q) => $q->whereJsonContains('collaborators', $user->id));
     }
 
     public function customer(): BelongsTo

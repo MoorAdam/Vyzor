@@ -6,8 +6,9 @@ use Livewire\Attributes\Validate;
 use Livewire\Attributes\On;
 use App\Models\User;
 use App\Models\Project;
+use App\PermissionEnum;
 use App\ProjectStatusEnum;
-use App\UserTypeEnum;
+use App\UserRoleEnum;
 
 new #[Layout('layouts.app')] class extends Component {
     public Project $project;
@@ -30,17 +31,24 @@ new #[Layout('layouts.app')] class extends Component {
     #[Validate('nullable|string')]
     public string $clarity_api_key = '';
 
+    #[Validate('array')]
+    public array $collaborator_ids = [];
+
+    public bool $isOwner = false;
+
     public function mount(Project $project): void
     {
-        abort_unless(auth()->user()->isAdmin() || $project->permission?->owner_id === auth()->id(), 403);
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::EDIT_PROJECT_DETAILS, $project]), 403);
 
         $this->project = $project;
+        $this->isOwner = auth()->user()->isAdmin() || $project->permission?->isOwner(auth()->user());
         $this->name = $project->name;
         $this->description = $project->description ?? '';
         $this->customer_id = (string) $project->customer_id;
         $this->status = $project->status->value;
         $this->domain = $project->domain;
         $this->clarity_api_key = $project->clarity_api_key ?? '';
+        $this->collaborator_ids = $project->permission?->collaborators ?? [];
     }
 
     public function updatedDomain(): void
@@ -73,14 +81,23 @@ new #[Layout('layouts.app')] class extends Component {
             'clarity_api_key' => $this->clarity_api_key ?: null,
         ]);
 
+        if ($this->isOwner) {
+            $this->project->permission?->update([
+                'collaborators' => array_map('intval', $this->collaborator_ids),
+            ]);
+        }
+
         $this->redirect(route('projects'), navigate: true);
     }
 
     public function with(): array
     {
         return [
-            'customers' => User::where('type', UserTypeEnum::CUSTOMER)->get(),
+            'customers' => User::where('role', UserRoleEnum::CUSTOMER)->get(),
             'statuses' => ProjectStatusEnum::cases(),
+            'availableCollaborators' => User::where('role', UserRoleEnum::WEB)
+                ->where('id', '!=', $this->project->permission?->owner_id)
+                ->get(),
         ];
     }
 };
@@ -117,6 +134,15 @@ new #[Layout('layouts.app')] class extends Component {
                         </x-ui.modal.trigger>
                     </div>
                     <x-ui.error name="customer_id" />
+                </x-ui.field>
+
+                <x-ui.field>
+                    <x-ui.label>{{ __('Collaborators') }}</x-ui.label>
+                    <x-ui.select wire:model="collaborator_ids" :placeholder="__('Add collaborators...')" multiple pillbox searchable :disabled="!$isOwner">
+                        @foreach ($availableCollaborators as $collab)
+                            <x-ui.select.option :value="$collab->id">{{ $collab->name }}</x-ui.select.option>
+                        @endforeach
+                    </x-ui.select>
                 </x-ui.field>
 
                 <x-ui.field required>

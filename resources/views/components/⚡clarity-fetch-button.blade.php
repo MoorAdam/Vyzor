@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Artisan;
 use App\Models\ClarityFetchCounter;
 use App\Models\ClarityInsight;
 use App\Models\Project;
+use App\PermissionEnum;
 
 new class extends Component {
 
@@ -61,6 +62,7 @@ new class extends Component {
     public function fetchInfo(): void
     {
         $project = Project::current();
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::FETCH_CLARITY_DATA, $project]), 403);
 
         if (!$project) {
             $this->error = __('No project selected. Please select a project first.');
@@ -118,7 +120,7 @@ new class extends Component {
         width="md"
     >
         <x-slot:trigger>
-            <x-ui.button variant="primary" icon="arrow-clockwise">
+            <x-ui.button variant="primary" icon="arrow-clockwise" :disabled="auth()->user()->cannot('permission', App\PermissionEnum::FETCH_CLARITY_DATA)">
                 {{ __('Fetch info') }}
             </x-ui.button>
         </x-slot:trigger>

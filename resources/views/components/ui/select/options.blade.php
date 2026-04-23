@@ -44,7 +44,15 @@
         x-rover:options
     >
         {{ $slot }}
-        
+
+        @if ($slot->isEmpty())
+            <li class="col-span-full">
+                <x-ui.text class="h-14 flex items-center justify-center">
+                    {{ __('No options available') }}
+                </x-ui.text>
+            </li>
+        @endif
+
         {{-- Empty and loading states are <li> elements to maintain valid HTML inside <ul>.
             col-span-full spans all 3 grid columns so they don't break the layout. --}}
         <li 

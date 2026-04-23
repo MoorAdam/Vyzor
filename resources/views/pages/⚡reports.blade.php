@@ -9,6 +9,7 @@ use App\AiContextType;
 use App\Models\AiContext;
 use App\ReportStatusEnum;
 use Illuminate\Support\Str;
+use App\PermissionEnum;
 
 new #[Layout('layouts.app')] class extends Component {
     use WithPagination;
@@ -19,6 +20,11 @@ new #[Layout('layouts.app')] class extends Component {
     public string $filterDateFrom = '';
     public string $filterDateTo = '';
     public string $search = '';
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::VIEW_REPORTS, \App\Models\Project::current()]), 403);
+    }
 
     #[On('current-project-changed')]
     public function onProjectChanged()
@@ -54,6 +60,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function deleteReport(int $reportId): void
     {
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::DELETE_REPORT, \App\Models\Project::current()]), 403);
         $report = Report::find($reportId);
         if ($report && $report->project_id == session('current_project_id')) {
             $report->delete();
@@ -276,7 +283,7 @@ new #[Layout('layouts.app')] class extends Component {
                             <div class="flex items-center gap-2 shrink-0">
                                 <x-ui.badge size="sm" color="{{ $report->status->color() }}">{{ $report->status->label() }}</x-ui.badge>
                                 <x-ui.modal.trigger :id="'delete-report-' . $report->id">
-                                    <button class="text-neutral-400 hover:text-red-500 transition-colors">
+                                    <button class="text-neutral-400 hover:text-red-500 transition-colors" :disabled="auth()->user()->cannot('permission', App\PermissionEnum::DELETE_REPORT)">
                                         <x-ui.icon name="trash" class="size-4" />
                                     </button>
                                 </x-ui.modal.trigger>

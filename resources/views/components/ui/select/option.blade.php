@@ -56,7 +56,7 @@
 >
     @if (!$allowCustomSlots)
         {{-- Check Icon for selected state --}}
-        <x-ui.icon 
+        <x-ui.icon
             :name="$checkIcon"
             @class([
                 'z-10 place-self-center opacity-0 group-data-selected:opacity-100 size-[1.15rem]',

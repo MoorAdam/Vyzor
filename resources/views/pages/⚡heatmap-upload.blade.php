@@ -5,16 +5,21 @@ use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\WithFileUploads;
 use App\Models\Heatmap;
+use App\PermissionEnum;
 
 new #[Layout('layouts.app')] class extends Component {
     use WithFileUploads;
-
 
     #[Validate('required|file|max:2048')]
     public $csvFile = null;
 
     public ?string $errorMessage = null;
     public ?string $successMessage = null;
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::UPLOAD_HEATMAP, \App\Models\Project::current()]), 403);
+    }
 
     public function updatedCsvFile(): void
     {

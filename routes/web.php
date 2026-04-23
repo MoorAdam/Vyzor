@@ -18,7 +18,7 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::middleware('user_type:web')->group(function () {
+    Route::middleware('user_role:web')->group(function () {
         Route::livewire('/new-project', 'pages::project.create')->name('new-project');
         Route::livewire('/projects/{project}/edit', 'pages::project.edit')->name('project.edit');
         Route::livewire('/projects', 'pages::project.list')->name('projects');
@@ -34,7 +34,7 @@ Route::middleware('auth')->group(function () {
         Route::livewire('/register', 'pages::auth.register')->name('register');
     });
 
-    Route::middleware('user_type:customer')->group(function () {
+    Route::middleware('user_role:customer')->group(function () {
         Route::livewire('/customer/dashboard', 'pages::customer.dashboard')->name('customer.dashboard');
     });
 

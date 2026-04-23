@@ -7,13 +7,19 @@ use Livewire\Attributes\On;
 use App\Models\User;
 use App\Models\Project;
 use App\Models\ProjectPermission;
+use App\PermissionEnum;
 use App\ProjectStatusEnum;
-use App\UserTypeEnum;
+use App\UserRoleEnum;
 
 new #[Layout('layouts.app')] class extends Component {
     #[Validate('required|string|max:255')]
 
     public string $name = '';
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('permission', PermissionEnum::CREATE_PROJECT), 403);
+    }
 
     #[Validate('nullable|string')]
     public string $description = '';
@@ -29,6 +35,9 @@ new #[Layout('layouts.app')] class extends Component {
 
     #[Validate('nullable|string')]
     public string $clarity_api_key = '';
+
+    #[Validate('array')]
+    public array $collaborator_ids = [];
 
     public function updatedDomain(): void
     {
@@ -62,6 +71,7 @@ new #[Layout('layouts.app')] class extends Component {
 
         $project->permission()->create([
             'owner_id' => auth()->id(),
+            'collaborators' => array_map('intval', $this->collaborator_ids),
         ]);
 
         session(['current_project_id' => $project->id]);
@@ -73,8 +83,11 @@ new #[Layout('layouts.app')] class extends Component {
     public function with(): array
     {
         return [
-            'customers' => User::where('type', UserTypeEnum::CUSTOMER)->get(),
+            'customers' => User::where('role', UserRoleEnum::CUSTOMER)->get(),
             'statuses' => ProjectStatusEnum::cases(),
+            'availableCollaborators' => User::where('role', UserRoleEnum::WEB)
+                ->where('id', '!=', auth()->id())
+                ->get(),
         ];
     }
 };
@@ -111,6 +124,15 @@ new #[Layout('layouts.app')] class extends Component {
                         </x-ui.modal.trigger>
                     </div>
                     <x-ui.error name="customer_id" />
+                </x-ui.field>
+
+                <x-ui.field>
+                    <x-ui.label>{{ __('Collaborators') }}</x-ui.label>
+                    <x-ui.select wire:model="collaborator_ids" :placeholder="__('Add collaborators...')" multiple pillbox searchable>
+                        @foreach ($availableCollaborators as $collab)
+                            <x-ui.select.option :value="$collab->id">{{ $collab->name }}</x-ui.select.option>
+                        @endforeach
+                    </x-ui.select>
                 </x-ui.field>
 
                 <x-ui.field required>

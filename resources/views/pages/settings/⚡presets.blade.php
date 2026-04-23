@@ -6,6 +6,7 @@ use Livewire\Attributes\Validate;
 use App\AiContextType;
 use App\ContextTag;
 use App\Models\AiContext;
+use App\PermissionEnum;
 
 new #[Layout('layouts.app')] class extends Component {
 
@@ -26,6 +27,11 @@ new #[Layout('layouts.app')] class extends Component {
 
     public bool $showForm = false;
     public string $filterType = '';
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('permission', PermissionEnum::VIEW_CONTEXTS), 403);
+    }
 
     public function openCreateForm(): void
     {
@@ -54,6 +60,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function savePreset(): void
     {
+        abort_unless(auth()->user()->can('permission', $this->editingId ? PermissionEnum::EDIT_CONTEXTS : PermissionEnum::ADD_CONTEXTS), 403);
         $this->validate([
             'formName' => 'required|string|max:255',
             'formNameHu' => 'nullable|string|max:255',
@@ -102,6 +109,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function deletePreset(int $id): void
     {
+        abort_unless(auth()->user()->can('permission', PermissionEnum::EDIT_CONTEXTS), 403);
         AiContext::findOrFail($id)->delete();
         session()->flash('success', __('Context deleted.'));
     }
@@ -199,7 +207,7 @@ new #[Layout('layouts.app')] class extends Component {
                 <x-ui.description class="mt-1">{{ __('Configure the contexts and instructions that shape AI behaviour in reports.') }}</x-ui.description>
             </div>
             @if (!$showForm)
-                <x-ui.button color="blue" icon="plus" wire:click="openCreateForm">
+                <x-ui.button color="blue" icon="plus" wire:click="openCreateForm" :disabled="auth()->user()->cannot('permission', App\PermissionEnum::ADD_CONTEXTS)">
                     {{ __('New Context') }}
                 </x-ui.button>
             @endif
@@ -480,7 +488,7 @@ new #[Layout('layouts.app')] class extends Component {
 
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-1">
-                                <x-ui.button size="xs" variant="outline" color="neutral" icon="pencil-simple" wire:click="editPreset({{ $context->id }})">
+                                <x-ui.button size="xs" variant="outline" color="neutral" icon="pencil-simple" wire:click="editPreset({{ $context->id }})" :disabled="auth()->user()->cannot('permission', App\PermissionEnum::EDIT_CONTEXTS)">
                                     {{ __('Edit') }}
                                 </x-ui.button>
                                 <x-ui.button
@@ -497,6 +505,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 wire:click="deletePreset({{ $context->id }})"
                                 wire:confirm="{{ __('Are you sure you want to delete \':name\'? This cannot be undone.', ['name' => $context->localizedName()]) }}"
                                 class="text-neutral-400 hover:text-red-500 transition-colors p-1"
+                                :disabled="auth()->user()->cannot('permission', App\PermissionEnum::EDIT_CONTEXTS)"
                             >
                                 <x-ui.icon name="trash" class="size-4" />
                             </button>

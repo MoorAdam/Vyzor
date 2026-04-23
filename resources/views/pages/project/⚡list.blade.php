@@ -4,15 +4,27 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use App\Models\Project;
+use App\PermissionEnum;
 use App\ProjectStatusEnum;
 
 new #[Layout('layouts.app')] class extends Component {
 
+    public string $tab = 'owned';
+
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('permission', PermissionEnum::VIEW_PROJECTS), 403);
+    }
+
     private function projectQuery()
     {
-        return auth()->user()->isAdmin()
-            ? Project::query()
-            : Project::whereHas('permission', fn($q) => $q->where('owner_id', auth()->id()));
+        if (auth()->user()->isAdmin()) {
+            return Project::query();
+        }
+
+        return $this->tab === 'collaborating'
+            ? Project::collaboratingWith(auth()->user())
+            : Project::ownedBy(auth()->user());
     }
 
     public function setActiveProject(int $projectId): void
@@ -32,12 +44,14 @@ new #[Layout('layouts.app')] class extends Component {
     public function updateStatus(int $projectId, string $status): void
     {
         $project = $this->projectQuery()->findOrFail($projectId);
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::CHANGE_PROJECT_STATUS, $project]), 403);
         $project->update(['status' => ProjectStatusEnum::from($status)]);
     }
 
     public function deleteProject(int $projectId): void
     {
         $project = $this->projectQuery()->findOrFail($projectId);
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::DELETE_PROJECT, $project]), 403);
         $project->delete();
 
         if (session('current_project_id') == $projectId) {
@@ -48,12 +62,16 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function with(): array
     {
+        $isAdmin = auth()->user()->isAdmin();
+
         return [
             'projects' => $this->projectQuery()
-                ->with('customer')
+                ->with('customer', 'permission.owner')
                 ->latest('updated_at')
                 ->get(),
             'statuses' => ProjectStatusEnum::cases(),
+            'isAdmin' => $isAdmin,
+            'collabCount' => $isAdmin ? 0 : Project::collaboratingWith(auth()->user())->count(),
         ];
     }
 
@@ -66,16 +84,30 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.heading level="h1" size="xl">{{ __('Projects') }}</x-ui.heading>
             <x-ui.description class="mt-1">{{ __('All projects assigned to you.') }}</x-ui.description>
         </div>
-        <x-ui.button variant="primary" icon="plus" as="a" href="/new-project">{{ __('New Project') }}</x-ui.button>
+        <x-ui.button variant="primary" icon="plus" as="a" href="/new-project" :disabled="auth()->user()->cannot('permission', App\PermissionEnum::CREATE_PROJECT)">{{ __('New Project') }}</x-ui.button>
     </div>
+
+    @if (!$isAdmin)
+        <x-ui.radio.group wire:model.live="tab" variant="segmented" direction="horizontal">
+            <x-ui.radio.item value="owned" :label="__('My Projects')" />
+            <x-ui.radio.item value="collaborating" :label="__('Collaborating')" :badge="$collabCount > 0 ? $collabCount : null" />
+        </x-ui.radio.group>
+    @endif
+
+    @php
+        $user = auth()->user();
+        $isCollab = $tab === 'collaborating';
+    @endphp
 
     <x-ui.card class="overflow-hidden p-0! max-w-full!">
         @if ($projects->isEmpty())
             <x-ui.empty>
                 <x-ui.empty.contents>
-                    <x-ui.icon name="folder-open" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>{{ __('No projects found.') }}</x-ui.text>
-                    <x-ui.button variant="outline" color="neutral" as="a" href="/new-project" class="mt-2">{{ __('Create your first project') }}</x-ui.button>
+                    <x-ui.icon name="{{ $isCollab ? 'users' : 'folder-open' }}" class="size-10 text-neutral-300 dark:text-neutral-600" />
+                    <x-ui.text>{{ $isCollab ? __('No collaborating projects.') : __('No projects found.') }}</x-ui.text>
+                    @if (!$isCollab)
+                        <x-ui.button variant="outline" color="neutral" as="a" href="/new-project" class="mt-2">{{ __('Create your first project') }}</x-ui.button>
+                    @endif
                 </x-ui.empty.contents>
             </x-ui.empty>
         @else
@@ -85,6 +117,9 @@ new #[Layout('layouts.app')] class extends Component {
                         <th class="px-4 py-3 font-medium">{{ __('Name') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Domain') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Customer') }}</th>
+                        @if ($isCollab)
+                            <th class="px-4 py-3 font-medium">{{ __('Owner') }}</th>
+                        @endif
                         <th class="px-4 py-3 font-medium">{{ __('Status') }}</th>
                         <th class="px-4 py-3 font-medium">{{ __('Created') }}</th>
                         <th class="px-4 py-3 font-medium w-36">{{ __('Updated') }}</th>
@@ -93,13 +128,23 @@ new #[Layout('layouts.app')] class extends Component {
                 </thead>
                 <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
                     @foreach ($projects as $project)
-                        @php $isActive = session('current_project_id') == $project->id; @endphp
+                        @php
+                            $isActive = session('current_project_id') == $project->id;
+                            $canChangeStatus = $user->can('permission', [App\PermissionEnum::CHANGE_PROJECT_STATUS, $project]);
+                            $canEdit = $user->can('permission', [App\PermissionEnum::EDIT_PROJECT_DETAILS, $project]);
+                            $canDelete = $user->can('permission', [App\PermissionEnum::DELETE_PROJECT, $project]);
+                        @endphp
                         <tr class="h-16 {{ $isActive ? 'bg-neutral-50 dark:bg-neutral-900/30 border-l-2 border-l-green-500' : '' }}">
                             <td class="px-4 py-3 align-middle">
                                 <div>
-                                    <span class="font-medium text-neutral-900 dark:text-neutral-100">{{ $project->name }}</span>
+                                    <span class="font-medium text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
+                                        @if ($isCollab)
+                                            <x-ui.icon name="users" class="size-4 text-blue-500 shrink-0" />
+                                        @endif
+                                        {{ $project->name }}
+                                    </span>
                                     @if ($project->description)
-                                        <p class="text-xs text-neutral-400 dark:text-neutral-500 truncate max-w-xs mt-0.5">{{ $project->description }}</p>
+                                        <p class="text-xs text-neutral-400 dark:text-neutral-500 truncate max-w-xs mt-0.5 {{ $isCollab ? 'pl-5.5' : '' }}">{{ $project->description }}</p>
                                     @endif
                                 </div>
                             </td>
@@ -109,28 +154,39 @@ new #[Layout('layouts.app')] class extends Component {
                             <td class="px-4 py-3 text-neutral-600 dark:text-neutral-400">
                                 {{ $project->customer?->name ?? '—' }}
                             </td>
+                            @if ($isCollab)
+                                <td class="px-4 py-3 text-neutral-600 dark:text-neutral-400">
+                                    {{ $project->permission?->owner?->name ?? '—' }}
+                                </td>
+                            @endif
                             <td class="px-4 py-3">
-                                <x-ui.dropdown position="bottom-start" portal>
-                                    <x-slot:button>
-                                        <x-ui.badge size="sm" class="cursor-pointer" :color="$project->status->color()">
-                                            {{ $project->status->label() }}
-                                            <x-ui.icon name="caret-down" class="size-3" />
-                                        </x-ui.badge>
-                                    </x-slot:button>
-                                    <x-slot:menu>
-                                        @foreach ($statuses as $status)
-                                            <x-ui.dropdown.item
-                                                wire:click="updateStatus({{ $project->id }}, '{{ $status->value }}')"
-                                                :active="$project->status === $status"
-                                            >
-                                                <span class="flex items-center gap-2">
-                                                    <span class="size-2 rounded-full bg-{{ $status->color() }}-500"></span>
-                                                    {{ $status->label() }}
-                                                </span>
-                                            </x-ui.dropdown.item>
-                                        @endforeach
-                                    </x-slot:menu>
-                                </x-ui.dropdown>
+                                @if ($canChangeStatus)
+                                    <x-ui.dropdown position="bottom-start" portal>
+                                        <x-slot:button>
+                                            <x-ui.badge size="sm" class="cursor-pointer" :color="$project->status->color()">
+                                                {{ $project->status->label() }}
+                                                <x-ui.icon name="caret-down" class="size-3" />
+                                            </x-ui.badge>
+                                        </x-slot:button>
+                                        <x-slot:menu>
+                                            @foreach ($statuses as $status)
+                                                <x-ui.dropdown.item
+                                                    wire:click="updateStatus({{ $project->id }}, '{{ $status->value }}')"
+                                                    :active="$project->status === $status"
+                                                >
+                                                    <span class="flex items-center gap-2">
+                                                        <span class="size-2 rounded-full bg-{{ $status->color() }}-500"></span>
+                                                        {{ $status->label() }}
+                                                    </span>
+                                                </x-ui.dropdown.item>
+                                            @endforeach
+                                        </x-slot:menu>
+                                    </x-ui.dropdown>
+                                @else
+                                    <x-ui.badge size="sm" :color="$project->status->color()">
+                                        {{ $project->status->label() }}
+                                    </x-ui.badge>
+                                @endif
                             </td>
                             <td class="px-4 py-3 text-neutral-500 dark:text-neutral-400 whitespace-nowrap">
                                 {{ $project->created_at->format('M d, Y') }}
@@ -149,19 +205,25 @@ new #[Layout('layouts.app')] class extends Component {
                                     >
                                         {{ __('Set Active') }}
                                     </x-ui.button>
-                                    <x-ui.button size="xs" variant="soft" icon="pencil-simple" as="a" href="{{ route('project.edit', $project) }}" wire:navigate>{{ __('Edit') }}</x-ui.button>
+                                    @if ($canEdit)
+                                        <x-ui.button size="xs" variant="soft" icon="pencil-simple" as="a" href="{{ route('project.edit', $project) }}" wire:navigate>{{ __('Edit') }}</x-ui.button>
+                                    @else
+                                        <x-ui.button size="xs" variant="soft" icon="pencil-simple" disabled>{{ __('Edit') }}</x-ui.button>
+                                    @endif
                                     <x-ui.modal.trigger :id="'delete-project-' . $project->id">
-                                        <x-ui.button size="xs" variant="soft" icon="trash">
+                                        <x-ui.button size="xs" variant="soft" icon="trash" :disabled="!$canDelete">
                                             {{ __('Delete') }}
                                         </x-ui.button>
                                     </x-ui.modal.trigger>
-                                    <x-ui.modal :id="'delete-project-' . $project->id" :title="__('Delete Project')" size="sm" centered>
-                                        <x-ui.text>{!! __('Are you sure you want to delete <strong>:name</strong>?', ['name' => $project->name]) !!}</x-ui.text>
-                                        <x-slot:footer>
-                                            <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
-                                            <x-ui.button variant="danger" wire:click="deleteProject({{ $project->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
-                                        </x-slot:footer>
-                                    </x-ui.modal>
+                                    @if ($canDelete)
+                                        <x-ui.modal :id="'delete-project-' . $project->id" :title="__('Delete Project')" size="sm" centered>
+                                            <x-ui.text>{!! __('Are you sure you want to delete <strong>:name</strong>?', ['name' => $project->name]) !!}</x-ui.text>
+                                            <x-slot:footer>
+                                                <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
+                                                <x-ui.button variant="danger" wire:click="deleteProject({{ $project->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
+                                            </x-slot:footer>
+                                        </x-ui.modal>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

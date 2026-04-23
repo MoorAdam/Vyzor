@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\Report;
 use App\ReportStatusEnum;
 use Illuminate\Support\Str;
+use App\PermissionEnum;
 
 new #[Layout('layouts.app')] class extends Component {
 
@@ -25,6 +26,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function mount(): void
     {
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::CREATE_REPORT, \App\Models\Project::current()]), 403);
         // Default to "page" sub-tab when the project has no Clarity key
         // and the URL doesn't already specify a type.
         if (!$this->hasClarityKey && !request()->has('type')) {

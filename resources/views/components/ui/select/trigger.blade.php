@@ -101,7 +101,7 @@
             class="col-start-3 row-start-1 pr-1 justify-self-center"
         >
             <x-ui.icon
-                name="x-mark"
+                name="x"
                 @class([
                     'rounded-md dark:hover:bg-white/5 hover:bg-neutral-800/5',
                     match($size) {

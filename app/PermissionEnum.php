@@ -1,0 +1,97 @@
+<?php
+
+namespace App;
+
+enum PermissionEnum: string
+{
+    // Basics
+    case VIEW_PROJECTS = 'basics.view-projects';
+
+    // Users
+    case VIEW_USERS = 'users.view-list';
+    case CREATE_USER = 'users.create-user';
+    case EDIT_USER = 'users.edit-user';
+    case REMOVE_USER = 'users.remove-user';
+    case CREATE_CUSTOMER = 'users.create-customer';
+    case EDIT_CUSTOMER = 'users.edit-customer';
+    case REMOVE_CUSTOMER = 'users.remove-customer';
+
+    // Project
+    case VIEW_ALL_PROJECTS = 'project.view-all';
+    case VIEW_OWNED_PROJECTS = 'project.view-owned';
+    case VIEW_COLLAB_PROJECTS = 'project.view-collab';
+    case CHANGE_PROJECT_STATUS = 'project.change-status';
+    case EDIT_PROJECT_DETAILS = 'project.edit-details';
+    case DELETE_PROJECT = 'project.delete';
+    case CREATE_PROJECT = 'project.create';
+
+    // Clarity
+    case VIEW_CLARITY_SNAPSHOTS = 'project.clarity.view-snapshots';
+    case VIEW_CLARITY_TRENDS = 'project.clarity.view-trends';
+    case FETCH_CLARITY_DATA = 'project.clarity.fetch-data';
+
+    // Report
+    case VIEW_REPORTS = 'project.report.view';
+    case CREATE_REPORT = 'project.report.create';
+    case EDIT_REPORT = 'project.report.edit';
+    case DELETE_REPORT = 'project.report.delete';
+
+    // Heatmap
+    case UPLOAD_HEATMAP = 'project.heatmap.upload';
+    case VIEW_HEATMAPS = 'project.heatmap.view';
+    case EDIT_HEATMAPS = 'project.heatmap.edit';
+    case DELETE_HEATMAPS = 'project.heatmap.delete';
+
+    // Context
+    case VIEW_CONTEXTS = 'context.view';
+    case EDIT_CONTEXTS = 'context.edit';
+    case ADD_CONTEXTS = 'context.add';
+
+    public function group(): string
+    {
+        return match (true) {
+            str_starts_with($this->value, 'basics.') => 'basics',
+            str_starts_with($this->value, 'users.') => 'users',
+            str_starts_with($this->value, 'project.clarity.') => 'project.clarity',
+            str_starts_with($this->value, 'project.report.') => 'project.report',
+            str_starts_with($this->value, 'project.heatmap.') => 'project.heatmap',
+            str_starts_with($this->value, 'project.') => 'project',
+            str_starts_with($this->value, 'context.') => 'context',
+        };
+    }
+
+    public function description(): string
+    {
+        return match ($this) {
+            self::VIEW_PROJECTS => 'View the projects list',
+            self::VIEW_USERS => 'View the users list',
+            self::CREATE_USER => 'Create new users',
+            self::EDIT_USER => 'Edit existing users',
+            self::REMOVE_USER => 'Remove users',
+            self::CREATE_CUSTOMER => 'Create new customers',
+            self::EDIT_CUSTOMER => 'Edit existing customers',
+            self::REMOVE_CUSTOMER => 'Remove customers',
+            self::VIEW_ALL_PROJECTS => 'View all projects regardless of ownership',
+            self::VIEW_OWNED_PROJECTS => 'View own projects',
+            self::VIEW_COLLAB_PROJECTS => 'View projects as collaborator',
+            self::CHANGE_PROJECT_STATUS => 'Change project status',
+            self::EDIT_PROJECT_DETAILS => 'Edit project details',
+            self::DELETE_PROJECT => 'Delete projects',
+            self::CREATE_PROJECT => 'Create new projects',
+            self::VIEW_CLARITY_SNAPSHOTS => 'View Clarity snapshots',
+            self::VIEW_CLARITY_TRENDS => 'View Clarity trends',
+            self::FETCH_CLARITY_DATA => 'Fetch Clarity data',
+            self::VIEW_REPORTS => 'View reports',
+            self::CREATE_REPORT => 'Create or request reports',
+            self::EDIT_REPORT => 'Edit reports',
+            self::DELETE_REPORT => 'Delete reports',
+            self::UPLOAD_HEATMAP => 'Upload heatmaps',
+            self::VIEW_HEATMAPS => 'View heatmaps',
+            self::EDIT_HEATMAPS => 'Edit heatmaps',
+            self::DELETE_HEATMAPS => 'Delete heatmaps',
+            self::VIEW_CONTEXTS => 'View contexts page',
+            self::EDIT_CONTEXTS => 'Edit contexts',
+            self::ADD_CONTEXTS => 'Add new contexts',
+        };
+    }
+}

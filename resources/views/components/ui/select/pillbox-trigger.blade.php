@@ -79,7 +79,7 @@
                     x-bind:aria-label="'Remove ' + item.label"
                 >
                     <x-ui.icon 
-                        name="x-mark"
+                        name="x"
                         class="size-3.5 opacity-60"
                     />
                 </button>
@@ -138,7 +138,7 @@
             x-cloak
         >
             <x-ui.icon
-                name="x-mark"
+                name="x"
                 @class([
                     "rounded-md dark:hover:bg-white/5 hover:bg-neutral-800/5  ",
                     match($size){

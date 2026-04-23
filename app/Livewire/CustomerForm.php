@@ -3,7 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\User;
-use App\UserTypeEnum;
+use App\UserRoleEnum;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -30,7 +30,7 @@ class CustomerForm extends Component
 
         DB::transaction(function () {
             $user = User::create([
-                'type' => UserTypeEnum::CUSTOMER,
+                'role' => UserRoleEnum::CUSTOMER,
                 'name' => $this->company_name,
                 'email' => $this->email,
                 'password' => $this->password,

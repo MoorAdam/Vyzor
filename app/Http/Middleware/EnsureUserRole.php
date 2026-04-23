@@ -2,14 +2,14 @@
 
 namespace App\Http\Middleware;
 
-use App\UserTypeEnum;
+use App\UserRoleEnum;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-class EnsureUserType
+class EnsureUserRole
 {
-    public function handle(Request $request, Closure $next, string $type): Response
+    public function handle(Request $request, Closure $next, string $role): Response
     {
         $user = $request->user();
 
@@ -17,7 +17,7 @@ class EnsureUserType
             return $next($request);
         }
 
-        if ($user?->type !== UserTypeEnum::from($type)) {
+        if ($user?->role !== UserRoleEnum::from($role)) {
             return $user?->isCustomer()
                 ? redirect()->route('customer.dashboard')
                 : redirect()->route('clarity.snapshot');

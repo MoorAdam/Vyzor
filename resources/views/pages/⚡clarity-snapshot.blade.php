@@ -4,6 +4,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use App\Models\ClarityInsight;
+use App\PermissionEnum;
 
 new #[Layout('layouts.app')] class extends Component {
 
@@ -12,6 +13,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function mount(): void
     {
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::VIEW_CLARITY_SNAPSHOTS, \App\Models\Project::current()]), 403);
         $this->datetime = $this->defaultDatetime();
     }
 

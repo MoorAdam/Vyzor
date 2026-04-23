@@ -7,5 +7,5 @@
         }
     "
 >     
-    <x-ui.icon name="x-mark" />
+    <x-ui.icon name="x" />
 </x-ui.input.options.button>

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Middleware\EnsureUserType;
+use App\Http\Middleware\EnsureUserRole;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -19,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
             : '/clarity/snapshot'
         );
         $middleware->alias([
-            'user_type' => EnsureUserType::class,
+            'user_role' => EnsureUserRole::class,
         ]);
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
