@@ -6,6 +6,7 @@ use Livewire\Attributes\Validate;
 use Livewire\Attributes\On;
 use App\Models\User;
 use App\Models\Project;
+use App\Models\ProjectPermission;
 use App\ProjectStatusEnum;
 use App\UserTypeEnum;
 
@@ -53,11 +54,14 @@ new #[Layout('layouts.app')] class extends Component {
         $project = Project::create([
             'name' => $this->name,
             'description' => $this->description ?: null,
-            'owner_id' => auth()->id(),
             'customer_id' => $this->customer_id,
             'status' => $this->status,
             'domain' => $this->domain,
             'clarity_api_key' => $this->clarity_api_key ?: null,
+        ]);
+
+        $project->permission()->create([
+            'owner_id' => auth()->id(),
         ]);
 
         session(['current_project_id' => $project->id]);

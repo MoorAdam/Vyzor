@@ -32,7 +32,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function mount(Project $project): void
     {
-        abort_unless(auth()->user()->isAdmin() || $project->owner_id === auth()->id(), 403);
+        abort_unless(auth()->user()->isAdmin() || $project->permission?->owner_id === auth()->id(), 403);
 
         $this->project = $project;
         $this->name = $project->name;

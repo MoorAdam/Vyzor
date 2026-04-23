@@ -26,7 +26,7 @@ new class extends Component {
 
         $accessible = auth()->user()->isAdmin()
             ? Project::where('id', $projectId)->exists()
-            : Project::where('owner_id', auth()->id())->where('id', $projectId)->exists();
+            : Project::whereHas('permission', fn($q) => $q->where('owner_id', auth()->id()))->where('id', $projectId)->exists();
 
         if ($accessible) {
             $this->selectedProject = (string) $projectId;
@@ -44,7 +44,7 @@ new class extends Component {
     {
         $query = auth()->user()->isAdmin()
             ? Project::with('customer')
-            : Project::with('customer')->where('owner_id', auth()->id());
+            : Project::with('customer')->whereHas('permission', fn($q) => $q->where('owner_id', auth()->id()));
 
         return $query->get()->groupBy(fn($project) => $project->customer?->name ?? __('No Customer'));
     }

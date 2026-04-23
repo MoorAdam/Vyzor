@@ -5,13 +5,14 @@ namespace App\Models;
 use App\ProjectStatusEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 class Project extends Model
 {
     protected $fillable = [
         'name',
         'description',
-        'owner_id',
         'customer_id',
         'status',
         'domain',
@@ -26,9 +27,14 @@ class Project extends Model
         ];
     }
 
-    public function owner(): BelongsTo
+    public function permission(): HasOne
     {
-        return $this->belongsTo(User::class, 'owner_id');
+        return $this->hasOne(ProjectPermission::class);
+    }
+
+    public function owner(): HasOneThrough
+    {
+        return $this->hasOneThrough(User::class, ProjectPermission::class, 'project_id', 'id', 'id', 'owner_id');
     }
 
     public function customer(): BelongsTo

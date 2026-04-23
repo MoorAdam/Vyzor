@@ -12,7 +12,7 @@ new #[Layout('layouts.app')] class extends Component {
     {
         return auth()->user()->isAdmin()
             ? Project::query()
-            : Project::where('owner_id', auth()->id());
+            : Project::whereHas('permission', fn($q) => $q->where('owner_id', auth()->id()));
     }
 
     public function setActiveProject(int $projectId): void
