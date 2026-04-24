@@ -116,24 +116,25 @@
                     <x-ui.navlist.group :label="__('General')">
                         <x-ui.navlist.item :label="__('Projects')" icon="check-square" href="/projects" :disabled="auth()->user()->cannot('permission', App\PermissionEnum::VIEW_PROJECTS)" />
                     </x-ui.navlist.group>
+                    @php $noProject = !$currentProject && !auth()->user()->isAdmin(); @endphp
                     <x-ui.navlist.group :label="__('Project')">
                         <x-ui.navlist.group :label="__('Clarity')" collapsable>
                             <x-ui.navlist.item :label="__('Snapshot')" icon="camera" href="/clarity/snapshot"
-                                :active="request()->is('clarity/snapshot')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\PermissionEnum::VIEW_CLARITY_SNAPSHOTS, $currentProject])" />
+                                :active="request()->is('clarity/snapshot')" :disabled="$noProject || auth()->user()->cannot('permission', [App\PermissionEnum::VIEW_CLARITY_SNAPSHOTS, $currentProject])" />
                             <x-ui.navlist.item :label="__('Trends')" icon="chart-line-up" href="/clarity/trends"
-                                :active="request()->is('clarity/trends')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\PermissionEnum::VIEW_CLARITY_TRENDS, $currentProject])" />
+                                :active="request()->is('clarity/trends')" :disabled="$noProject || auth()->user()->cannot('permission', [App\PermissionEnum::VIEW_CLARITY_TRENDS, $currentProject])" />
                         </x-ui.navlist.group>
                         <x-ui.navlist.group :label="__('Reports')" collapsable>
                             <x-ui.navlist.item :label="__('New Report')" icon="plus-circle" href="/ai-reports"
-                                :active="request()->is('ai-reports')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\PermissionEnum::CREATE_REPORT, $currentProject])" />
+                                :active="request()->is('ai-reports')" :disabled="$noProject || auth()->user()->cannot('permission', [App\PermissionEnum::CREATE_REPORT, $currentProject])" />
                             <x-ui.navlist.item :label="__('All Reports')" icon="book-bookmark" href="/reports"
-                                :active="request()->is('reports') || request()->is('reports/*')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\PermissionEnum::VIEW_REPORTS, $currentProject])" />
+                                :active="request()->is('reports') || request()->is('reports/*')" :disabled="$noProject || auth()->user()->cannot('permission', [App\PermissionEnum::VIEW_REPORTS, $currentProject])" />
                         </x-ui.navlist.group>
                         <x-ui.navlist.group :label="__('Heatmaps')" collapsable>
                             <x-ui.navlist.item :label="__('Upload')" icon="upload-simple" href="/heatmaps/upload"
-                                :active="request()->is('heatmaps/upload')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\PermissionEnum::UPLOAD_HEATMAP, $currentProject])" />
+                                :active="request()->is('heatmaps/upload')" :disabled="$noProject || auth()->user()->cannot('permission', [App\PermissionEnum::UPLOAD_HEATMAP, $currentProject])" />
                             <x-ui.navlist.item :label="__('All Heatmaps')" icon="fire" href="/heatmaps"
-                                :active="request()->is('heatmaps') && !request()->is('heatmaps/*')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\PermissionEnum::VIEW_HEATMAPS, $currentProject])" />
+                                :active="request()->is('heatmaps') && !request()->is('heatmaps/*')" :disabled="$noProject || auth()->user()->cannot('permission', [App\PermissionEnum::VIEW_HEATMAPS, $currentProject])" />
                         </x-ui.navlist.group>
                         <x-ui.navlist.item disabled :label="__('Presentations')" icon="projector-screen-chart" />
                     </x-ui.navlist.group>
