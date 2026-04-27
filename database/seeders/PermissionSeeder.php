@@ -50,10 +50,8 @@ class PermissionSeeder extends Seeder
         PermissionEnum::EDIT_HEATMAPS,
         PermissionEnum::DELETE_HEATMAPS,
 
-        // Context
+        // Context — view only by default
         PermissionEnum::VIEW_CONTEXTS,
-        PermissionEnum::EDIT_CONTEXTS,
-        PermissionEnum::ADD_CONTEXTS,
     ];
 
     /**
@@ -84,6 +82,27 @@ class PermissionSeeder extends Seeder
         PermissionEnum::DELETE_HEATMAPS,
     ];
 
+    /**
+     * Context manager — full read/write on AI contexts.
+     * Stacks on top of the user's other roles via the multi-role system.
+     */
+    private const CONTEXT_MANAGER_PERMISSIONS = [
+        PermissionEnum::VIEW_CONTEXTS,
+        PermissionEnum::ADD_CONTEXTS,
+        PermissionEnum::EDIT_CONTEXTS,
+        PermissionEnum::DELETE_CONTEXTS,
+    ];
+
+    /**
+     * Agent manager — full read/write on AI agent configurations.
+     */
+    private const AGENT_MANAGER_PERMISSIONS = [
+        PermissionEnum::VIEW_AGENTS,
+        PermissionEnum::ADD_AGENTS,
+        PermissionEnum::EDIT_AGENTS,
+        PermissionEnum::DELETE_AGENTS,
+    ];
+
     public function run(): void
     {
         // Upsert all permissions from the enum
@@ -97,12 +116,15 @@ class PermissionSeeder extends Seeder
             );
         }
 
+        // Drop slugs that no longer exist in the enum (e.g. context.edit, context.add).
+        $validSlugs = array_map(fn ($p) => $p->value, PermissionEnum::cases());
+        Permission::whereNotIn('slug', $validSlugs)->delete();
+
         $allPermissions = Permission::pluck('id', 'slug');
 
-        // Seed web role permissions
         $this->seedRole(UserRoleEnum::WEB->value, self::WEB_PERMISSIONS, $allPermissions);
-
-        // Seed collaborator role permissions
+        $this->seedRole(UserRoleEnum::CONTEXT_MANAGER->value, self::CONTEXT_MANAGER_PERMISSIONS, $allPermissions);
+        $this->seedRole(UserRoleEnum::AGENT_MANAGER->value, self::AGENT_MANAGER_PERMISSIONS, $allPermissions);
         $this->seedRole('collaborator', self::COLLABORATOR_PERMISSIONS, $allPermissions);
     }
 

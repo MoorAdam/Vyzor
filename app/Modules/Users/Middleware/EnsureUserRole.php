@@ -17,7 +17,7 @@ class EnsureUserRole
             return $next($request);
         }
 
-        if ($user?->role !== UserRoleEnum::from($role)) {
+        if (! $user?->hasRole(UserRoleEnum::from($role))) {
             return $user?->isCustomer()
                 ? redirect()->route('customer.dashboard')
                 : redirect()->route('projects');

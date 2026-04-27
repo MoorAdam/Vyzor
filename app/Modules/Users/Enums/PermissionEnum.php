@@ -44,8 +44,15 @@ enum PermissionEnum: string
 
     // Context
     case VIEW_CONTEXTS = 'context.view';
-    case EDIT_CONTEXTS = 'context.edit';
     case ADD_CONTEXTS = 'context.add';
+    case EDIT_CONTEXTS = 'context.edit';
+    case DELETE_CONTEXTS = 'context.delete';
+
+    // Agent
+    case VIEW_AGENTS = 'agent.view';
+    case ADD_AGENTS = 'agent.add';
+    case EDIT_AGENTS = 'agent.edit';
+    case DELETE_AGENTS = 'agent.delete';
 
     public function group(): string
     {
@@ -57,6 +64,7 @@ enum PermissionEnum: string
             str_starts_with($this->value, 'project.heatmap.') => 'project.heatmap',
             str_starts_with($this->value, 'project.') => 'project',
             str_starts_with($this->value, 'context.') => 'context',
+            str_starts_with($this->value, 'agent.') => 'agent',
         };
     }
 
@@ -90,8 +98,13 @@ enum PermissionEnum: string
             self::EDIT_HEATMAPS => 'Edit heatmaps',
             self::DELETE_HEATMAPS => 'Delete heatmaps',
             self::VIEW_CONTEXTS => 'View contexts page',
-            self::EDIT_CONTEXTS => 'Edit contexts',
-            self::ADD_CONTEXTS => 'Add new contexts',
+            self::ADD_CONTEXTS => 'Create new contexts',
+            self::EDIT_CONTEXTS => 'Edit existing contexts',
+            self::DELETE_CONTEXTS => 'Delete contexts',
+            self::VIEW_AGENTS => 'View agent configuration page',
+            self::ADD_AGENTS => 'Create new agent configurations',
+            self::EDIT_AGENTS => 'Edit agent configurations',
+            self::DELETE_AGENTS => 'Delete agent configurations',
         };
     }
 }

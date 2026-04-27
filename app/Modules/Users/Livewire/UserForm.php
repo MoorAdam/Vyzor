@@ -27,7 +27,7 @@ class UserForm extends Component
 
         DB::transaction(function () {
             $user = User::create([
-                'role' => UserRoleEnum::WEB,
+                'roles' => [UserRoleEnum::WEB->value],
                 'name' => $this->name,
                 'email' => $this->email,
                 'password' => $this->password,

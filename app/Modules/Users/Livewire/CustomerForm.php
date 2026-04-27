@@ -30,7 +30,7 @@ class CustomerForm extends Component
 
         DB::transaction(function () {
             $user = User::create([
-                'role' => UserRoleEnum::CUSTOMER,
+                'roles' => [UserRoleEnum::CUSTOMER->value],
                 'name' => $this->company_name,
                 'email' => $this->email,
                 'password' => $this->password,

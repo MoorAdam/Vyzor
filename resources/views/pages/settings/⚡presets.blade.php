@@ -113,7 +113,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function deletePreset(int $id): void
     {
-        abort_unless(auth()->user()->can('permission', PermissionEnum::EDIT_CONTEXTS), 403);
+        abort_unless(auth()->user()->can('permission', PermissionEnum::DELETE_CONTEXTS), 403);
         AiContext::findOrFail($id)->delete();
         session()->flash('success', __('Context deleted.'));
     }
@@ -513,7 +513,7 @@ new #[Layout('layouts.app')] class extends Component {
                                     wire:click="deletePreset({{ $context->id }})"
                                     wire:confirm="{{ __('Are you sure you want to delete \':name\'? This cannot be undone.', ['name' => $context->localizedName()]) }}"
                                     class="text-neutral-400 hover:text-red-500 transition-colors p-1"
-                                    :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_CONTEXTS)"
+                                    :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::DELETE_CONTEXTS)"
                                 >
                                     <x-ui.icon name="trash" class="size-4" />
                                 </button>

@@ -29,25 +29,24 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        // Generic permission gate
+        // Generic permission gate — unions permissions across all of the user's roles.
         Gate::define('permission', function (User $user, PermissionEnum $permission, $project = null) {
-            // Determine the effective role for this check
-            $effectiveRole = $user->role->value;
+            $effectiveRoles = $user->roles ?? [];
 
             if ($project && str_starts_with($permission->value, 'project.')) {
                 $perm = $project->permission;
                 if (!$perm) return false;
 
                 if ($perm->isOwner($user)) {
-                    $effectiveRole = $user->role->value;
-                } elseif (in_array($user->id, $perm->collaborators ?? [])) {
-                    $effectiveRole = 'collaborator';
+                    // Owner uses their full role list.
+                } elseif (\in_array($user->id, $perm->collaborators ?? [])) {
+                    $effectiveRoles = ['collaborator'];
                 } else {
                     return false;
                 }
             }
 
-            return User::permissionsForRole($effectiveRole)->contains($permission->value);
+            return User::permissionsForRoles($effectiveRoles)->contains($permission->value);
         });
     }
 }

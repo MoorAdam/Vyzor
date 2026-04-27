@@ -16,7 +16,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
-        'role',
+        'roles',
         'name',
         'email',
         'password',
@@ -32,23 +32,38 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'role' => UserRoleEnum::class,
+            'roles' => 'array',
         ];
+    }
+
+    public function hasRole(UserRoleEnum $role): bool
+    {
+        return \in_array($role->value, $this->roles ?? [], true);
+    }
+
+    public function hasAnyRole(array $roles): bool
+    {
+        foreach ($roles as $role) {
+            if ($this->hasRole($role)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function isCustomer(): bool
     {
-        return $this->role === UserRoleEnum::CUSTOMER;
+        return $this->hasRole(UserRoleEnum::CUSTOMER);
     }
 
     public function isUser(): bool
     {
-        return $this->role === UserRoleEnum::WEB;
+        return $this->hasRole(UserRoleEnum::WEB);
     }
 
     public function isAdmin(): bool
     {
-        return $this->role === UserRoleEnum::ADMIN;
+        return $this->hasRole(UserRoleEnum::ADMIN);
     }
 
     public function profile(): HasOne
@@ -69,8 +84,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get cached permission slugs for a given role string.
-     * Defaults to the user's own role.
+     * Cached permission slugs for a single role.
      */
     public static function permissionsForRole(string $role): Collection
     {
@@ -82,8 +96,19 @@ class User extends Authenticatable
             ->pluck('permissions.slug');
     }
 
+    /**
+     * Union of permission slugs across multiple roles.
+     */
+    public static function permissionsForRoles(array $roles): Collection
+    {
+        return collect($roles)
+            ->flatMap(fn (string $role) => static::permissionsForRole($role)->all())
+            ->unique()
+            ->values();
+    }
+
     public function rolePermissions(): Collection
     {
-        return static::permissionsForRole($this->role->value);
+        return static::permissionsForRoles($this->roles ?? []);
     }
 }

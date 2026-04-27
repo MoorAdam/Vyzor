@@ -5,15 +5,18 @@ namespace App\Modules\Users\Enums;
 enum UserRoleEnum: string
 {
 
-    // Although the permissions are mostly managed in the database and via gates,
-    // these three roles are used because they have special purposes in the app:
-    // - Admin: has access to everything, but no explicit permissions (Gate::before handles this).
-    // - Customer: represents users that belong to a customer organization, with no access by default until permissions are granted.
-    // - Web: regular users with permissions assigned in the database.
+    // Users can hold multiple roles; permissions are unioned across all of them.
+    // - Admin: bypasses every permission check (Gate::before).
+    // - Web: regular internal user.
+    // - Customer: external user, no access by default.
+    // - ContextManager: can view and manage AI contexts.
+    // - AgentManager: can configure AI agents.
 
     case WEB = 'web';
     case CUSTOMER = 'customer';
     case ADMIN = 'admin';
+    case CONTEXT_MANAGER = 'context_manager';
+    case AGENT_MANAGER = 'agent_manager';
 
     public function label(): string
     {
@@ -21,6 +24,8 @@ enum UserRoleEnum: string
             self::WEB => __('User'),
             self::CUSTOMER => __('Customer'),
             self::ADMIN => __('Admin'),
+            self::CONTEXT_MANAGER => __('Context Manager'),
+            self::AGENT_MANAGER => __('Agent Manager'),
         };
     }
 }
