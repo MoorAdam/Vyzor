@@ -14,7 +14,7 @@ class UsersServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Livewire::component('users.user-form', \App\Modules\Users\Livewire\UserForm::class);
-        Livewire::component('users.customer-form', \App\Modules\Users\Livewire\CustomerForm::class);
+        Livewire::component('user-form', \App\Modules\Users\Livewire\UserForm::class);
+        Livewire::component('customer-form', \App\Modules\Users\Livewire\CustomerForm::class);
     }
 }
