@@ -277,12 +277,17 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function with(): array
     {
-        // "Users" = anyone who isn't a customer. The `web` role is an implicit
-        // default for non-customers, so we filter on the absence of `customer`
-        // rather than the presence of `web`.
+        // "Users" = anyone who isn't a customer and isn't an admin. The admin
+        // user is intentionally hidden from the management UI so it can't be
+        // edited or deleted; the `web` role is an implicit default for the
+        // rest, so the filter checks on absence rather than presence.
         $nonCustomers = User::query()
             ->where(function ($q) {
                 $q->whereJsonDoesntContain('roles', UserRoleEnum::CUSTOMER->value)
+                    ->orWhereNull('roles');
+            })
+            ->where(function ($q) {
+                $q->whereJsonDoesntContain('roles', UserRoleEnum::ADMIN->value)
                     ->orWhereNull('roles');
             })
             ->get();

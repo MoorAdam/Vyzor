@@ -94,11 +94,10 @@ class PermissionSeeder extends Seeder
     ];
 
     /**
-     * Admin gets every permission explicitly. Gate::before still bypasses checks,
-     * but seeding the rows keeps the system consistent if bypass is ever removed
-     * and lets the access-management UI render admin permissions correctly.
+     * Returns every permission case from the enum. Used to grant the full
+     * permission set to roles that are functionally all-powerful.
      */
-    private function adminPermissions(): array
+    private function allPermissions(): array
     {
         return PermissionEnum::cases();
     }
@@ -110,6 +109,7 @@ class PermissionSeeder extends Seeder
      */
     private const SYSTEM_ROLES = [
         'admin' => ['Admin', 'Full access — bypasses all permission checks.', false],
+        'overseer' => ['Overseer', 'Holds every permission explicitly. Functionally equivalent to Admin, but goes through normal permission checks instead of bypassing them.', true],
         'web' => ['Web', 'Internal web user with default permissions.', true],
         'customer' => ['Customer', 'External user; no access until granted.', false],
         'context_manager' => ['Context Manager', 'Can view, create, edit and delete AI contexts.', true],
@@ -153,7 +153,8 @@ class PermissionSeeder extends Seeder
         // 4. Bind permissions to roles via the role_permission pivot.
         $allPermissions = Permission::pluck('id', 'slug');
 
-        $this->seedRole(UserRoleEnum::ADMIN->value, $this->adminPermissions(), $allPermissions);
+        $this->seedRole(UserRoleEnum::ADMIN->value, $this->allPermissions(), $allPermissions);
+        $this->seedRole('overseer', $this->allPermissions(), $allPermissions);
         $this->seedRole(UserRoleEnum::WEB->value, self::WEB_PERMISSIONS, $allPermissions);
         $this->seedRole('context_manager', self::CONTEXT_MANAGER_PERMISSIONS, $allPermissions);
         $this->seedRole('agent_manager', self::AGENT_MANAGER_PERMISSIONS, $allPermissions);
