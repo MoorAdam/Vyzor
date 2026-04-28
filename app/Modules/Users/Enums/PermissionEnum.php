@@ -54,6 +54,17 @@ enum PermissionEnum: string
     case EDIT_AGENTS = 'agent.edit';
     case DELETE_AGENTS = 'agent.delete';
 
+    // Roles
+    case VIEW_ROLES = 'roles.view';
+    case ADD_ROLES = 'roles.add';
+    case EDIT_ROLES = 'roles.edit';
+    case DELETE_ROLES = 'roles.delete';
+    case ASSIGN_ROLES = 'roles.assign';
+
+    // Permissions
+    case VIEW_PERMS = 'permissions.view';
+    case EDIT_PERMS = 'permissions.edit';
+
     public function group(): string
     {
         return match (true) {
@@ -65,6 +76,8 @@ enum PermissionEnum: string
             str_starts_with($this->value, 'project.') => 'project',
             str_starts_with($this->value, 'context.') => 'context',
             str_starts_with($this->value, 'agent.') => 'agent',
+            str_starts_with($this->value, 'roles.') => 'roles',
+            str_starts_with($this->value, 'permissions.') => 'permissions',
         };
     }
 
@@ -105,6 +118,13 @@ enum PermissionEnum: string
             self::ADD_AGENTS => 'Create new agent configurations',
             self::EDIT_AGENTS => 'Edit agent configurations',
             self::DELETE_AGENTS => 'Delete agent configurations',
+            self::VIEW_ROLES => 'View roles list',
+            self::ADD_ROLES => 'Create new roles',
+            self::EDIT_ROLES => 'Edit role label, description and permission set',
+            self::DELETE_ROLES => 'Delete non-system roles',
+            self::ASSIGN_ROLES => 'Assign or unassign roles to users',
+            self::VIEW_PERMS => 'View permission list',
+            self::EDIT_PERMS => 'Edit permission description',
         };
     }
 }

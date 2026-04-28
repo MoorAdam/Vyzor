@@ -58,7 +58,10 @@ class User extends Authenticatable
 
     public function isUser(): bool
     {
-        return $this->hasRole(UserRoleEnum::WEB);
+        // "User" means any non-customer logged-in account. The `web` role is an
+        // implicit default for non-customers and isn't required to be present
+        // explicitly in $this->roles.
+        return ! $this->isCustomer();
     }
 
     public function isAdmin(): bool

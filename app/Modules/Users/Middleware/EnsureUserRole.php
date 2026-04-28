@@ -17,12 +17,24 @@ class EnsureUserRole
             return $next($request);
         }
 
-        if (! $user?->hasRole(UserRoleEnum::from($role))) {
-            return $user?->isCustomer()
-                ? redirect()->route('customer.dashboard')
-                : redirect()->route('projects');
+        if ($user?->hasRole(UserRoleEnum::from($role))) {
+            return $next($request);
         }
 
-        return $next($request);
+        // The user is logged in but doesn't hold the required role. Send them
+        // to a route they can actually access — and abort 403 if no such route
+        // applies, to avoid redirect loops when the request is already on the
+        // fallback route.
+        $target = match (true) {
+            $user?->isCustomer() => 'customer.dashboard',
+            $user?->isUser() => 'projects',
+            default => null,
+        };
+
+        if ($target === null || $request->routeIs($target)) {
+            abort(403);
+        }
+
+        return redirect()->route($target);
     }
 }

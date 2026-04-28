@@ -93,9 +93,13 @@ new #[Layout('layouts.app')] class extends Component {
     public function with(): array
     {
         return [
-            'customers' => User::where('role', UserRoleEnum::CUSTOMER)->get(),
+            'customers' => User::whereJsonContains('roles', UserRoleEnum::CUSTOMER->value)->get(),
             'statuses' => ProjectStatusEnum::cases(),
-            'availableCollaborators' => User::where('role', UserRoleEnum::WEB)
+            'availableCollaborators' => User::query()
+                ->where(function ($q) {
+                    $q->whereJsonDoesntContain('roles', UserRoleEnum::CUSTOMER->value)
+                        ->orWhereNull('roles');
+                })
                 ->where('id', '!=', $this->project->permission?->owner_id)
                 ->get(),
         ];

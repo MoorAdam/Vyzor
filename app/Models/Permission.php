@@ -10,5 +10,13 @@ class Permission extends Model
         'slug',
         'group',
         'description',
+        'visible',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'visible' => 'boolean',
+        ];
+    }
 }

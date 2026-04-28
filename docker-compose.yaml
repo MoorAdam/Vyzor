@@ -1,4 +1,5 @@
 services:
+  # ── PostgreSQL ────────────────────────────────────────────────────
   vyzor-db:
     image: postgres:15-alpine
     container_name: vyzor-db
@@ -6,6 +7,8 @@ services:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_DATABASE}
+    ports:
+      - "5433:5432"
     volumes:
       - vyzor_pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -13,9 +16,58 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+    networks:
+      - vyzor-internal
+
+  # ── PHP-FPM Application ──────────────────────────────────────────
+  vyzor-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vyzor-app
+    env_file: .env
+    environment:
+      DB_HOST: vyzor-db
+      DB_PORT: 5432
+    volumes:
+      - .:/var/www/html
+    command: sh -c "composer install --no-interaction --prefer-dist && exec php-fpm"
+    depends_on:
+      vyzor-db:
+        condition: service_healthy
+    networks:
+      - vyzor-internal
+
+  # ── Nginx ────────────────────────────────────────────────────────
+  vyzor-nginx:
+    image: nginx:1.25-alpine
+    container_name: vyzor-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - .:/var/www/html
+    depends_on:
+      - vyzor-app
+    networks:
+      - vyzor-internal
+
+  # ── Vite Dev Server ──────────────────────────────────────────────
+  vyzor-vite:
+    image: node:22-alpine
+    container_name: vyzor-vite
+    working_dir: /var/www/html
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/var/www/html
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
     networks:
       - vyzor-internal
 
 volumes:
-  db_data:
+  vyzor_pgdata:
+
+networks:
+  vyzor-internal:
+    driver: bridge
