@@ -7,7 +7,7 @@
                 <x-ui.error name="company_name" />
             </x-ui.field>
 
-            <x-ui.field required>
+            <x-ui.field>
                 <x-ui.label>{{ __('Email') }}</x-ui.label>
                 <x-ui.input :placeholder="__('E-mail...')" type="email" wire:model="email" :invalid="$errors->has('email')" />
                 <x-ui.error name="email" />

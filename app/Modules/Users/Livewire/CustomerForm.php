@@ -13,7 +13,7 @@ class CustomerForm extends Component
     #[Validate('required|string|max:255|unique:users,name')]
     public string $company_name = '';
 
-    #[Validate('required|email|max:255|unique:users,email')]
+    #[Validate('nullable|email|max:255|unique:users,email')]
     public string $email = '';
 
     #[Validate('nullable|string|max:255')]
@@ -32,7 +32,7 @@ class CustomerForm extends Component
             $user = User::create([
                 'roles' => [UserRoleEnum::CUSTOMER->value],
                 'name' => $this->company_name,
-                'email' => $this->email,
+                'email' => $this->email ?: null,
                 'password' => $this->password,
             ]);
 

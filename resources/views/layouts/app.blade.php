@@ -120,19 +120,23 @@
                     <x-ui.navlist.group :label="__('Project')">
                         <x-ui.navlist.group :label="__('Clarity')" collapsable>
                             <x-ui.navlist.item :label="__('Snapshot')" icon="camera" href="/clarity/snapshot"
-                                :active="request()->is('clarity/snapshot')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_CLARITY_SNAPSHOTS, $currentProject])" />
+                                :active="request()->is('clarity/snapshot')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_CLARITY_SNAPSHOTS, $currentProject])" />
                             <x-ui.navlist.item :label="__('Trends')" icon="chart-line-up" href="/clarity/trends"
-                                :active="request()->is('clarity/trends')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_CLARITY_TRENDS, $currentProject])" />
+                                :active="request()->is('clarity/trends')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_CLARITY_TRENDS, $currentProject])" />
+                            <x-ui.navlist.item :label="__('Clarity Report')" icon="robot" href="/clarity/clarity-report"
+                                :active="request()->is('clarity/clarity-report')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::CREATE_REPORT, $currentProject])" />
+                            <x-ui.navlist.item :label="__('Page Report')" icon="browser" href="/clarity/page-report"
+                                :active="request()->is('clarity/page-report')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::CREATE_REPORT, $currentProject])" />
                         </x-ui.navlist.group>
                         <x-ui.navlist.group :label="__('Reports')" collapsable>
-                            <x-ui.navlist.item :label="__('New Report')" icon="plus-circle" href="/ai-reports"
+                            <x-ui.navlist.item :label="__('Write Report')" icon="pencil-simple" href="/ai-reports"
                                 :active="request()->is('ai-reports')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::CREATE_REPORT, $currentProject])" />
                             <x-ui.navlist.item :label="__('All Reports')" icon="book-bookmark" href="/reports"
                                 :active="request()->is('reports') || request()->is('reports/*')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_REPORTS, $currentProject])" />
                         </x-ui.navlist.group>
                         <x-ui.navlist.group :label="__('Heatmaps')" collapsable>
                             <x-ui.navlist.item :label="__('Upload')" icon="upload-simple" href="/heatmaps/upload"
-                                :active="request()->is('heatmaps/upload')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::UPLOAD_HEATMAP, $currentProject])" />
+                                :active="request()->is('heatmaps/upload')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::UPLOAD_HEATMAP, $currentProject])" />
                             <x-ui.navlist.item :label="__('All Heatmaps')" icon="fire" href="/heatmaps"
                                 :active="request()->is('heatmaps') && !request()->is('heatmaps/*')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_HEATMAPS, $currentProject])" />
                         </x-ui.navlist.group>

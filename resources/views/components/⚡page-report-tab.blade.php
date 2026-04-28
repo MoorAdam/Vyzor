@@ -269,9 +269,7 @@ new class extends Component {
                         <x-ui.icon name="x" class="size-4" />
                     </button>
                 </div>
-                <div class="prose prose-sm dark:prose-invert max-w-none text-neutral-600 dark:text-neutral-400">
-                    <pre class="whitespace-pre-wrap text-xs bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 overflow-auto max-h-96">{{ $presetPreviewContent }}</pre>
-                </div>
+                <pre class="whitespace-pre-wrap text-xs text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 overflow-auto max-h-96">{{ $presetPreviewContent }}</pre>
             </x-ui.card>
         @else
             <x-ui.card size="full" class="border-l-4 border-l-neutral-300 dark:border-l-neutral-700">

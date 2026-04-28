@@ -24,7 +24,7 @@ new #[Layout('layouts.app')] class extends Component {
     #[Validate('nullable|string')]
     public string $description = '';
 
-    #[Validate('required|exists:users,id')]
+    #[Validate('nullable|exists:users,id')]
     public ?string $customer_id = null;
 
     #[Validate('required|string')]
@@ -63,7 +63,7 @@ new #[Layout('layouts.app')] class extends Component {
         $project = Project::create([
             'name' => $this->name,
             'description' => $this->description ?: null,
-            'customer_id' => $this->customer_id,
+            'customer_id' => $this->customer_id ?: null,
             'status' => $this->status,
             'domain' => $this->domain,
             'clarity_api_key' => $this->clarity_api_key ?: null,
@@ -113,7 +113,7 @@ new #[Layout('layouts.app')] class extends Component {
                     <x-ui.error name="description" />
                 </x-ui.field>
 
-                <x-ui.field required>
+                <x-ui.field>
                     <x-ui.label>{{ __('Customer') }}</x-ui.label>
                     <div class="flex items-center gap-2">
                         <div class="flex-1" wire:key="customer-select-{{ $customer_id }}">
