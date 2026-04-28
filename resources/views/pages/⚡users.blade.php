@@ -366,20 +366,18 @@ new #[Layout('layouts.app')] class extends Component {
     {{-- ── Tab 1: Users & Customers ───────────────────────────────── --}}
     @if ($activeTab === 'users')
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            {{-- Users Column --}}
-            <x-ui.card size="full">
-                <div class="flex items-center gap-2 mb-4">
+            {{-- Users column --}}
+            <x-ui.card size="full" class="pb-0">
+                <div class="flex items-center gap-2 mb-3">
                     <x-ui.icon name="users" />
                     <x-ui.heading level="h2" size="sm">{{ __('Users') }}</x-ui.heading>
                     <x-ui.badge variant="solid" color="blue" size="sm">{{ $users->count() }}</x-ui.badge>
                 </div>
 
-                @if ($users->isNotEmpty())
-                <div class="-mx-4 divide-y divide-neutral-200 dark:divide-neutral-800">
-                @foreach ($users as $user)
-                    <div class="px-4 py-3">
+                @forelse ($users as $user)
+                    <div>
                         @if ($editingId === $user->id)
-                            <form wire:submit="saveEdit" class="flex-1 space-y-3">
+                            <form wire:submit="saveEdit" class="space-y-3">
                                 <x-ui.field>
                                     <x-ui.label>{{ __('Name') }}</x-ui.label>
                                     <x-ui.input wire:model="editName" :placeholder="__('Name...')" :invalid="$errors->has('editName')" />
@@ -387,14 +385,12 @@ new #[Layout('layouts.app')] class extends Component {
                                 </x-ui.field>
                                 <x-ui.field>
                                     <x-ui.label>{{ __('Email') }}</x-ui.label>
-                                    <x-ui.input wire:model="editEmail" type="email" :placeholder="__('Email...')"
-                                        :invalid="$errors->has('editEmail')" />
+                                    <x-ui.input wire:model="editEmail" type="email" :placeholder="__('Email...')" :invalid="$errors->has('editEmail')" />
                                     <x-ui.error name="editEmail" />
                                 </x-ui.field>
                                 <x-ui.field>
                                     <x-ui.label>{{ __('New Password') }}</x-ui.label>
-                                    <x-ui.input wire:model="editPassword" type="password" :placeholder="__('Leave blank to keep current...')"
-                                        :invalid="$errors->has('editPassword')" />
+                                    <x-ui.input wire:model="editPassword" type="password" :placeholder="__('Leave blank to keep current...')" :invalid="$errors->has('editPassword')" />
                                     <x-ui.error name="editPassword" />
                                 </x-ui.field>
                                 <x-ui.field>
@@ -403,44 +399,42 @@ new #[Layout('layouts.app')] class extends Component {
                                 </x-ui.field>
                                 <div class="flex gap-2">
                                     <x-ui.button type="submit" size="xs" variant="primary">{{ __('Save') }}</x-ui.button>
-                                    <x-ui.button type="button" size="xs" variant="ghost"
-                                        wire:click="cancelEditing">{{ __('Cancel') }}</x-ui.button>
+                                    <x-ui.button type="button" size="xs" variant="ghost" wire:click="cancelEditing">{{ __('Cancel') }}</x-ui.button>
                                 </div>
                             </form>
                         @else
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex items-start gap-3 min-w-0 flex-1">
-                                    <x-ui.avatar :name="$user->name" size="sm" />
-                                    <div class="min-w-0 flex-1 space-y-1.5">
-                                        <div>
-                                            <p class="font-medium text-neutral-900 dark:text-neutral-100 truncate">{{ $user->name }}</p>
-                                            <p class="text-sm text-neutral-500 dark:text-neutral-400 truncate">{{ $user->email }}</p>
-                                        </div>
-                                        @if ($canViewRoles)
-                                            <div class="flex flex-wrap gap-1">
-                                                @foreach ($assignableRoles as $role)
-                                                    @php $assigned = \in_array($role->slug, $user->roles ?? [], true); @endphp
-                                                    <button
-                                                        wire:click="toggleUserRole({{ $user->id }}, '{{ $role->slug }}')"
-                                                        :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::ASSIGN_ROLES)"
-                                                        class="px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors {{ $assigned
-                                                            ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900'
-                                                            : 'bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800' }}">
-                                                        {{ $role->label }}
-                                                    </button>
-                                                @endforeach
-                                            </div>
-                                        @endif
-                                    </div>
+                            <div class="flex items-start gap-3 pt-4">
+                                <x-ui.avatar :name="$user->name" size="sm" />
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">{{ $user->name }}</p>
+                                    <p class="text-xs text-neutral-500 dark:text-neutral-400 truncate">{{ $user->email }}</p>
                                 </div>
                                 <div class="flex shrink-0 gap-1">
                                     <x-ui.button size="xs" variant="ghost" icon="pencil"
-                                        wire:click="startEditing({{ $user->id }})" :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_USER)">{{ __('Edit') }}</x-ui.button>
+                                        wire:click="startEditing({{ $user->id }})"
+                                        :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_USER)">{{ __('Edit') }}</x-ui.button>
                                     <x-ui.modal.trigger :id="'delete-user-' . $user->id">
-                                        <x-ui.button size="xs" variant="ghost" icon="trash" color="red" :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::REMOVE_USER)">{{ __('Delete') }}</x-ui.button>
+                                        <x-ui.button size="xs" variant="ghost" icon="trash" color="red"
+                                            :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::REMOVE_USER)">{{ __('Delete') }}</x-ui.button>
                                     </x-ui.modal.trigger>
                                 </div>
                             </div>
+
+                            @if ($canViewRoles && $assignableRoles->isNotEmpty())
+                                <div class="flex flex-wrap gap-1 mt-3">
+                                    @foreach ($assignableRoles as $role)
+                                        @php $assigned = \in_array($role->slug, $user->roles ?? [], true); @endphp
+                                        <button
+                                            wire:click="toggleUserRole({{ $user->id }}, '{{ $role->slug }}')"
+                                            :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::ASSIGN_ROLES)"
+                                            class="px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors {{ $assigned
+                                                ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900'
+                                                : 'bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800' }}">
+                                            {{ $role->label }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
                         @endif
                     </div>
 
@@ -451,41 +445,39 @@ new #[Layout('layouts.app')] class extends Component {
                             <x-ui.button variant="danger" wire:click="deleteUser({{ $user->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
                         </x-slot:footer>
                     </x-ui.modal>
-                @endforeach
-                </div>
-                @else
+
+                    @if (! $loop->last)
+                        <x-ui.separator class="my-2" horizontal />
+                    @endif
+                @empty
                     <x-ui.empty>
                         <x-ui.empty.contents>
                             <x-ui.text>{{ __('No users found.') }}</x-ui.text>
                         </x-ui.empty.contents>
                     </x-ui.empty>
-                @endif
+                @endforelse
             </x-ui.card>
 
-            {{-- Customers Column --}}
-            <x-ui.card size="full">
-                <div class="flex items-center gap-2 mb-4">
+            {{-- Customers column --}}
+            <x-ui.card size="full" class="pb-0">
+                <div class="flex items-center gap-2 mb-2">
                     <x-ui.icon name="ps:buildings" />
                     <x-ui.heading level="h2" size="sm">{{ __('Customers') }}</x-ui.heading>
                     <x-ui.badge variant="solid" color="emerald" size="sm">{{ $customers->count() }}</x-ui.badge>
                 </div>
 
-                @if ($customers->isNotEmpty())
-                <div class="-mx-4 divide-y divide-neutral-200 dark:divide-neutral-800">
-                @foreach ($customers as $customer)
-                    <div class="px-4 flex items-center justify-between py-3">
+                @forelse ($customers as $customer)
+                    <div>
                         @if ($editingId === $customer->id)
-                            <form wire:submit="saveEdit" class="flex-1 space-y-3">
+                            <form wire:submit="saveEdit" class="space-y-3">
                                 <x-ui.field>
                                     <x-ui.label>{{ __('Company Name') }}</x-ui.label>
-                                    <x-ui.input wire:model="editCompanyName" :placeholder="__('Company name...')"
-                                        :invalid="$errors->has('editCompanyName')" />
+                                    <x-ui.input wire:model="editCompanyName" :placeholder="__('Company name...')" :invalid="$errors->has('editCompanyName')" />
                                     <x-ui.error name="editCompanyName" />
                                 </x-ui.field>
                                 <x-ui.field>
                                     <x-ui.label>{{ __('Email') }}</x-ui.label>
-                                    <x-ui.input wire:model="editEmail" type="email" :placeholder="__('Email...')"
-                                        :invalid="$errors->has('editEmail')" />
+                                    <x-ui.input wire:model="editEmail" type="email" :placeholder="__('Email...')" :invalid="$errors->has('editEmail')" />
                                     <x-ui.error name="editEmail" />
                                 </x-ui.field>
                                 <x-ui.field>
@@ -495,8 +487,7 @@ new #[Layout('layouts.app')] class extends Component {
                                 </x-ui.field>
                                 <x-ui.field>
                                     <x-ui.label>{{ __('New Password') }}</x-ui.label>
-                                    <x-ui.input wire:model="editPassword" type="password" :placeholder="__('Leave blank to keep current...')"
-                                        :invalid="$errors->has('editPassword')" />
+                                    <x-ui.input wire:model="editPassword" type="password" :placeholder="__('Leave blank to keep current...')" :invalid="$errors->has('editPassword')" />
                                     <x-ui.error name="editPassword" />
                                 </x-ui.field>
                                 <x-ui.field>
@@ -505,29 +496,28 @@ new #[Layout('layouts.app')] class extends Component {
                                 </x-ui.field>
                                 <div class="flex gap-2">
                                     <x-ui.button type="submit" size="xs" variant="primary">{{ __('Save') }}</x-ui.button>
-                                    <x-ui.button type="button" size="xs" variant="ghost"
-                                        wire:click="cancelEditing">{{ __('Cancel') }}</x-ui.button>
+                                    <x-ui.button type="button" size="xs" variant="ghost" wire:click="cancelEditing">{{ __('Cancel') }}</x-ui.button>
                                 </div>
                             </form>
                         @else
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-start gap-3 pt-5">
                                 <x-ui.avatar :name="$customer->name" size="sm" color="emerald" />
-                                <div>
-                                    <p class="font-medium text-neutral-900 dark:text-neutral-100">
-                                        {{ $customer->customerProfile?->company_name ?? $customer->name }}</p>
-                                    <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ $customer->email }}</p>
+                                <div class="min-w-0 flex-1">
+                                    <p class="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">{{ $customer->customerProfile?->company_name ?? $customer->name }}</p>
+                                    <p class="text-xs text-neutral-500 dark:text-neutral-400 truncate">{{ $customer->email }}</p>
                                     @if ($customer->customerProfile?->phone)
-                                        <p class="text-sm text-neutral-500 dark:text-neutral-400">
-                                            {{ $customer->customerProfile->phone }}</p>
+                                        <p class="text-xs text-neutral-500 dark:text-neutral-400 truncate">{{ $customer->customerProfile->phone }}</p>
                                     @endif
                                 </div>
-                            </div>
-                            <div class="flex shrink-0 gap-1">
-                                <x-ui.button size="xs" variant="ghost" icon="pencil"
-                                    wire:click="startEditing({{ $customer->id }})" :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_CUSTOMER)">{{ __('Edit') }}</x-ui.button>
-                                <x-ui.modal.trigger :id="'delete-customer-' . $customer->id">
-                                    <x-ui.button size="xs" variant="ghost" icon="trash" color="red" :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::REMOVE_CUSTOMER)">{{ __('Delete') }}</x-ui.button>
-                                </x-ui.modal.trigger>
+                                <div class="flex shrink-0 gap-1">
+                                    <x-ui.button size="xs" variant="ghost" icon="pencil"
+                                        wire:click="startEditing({{ $customer->id }})"
+                                        :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_CUSTOMER)">{{ __('Edit') }}</x-ui.button>
+                                    <x-ui.modal.trigger :id="'delete-customer-' . $customer->id">
+                                        <x-ui.button size="xs" variant="ghost" icon="trash" color="red"
+                                            :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::REMOVE_CUSTOMER)">{{ __('Delete') }}</x-ui.button>
+                                    </x-ui.modal.trigger>
+                                </div>
                             </div>
                         @endif
                     </div>
@@ -539,15 +529,17 @@ new #[Layout('layouts.app')] class extends Component {
                             <x-ui.button variant="danger" wire:click="deleteUser({{ $customer->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
                         </x-slot:footer>
                     </x-ui.modal>
-                @endforeach
-                </div>
-                @else
+
+                    @if (! $loop->last)
+                        <x-ui.separator class="my-2" horizontal />
+                    @endif
+                @empty
                     <x-ui.empty>
                         <x-ui.empty.contents>
                             <x-ui.text>{{ __('No customers found.') }}</x-ui.text>
                         </x-ui.empty.contents>
                     </x-ui.empty>
-                @endif
+                @endforelse
             </x-ui.card>
         </div>
     @endif
