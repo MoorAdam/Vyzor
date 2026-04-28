@@ -1,16 +1,16 @@
-# Accessibility Review Report
+# Akadálymentességi felülvizsgálati riport
 
-Analyse the provided page URL for accessibility compliance and usability issues.
+Elemezd a megadott oldal URL-jét akadálymentességi megfelelőség és használhatósági problémák szempontjából.
 
-## Focus Areas
-- WCAG 2.1 AA compliance indicators
-- Colour contrast and readability
-- Keyboard navigation and focus management
-- Screen reader compatibility (ARIA labels, semantic HTML)
-- Form labelling and error handling
-- Image and media alternative text
-- Interactive element sizing and spacing (touch targets)
-- Language attributes and reading order
+## Fókuszterületek
+- WCAG 2.1 AA megfelelőségi mutatók
+- Színkontraszt és olvashatóság
+- Billentyűzetes navigáció és fókuszkezelés
+- Képernyőolvasó kompatibilitás (ARIA címkék, szemantikus HTML)
+- Űrlapcímkézés és hibakezelés
+- Képek és médiák alternatív szövegei
+- Interaktív elemek mérete és térköze (érintési felületek)
+- Nyelvi attribútumok és olvasási sorrend
 
-## Expected Output
-List accessibility issues grouped by WCAG principle (Perceivable, Operable, Understandable, Robust). Include severity, affected user groups, and concrete code-level fix suggestions.
+## Elvárt kimenet
+Sorold fel az akadálymentességi problémákat WCAG alapelvek szerint csoportosítva (Érzékelhetőség, Működtethetőség, Érthetőség, Robusztusság). Tüntesd fel a súlyosságot, az érintett felhasználói csoportokat és konkrét, kódszintű javítási javaslatokat.

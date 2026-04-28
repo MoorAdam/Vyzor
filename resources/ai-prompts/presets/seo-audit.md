@@ -1,16 +1,16 @@
-# SEO Audit Report
+# SEO audit riport
 
-Analyse the provided page URL for search engine optimisation issues and opportunities.
+Elemezd a megadott oldal URL-jét keresőoptimalizálási problémák és lehetőségek szempontjából.
 
-## Focus Areas
-- Title tag and meta description: length, keyword usage, uniqueness
-- Heading hierarchy (H1-H6): proper nesting, keyword relevance
-- URL structure: readability, keyword inclusion, length
-- Internal and external link quality
-- Image alt attributes and file naming
-- Structured data / schema markup presence
-- Mobile-friendliness indicators
-- Core Web Vitals implications from page structure
+## Fókuszterületek
+- Title tag és meta leírás: hosszúság, kulcsszóhasználat, egyediség
+- Címsor-hierarchia (H1-H6): megfelelő egymásba ágyazás, kulcsszó-relevancia
+- URL szerkezet: olvashatóság, kulcsszó-tartalom, hosszúság
+- Belső és külső linkek minősége
+- Képek alt attribútumai és fájlnév-konvencióik
+- Strukturált adatok / schema markup jelenléte
+- Mobilbarát megjelenés mutatói
+- Core Web Vitals következmények az oldalszerkezet alapján
 
-## Expected Output
-Provide a prioritised list of SEO issues with severity ratings (critical, important, minor). Include specific fix recommendations for each issue and estimate the potential impact on search visibility.
+## Elvárt kimenet
+Adj egy súlyossági besorolással ellátott (kritikus, fontos, kisebb), priorizált SEO problémalistát. Minden problémához adj konkrét javítási javaslatot, és becsüld meg a keresési láthatóságra gyakorolt potenciális hatást.

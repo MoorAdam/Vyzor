@@ -1,13 +1,13 @@
-# Device & Browser Analysis Report
+# Eszköz és böngésző elemzési riport
 
-Analyze the device, browser, and operating system breakdown data for the selected date range.
+Elemezd a kiválasztott időszakra vonatkozó eszköz, böngésző és operációs rendszer megoszlási adatait.
 
-## Focus Areas
-- Device distribution (desktop, mobile, tablet) and session behavior per device
-- Browser usage patterns and any browser-specific issues
-- Operating system breakdown
-- Country/region distribution and geographic patterns
-- Cross-device user behavior differences
+## Fókuszterületek
+- Eszközmegoszlás (asztali, mobil, tablet) és munkamenet-viselkedés eszközönként
+- Böngészőhasználati minták és bármilyen böngésző-specifikus probléma
+- Operációs rendszerek megoszlása
+- Ország/régió megoszlás és földrajzi minták
+- Eszközök közötti felhasználói viselkedésbeli különbségek
 
-## Expected Output
-Identify the primary audience segments by device and browser. Flag any compatibility concerns or device-specific issues. Recommend optimization priorities based on the audience breakdown.
+## Elvárt kimenet
+Azonosítsd a fő közönségszegmenseket eszköz és böngésző alapján. Jelezz minden kompatibilitási aggályt vagy eszközspecifikus problémát. Javasolj optimalizálási prioritásokat a közönségmegoszlás alapján.

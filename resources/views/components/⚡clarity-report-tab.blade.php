@@ -57,7 +57,7 @@ new class extends Component {
         $preset = AiContext::where('slug', $slug)->first();
         if ($preset) {
             $this->presetPreviewContent = $preset->context;
-            $this->presetPreviewName = $preset->localizedName();
+            $this->presetPreviewName = $preset->name;
             $this->showPresetPreview = true;
         }
     }
@@ -137,8 +137,8 @@ new class extends Component {
                                     <x-ui.icon :name="$presetOption->icon" class="size-5" />
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ $presetOption->localizedName() }}</span>
-                                    <span class="block text-xs text-neutral-400 mt-0.5">{{ $presetOption->localizedDescription() }}</span>
+                                    <span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ $presetOption->name }}</span>
+                                    <span class="block text-xs text-neutral-400 mt-0.5">{{ $presetOption->description }}</span>
                                 </div>
                                 @if ($preset === $presetOption->slug)
                                     <button

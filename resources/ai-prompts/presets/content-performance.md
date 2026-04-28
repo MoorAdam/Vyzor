@@ -1,13 +1,13 @@
-# Content Performance Report
+# Tartalom teljesítményi riport
 
-Analyze the page-level performance data including popular pages, page titles, and content engagement for the selected date range.
+Elemezd a kiválasztott időszakra vonatkozó oldalszintű teljesítményadatokat, beleértve a népszerű oldalakat, oldalcímeket és tartalmi elköteleződést.
 
-## Focus Areas
-- Top performing pages by visits and engagement
-- Pages with high traffic but low engagement (potential improvement targets)
-- Content that drives the most user interaction
-- Entry and exit page patterns
-- URL and page title analysis for SEO alignment
+## Fókuszterületek
+- Legjobban teljesítő oldalak látogatás és elköteleződés szerint
+- Magas forgalmú, de alacsony elköteleződésű oldalak (potenciális fejlesztési célpontok)
+- A legtöbb felhasználói interakciót generáló tartalmak
+- Belépési és kilépési oldalak mintái
+- URL és oldalcím elemzése SEO összhang szempontjából
 
-## Expected Output
-Rank content by performance and identify opportunities. Highlight pages that need attention (high bounce, low engagement) and pages that are performing well. Provide recommendations for content strategy improvements.
+## Elvárt kimenet
+Rangsorold a tartalmakat teljesítmény szerint és azonosítsd a lehetőségeket. Emeld ki a figyelmet igénylő oldalakat (magas visszafordulási arány, alacsony elköteleződés) és a jól teljesítő oldalakat. Adj javaslatokat a tartalomstratégia fejlesztésére.

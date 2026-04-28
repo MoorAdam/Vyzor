@@ -10,7 +10,6 @@ class AiContext extends Model
 {
     protected $fillable = [
         'name',
-        'name_hu',
         'slug',
         'type',
         'models',
@@ -18,29 +17,10 @@ class AiContext extends Model
         'icon',
         'label_color',
         'description',
-        'description_hu',
         'context',
         'is_active',
         'sort_order',
     ];
-
-    public function localizedName(): string
-    {
-        if (app()->getLocale() === 'hu' && $this->name_hu) {
-            return $this->name_hu;
-        }
-
-        return $this->name;
-    }
-
-    public function localizedDescription(): ?string
-    {
-        if (app()->getLocale() === 'hu' && $this->description_hu) {
-            return $this->description_hu;
-        }
-
-        return $this->description;
-    }
 
     protected function casts(): array
     {

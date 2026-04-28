@@ -1,16 +1,16 @@
-# Conversion Optimisation Report
+# Konverzióoptimalizálási riport
 
-Analyse the provided page URL for conversion rate optimisation opportunities.
+Elemezd a megadott oldal URL-jét konverziós ráta optimalizálási lehetőségek szempontjából.
 
-## Focus Areas
-- Call-to-action placement, visibility, and copy effectiveness
-- Form design: field count, labels, friction points
-- Trust signals: testimonials, badges, social proof
-- Visual hierarchy and user attention flow
-- Page layout and whitespace usage
-- Value proposition clarity above the fold
-- Distraction elements that may reduce focus
-- Mobile conversion path and touch-friendly interactions
+## Fókuszterületek
+- CTA elhelyezése, láthatósága és szövegezésének hatékonysága
+- Űrlapok kialakítása: mezők száma, címkék, súrlódási pontok
+- Bizalmi jelek: vélemények, jelvények, social proof
+- Vizuális hierarchia és felhasználói figyelem áramlása
+- Oldalelrendezés és üres terek (whitespace) használata
+- Értékajánlat egyértelműsége az „above the fold” területen
+- Figyelemelterelő elemek, amelyek csökkenthetik a fókuszt
+- Mobil konverziós útvonal és érintésbarát interakciók
 
-## Expected Output
-Provide a conversion analysis with specific elements identified for improvement. Include A/B test ideas ranked by expected impact and ease of implementation. Suggest quick wins and longer-term strategic changes.
+## Elvárt kimenet
+Adj egy konverziós elemzést, és azonosítsd a fejlesztendő konkrét elemeket. Tartalmazzon A/B teszt ötleteket, várható hatás és megvalósítási nehézség szerint rangsorolva. Javasolj gyorsan megvalósítható (quick win) és hosszabb távú stratégiai változtatásokat.

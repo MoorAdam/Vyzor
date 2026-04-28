@@ -13,9 +13,7 @@ new #[Layout('layouts.app')] class extends Component {
     // Form fields for create/edit
     public ?int $editingId = null;
     public string $formName = '';
-    public string $formNameHu = '';
     public string $formDescription = '';
-    public string $formDescriptionHu = '';
     public string $formType = 'preset';
     public array $formModels = ['all'];
     public array $formTags = [];
@@ -48,9 +46,7 @@ new #[Layout('layouts.app')] class extends Component {
         $context = AiContext::findOrFail($id);
         $this->editingId = $context->id;
         $this->formName = $context->name;
-        $this->formNameHu = $context->name_hu ?? '';
         $this->formDescription = $context->description ?? '';
-        $this->formDescriptionHu = $context->description_hu ?? '';
         $this->formType = $context->type->value;
         $this->formModels = $context->models ?? ['all'];
         $this->formTags = $context->tags ?? [];
@@ -67,9 +63,7 @@ new #[Layout('layouts.app')] class extends Component {
         abort_unless(auth()->user()->can('permission', $this->editingId ? PermissionEnum::EDIT_CONTEXTS : PermissionEnum::ADD_CONTEXTS), 403);
         $this->validate([
             'formName' => 'required|string|max:255',
-            'formNameHu' => 'nullable|string|max:255',
             'formDescription' => 'nullable|string|max:500',
-            'formDescriptionHu' => 'nullable|string|max:500',
             'formType' => 'required|string|in:preset,system,instruction',
             'formModels' => 'required|array|min:1',
             'formTags' => 'nullable|array',
@@ -81,9 +75,7 @@ new #[Layout('layouts.app')] class extends Component {
 
         $data = [
             'name' => $this->formName,
-            'name_hu' => $this->formNameHu ?: null,
             'description' => $this->formDescription ?: null,
-            'description_hu' => $this->formDescriptionHu ?: null,
             'type' => $this->formType,
             'models' => $this->formModels,
             'tags' => $this->formTags ?: null,
@@ -156,9 +148,7 @@ new #[Layout('layouts.app')] class extends Component {
     {
         $this->editingId = null;
         $this->formName = '';
-        $this->formNameHu = '';
         $this->formDescription = '';
-        $this->formDescriptionHu = '';
         $this->formType = 'preset';
         $this->formModels = ['all'];
         $this->formTags = [];
@@ -250,27 +240,15 @@ new #[Layout('layouts.app')] class extends Component {
                         {{-- Left column --}}
                         <div class="space-y-5">
                             <x-ui.field required>
-                                <x-ui.label>{{ __('Name') }} (EN)</x-ui.label>
+                                <x-ui.label>{{ __('Name') }}</x-ui.label>
                                 <x-ui.input wire:model="formName" :placeholder="__('e.g. Traffic Overview')" :invalid="$errors->has('formName')" />
                                 <x-ui.error name="formName" />
                             </x-ui.field>
 
                             <x-ui.field>
-                                <x-ui.label>{{ __('Name') }} (HU)</x-ui.label>
-                                <x-ui.input wire:model="formNameHu" placeholder="pl. Forgalmi \u00e1ttekint\u00e9s" :invalid="$errors->has('formNameHu')" />
-                                <x-ui.error name="formNameHu" />
-                            </x-ui.field>
-
-                            <x-ui.field>
-                                <x-ui.label>{{ __('Description') }} (EN)</x-ui.label>
+                                <x-ui.label>{{ __('Description') }}</x-ui.label>
                                 <x-ui.input wire:model="formDescription" :placeholder="__('Short description of what this context does...')" :invalid="$errors->has('formDescription')" />
                                 <x-ui.error name="formDescription" />
-                            </x-ui.field>
-
-                            <x-ui.field>
-                                <x-ui.label>{{ __('Description') }} (HU)</x-ui.label>
-                                <x-ui.input wire:model="formDescriptionHu" placeholder="R\u00f6vid le\u00edr\u00e1s a kontextus funkci\u00f3j\u00e1r\u00f3l..." :invalid="$errors->has('formDescriptionHu')" />
-                                <x-ui.error name="formDescriptionHu" />
                             </x-ui.field>
 
                             <div class="grid grid-cols-2 gap-4">
@@ -461,7 +439,7 @@ new #[Layout('layouts.app')] class extends Component {
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2">
-                                    <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">{{ $context->localizedName() }}</span>
+                                    <span class="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">{{ $context->name }}</span>
                                     <x-ui.badge size="sm" color="{{ $context->type->color() }}">{{ $context->type->label() }}</x-ui.badge>
                                     @foreach ($context->tags ?? [] as $tagValue)
                                         @if ($tagEnum = \App\Modules\Ai\Contexts\Enums\ContextTag::tryFrom($tagValue))
@@ -472,8 +450,8 @@ new #[Layout('layouts.app')] class extends Component {
                                         <x-ui.badge size="sm" color="neutral">{{ __('Inactive') }}</x-ui.badge>
                                     @endif
                                 </div>
-                                @if ($context->localizedDescription())
-                                    <x-ui.description class="mt-0.5 line-clamp-2">{{ $context->localizedDescription() }}</x-ui.description>
+                                @if ($context->description)
+                                    <x-ui.description class="mt-0.5 line-clamp-2">{{ $context->description }}</x-ui.description>
                                 @endif
                                 <div class="flex items-center gap-1 mt-2 text-xs text-neutral-400">
                                     <x-ui.icon name="sort-ascending" class="size-3" />
@@ -511,7 +489,7 @@ new #[Layout('layouts.app')] class extends Component {
                             @unless ($isProtected)
                                 <button
                                     wire:click="deletePreset({{ $context->id }})"
-                                    wire:confirm="{{ __('Are you sure you want to delete \':name\'? This cannot be undone.', ['name' => $context->localizedName()]) }}"
+                                    wire:confirm="{{ __('Are you sure you want to delete \':name\'? This cannot be undone.', ['name' => $context->name]) }}"
                                     class="text-neutral-400 hover:text-red-500 transition-colors p-1"
                                     :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::DELETE_CONTEXTS)"
                                 >

@@ -1,14 +1,14 @@
-# UX Issues Analysis Report
+# UX problémák elemzési riport
 
-Analyze the UX signal data (dead clicks, rage clicks, quick backs, excessive scroll, script errors, error clicks) for the selected date range.
+Elemezd a kiválasztott időszakra vonatkozó UX jelzések adatait (halott kattintások, dühös kattintások, gyors visszalépések, túlzott görgetés, szkripthibák, hibás kattintások).
 
-## Focus Areas
-- Identify the most critical UX issues based on frequency and session impact
-- Dead clicks: where users click expecting interaction but nothing happens
-- Rage clicks: signs of user frustration from rapid repeated clicks
-- Quick backs: pages where users immediately navigate away
-- Excessive scrolling: content layout or findability issues
-- Script errors and error clicks: technical issues affecting user experience
+## Fókuszterületek
+- Azonosítsd a legkritikusabb UX problémákat gyakoriságuk és munkamenetekre gyakorolt hatásuk alapján
+- Halott kattintások: ahol a felhasználók interakcióra számítanak kattintáskor, de semmi nem történik
+- Dühös kattintások: a felhasználói frusztráció jelei a gyors, ismétlődő kattintásokból
+- Gyors visszalépések: oldalak, ahonnan a felhasználók azonnal továbblépnek
+- Túlzott görgetés: tartalomelrendezési vagy kereshetőségi problémák
+- Szkripthibák és hibás kattintások: a felhasználói élményt befolyásoló technikai problémák
 
-## Expected Output
-Prioritize UX issues by severity and user impact. Provide specific, actionable recommendations for fixing each identified issue. Suggest which issues to address first for maximum user experience improvement.
+## Elvárt kimenet
+Rangsorold a UX problémákat súlyosság és felhasználói hatás alapján. Adj konkrét, megvalósítható javaslatokat az egyes problémák javítására. Javasold, mely problémákat kezeld először a maximális felhasználói élmény-javulás érdekében.

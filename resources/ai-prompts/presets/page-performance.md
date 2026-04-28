@@ -1,16 +1,16 @@
-# Page Performance Report
+# Oldal teljesítményi riport
 
-Analyse the provided page URL for technical performance and loading efficiency.
+Elemezd a megadott oldal URL-jét technikai teljesítmény és betöltési hatékonyság szempontjából.
 
-## Focus Areas
-- Page weight and resource count (scripts, stylesheets, images, fonts)
-- Render-blocking resources
-- Image optimisation opportunities (format, compression, lazy loading)
-- JavaScript and CSS delivery (bundling, minification, unused code)
-- Caching indicators and CDN usage
-- Third-party script impact
-- Critical rendering path efficiency
-- Server response and connection indicators
+## Fókuszterületek
+- Oldal mérete és erőforrások száma (szkriptek, stíluslapok, képek, betűtípusok)
+- Renderelést blokkoló erőforrások
+- Képoptimalizálási lehetőségek (formátum, tömörítés, lazy loading)
+- JavaScript és CSS kiszolgálás (bundling, minifikálás, fel nem használt kód)
+- Cache mutatók és CDN használat
+- Harmadik féltől származó szkriptek hatása
+- Kritikus renderelési útvonal hatékonysága
+- Szerverválasz és kapcsolódási mutatók
 
-## Expected Output
-Provide a performance score card with specific metrics where identifiable. List optimisation opportunities ranked by estimated impact on load time. Include implementation difficulty for each recommendation.
+## Elvárt kimenet
+Adj egy teljesítményi pontszámkártyát konkrét mutatókkal, ahol azonosíthatók. Sorold fel az optimalizálási lehetőségeket a betöltési időre gyakorolt becsült hatás szerint rangsorolva. Minden javaslatnál tüntesd fel a megvalósítás nehézségét.

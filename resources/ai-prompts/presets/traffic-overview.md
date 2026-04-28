@@ -1,13 +1,13 @@
-# Traffic Overview Report
+# Forgalmi áttekintő riport
 
-Analyze the website traffic data for the selected date range and provide a comprehensive overview.
+Elemezd a kiválasztott időszakra vonatkozó weboldal forgalmi adatait, és adj átfogó áttekintést.
 
-## Focus Areas
-- Total sessions and unique users trends
-- Bot traffic ratio and any anomalies
-- Pages per session and how it compares to typical benchmarks
-- Traffic sources and referral patterns
-- Any notable spikes or drops in traffic
+## Fókuszterületek
+- Összes munkamenet és egyedi felhasználók trendjei
+- Botforgalom aránya és bármilyen rendellenesség
+- Munkamenetenkénti oldalszám és összevetése a tipikus benchmarkokkal
+- Forgalmi források és hivatkozási minták
+- Bármilyen jelentős forgalmi kiugrás vagy visszaesés
 
-## Expected Output
-Provide a summary that highlights key traffic metrics, identifies trends, and flags any anomalies worth investigating. Include actionable recommendations where applicable.
+## Elvárt kimenet
+Adj egy összefoglalót, amely kiemeli a legfontosabb forgalmi mutatókat, azonosítja a trendeket, és jelzi a kivizsgálásra érdemes anomáliákat. Ahol releváns, adj megvalósítható javaslatokat.

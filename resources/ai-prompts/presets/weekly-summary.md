@@ -1,13 +1,13 @@
-# Weekly Summary Report
+# Heti összefoglaló riport
 
-Create a concise weekly summary covering all major aspects of website performance for the selected date range.
+Készíts tömör heti összefoglalót, amely a kiválasztott időszakra vonatkozóan a weboldal teljesítményének összes fő szempontját lefedi.
 
-## Focus Areas
-- Traffic highlights (sessions, users, notable changes)
-- Engagement summary (time on site, scroll depth)
-- Top UX issues that need attention
-- Device/browser breakdown highlights
-- Top performing and underperforming content
+## Fókuszterületek
+- Forgalmi kiemelések (munkamenetek, felhasználók, jelentős változások)
+- Elköteleződési összefoglaló (oldalon töltött idő, görgetési mélység)
+- Figyelmet igénylő legfontosabb UX problémák
+- Eszköz/böngésző megoszlás kiemelései
+- Legjobban és legkevésbé teljesítő tartalmak
 
-## Expected Output
-A brief, executive-style summary suitable for stakeholder review. Use bullet points and keep the language clear and non-technical. Highlight the 3-5 most important takeaways and suggest immediate action items.
+## Elvárt kimenet
+Egy rövid, vezetői stílusú összefoglaló, amely alkalmas érintettekkel való áttekintésre. Használj felsorolásokat, és tartsd a nyelvezetet közérthetőnek és szakmai zsargontól mentesnek. Emeld ki a 3-5 legfontosabb tanulságot, és javasolj azonnali cselekvési pontokat.

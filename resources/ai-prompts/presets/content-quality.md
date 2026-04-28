@@ -1,16 +1,16 @@
-# Content Quality Report
+# Tartalomminőségi riport
 
-Analyse the provided page URL for content quality, readability, and messaging effectiveness.
+Elemezd a megadott oldal URL-jét tartalomminőség, olvashatóság és üzenethatékonyság szempontjából.
 
-## Focus Areas
-- Readability score and reading level appropriateness for target audience
-- Content structure: scanability, paragraph length, use of lists and subheadings
-- Messaging clarity: value proposition, call-to-action effectiveness
-- Tone and voice consistency
-- Grammar, spelling, and typographic issues
-- Content freshness indicators (dates, references)
-- Above-the-fold content: does it communicate the core message quickly?
-- Content gaps or missing information
+## Fókuszterületek
+- Olvashatósági pontszám és olvasási szint megfelelése a célközönségnek
+- Tartalom szerkezete: átfuthatóság, bekezdések hossza, listák és alcímek használata
+- Üzenet egyértelműsége: értékajánlat, cselekvésre ösztönző elemek (CTA) hatékonysága
+- Hangnem és stílus következetessége
+- Nyelvtani, helyesírási és tipográfiai problémák
+- Tartalom frissességének mutatói (dátumok, hivatkozások)
+- Az „above-the-fold” (látható) tartalom: gyorsan közvetíti-e a fő üzenetet?
+- Tartalmi hiányosságok vagy hiányzó információk
 
-## Expected Output
-Provide a content quality assessment with specific passages highlighted for improvement. Include rewrite suggestions for weak sections and recommendations for content structure changes.
+## Elvárt kimenet
+Adj egy tartalomminőségi értékelést, és emeld ki a konkrét, fejlesztésre szoruló szövegrészeket. A gyenge szakaszokhoz javasolj újrafogalmazási javaslatokat, valamint adj javaslatokat a tartalomszerkezet módosítására.

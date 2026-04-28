@@ -1,3 +1,3 @@
-## Output Format
+## Kimeneti formátum
 
-Provide the report in markdown format with clear headings, bullet points, and actionable recommendations.
+A riportot markdown formátumban add meg, egyértelmű címsorokkal, felsorolásokkal és megvalósítható javaslatokkal.

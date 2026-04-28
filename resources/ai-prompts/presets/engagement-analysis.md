@@ -1,13 +1,13 @@
-# Engagement Analysis Report
+# Elköteleződés elemzési riport
 
-Analyze user engagement metrics including time on site, active time, scroll depth, and session behavior for the selected date range.
+Elemezd a felhasználói elköteleződési mutatókat, beleértve az oldalon töltött időt, az aktív időt, a görgetési mélységet és a munkamenet viselkedését a kiválasztott időszakra.
 
-## Focus Areas
-- Total time vs active time ratio (how engaged are users really?)
-- Average scroll depth and what it reveals about content consumption
-- Session duration patterns and engagement quality
-- Pages per session and content discovery paths
-- Comparison of engagement across different time periods if data allows
+## Fókuszterületek
+- Összes idő vs aktív idő aránya (mennyire elkötelezettek valójában a felhasználók?)
+- Átlagos görgetési mélység és amit ez a tartalomfogyasztásról elárul
+- Munkamenet hosszának mintái és az elköteleződés minősége
+- Munkamenetenkénti oldalszám és tartalomfelfedezési útvonalak
+- Az elköteleződés összehasonlítása különböző időszakokban, ha az adatok engedik
 
-## Expected Output
-Provide insights into how users are engaging with the website content. Identify areas where engagement is strong and where it drops off. Suggest improvements for increasing meaningful user interaction.
+## Elvárt kimenet
+Adj betekintést abba, hogyan kapcsolódnak a felhasználók a weboldal tartalmához. Azonosítsd, hol erős az elköteleződés és hol esik vissza. Javasolj fejlesztéseket az érdemi felhasználói interakció növelésére.
