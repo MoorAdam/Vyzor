@@ -31,7 +31,7 @@ services:
       DB_PORT: 5432
     volumes:
       - .:/var/www/html
-    command: sh -c "composer install --no-interaction --prefer-dist && exec php-fpm"
+    command: sh -c "composer install --no-interaction --prefer-dist && php artisan migrate --force && exec php-fpm"
     depends_on:
       vyzor-db:
         condition: service_healthy
