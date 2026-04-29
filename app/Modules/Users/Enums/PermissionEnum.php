@@ -12,6 +12,7 @@ enum PermissionEnum: string
     case CREATE_USER = 'users.create-user';
     case EDIT_USER = 'users.edit-user';
     case REMOVE_USER = 'users.remove-user';
+    case VIEW_CUSTOMERS = 'users.view-customers';
     case CREATE_CUSTOMER = 'users.create-customer';
     case EDIT_CUSTOMER = 'users.edit-customer';
     case REMOVE_CUSTOMER = 'users.remove-customer';
@@ -90,6 +91,7 @@ enum PermissionEnum: string
             self::CREATE_USER => 'Create new users',
             self::EDIT_USER => 'Edit existing users',
             self::REMOVE_USER => 'Remove users',
+            self::VIEW_CUSTOMERS => 'View the customers list',
             self::CREATE_CUSTOMER => 'Create new customers',
             self::EDIT_CUSTOMER => 'Edit existing customers',
             self::REMOVE_CUSTOMER => 'Remove customers',

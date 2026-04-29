@@ -23,7 +23,10 @@
         @break
         
     @case('a')
-        <a href="{{ $href }}" {{ $attributes }}>
+        <a
+            @if($disabled) aria-disabled="true" tabindex="-1" @else href="{{ $href }}" @endif
+            {{ $attributes->class(['pointer-events-none opacity-55 cursor-default' => $disabled]) }}
+        >
             {{ $slot }}
         </a>
         @break

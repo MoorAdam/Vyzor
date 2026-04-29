@@ -143,7 +143,10 @@
                         <x-ui.navlist.item disabled :label="__('Presentations')" icon="projector-screen-chart" />
                     </x-ui.navlist.group>
                     <x-ui.navlist.group :label="__('System')">
-                        <x-ui.navlist.item :label="__('Users | Customers')" icon="users" href="/users" :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::VIEW_USERS)" />
+                        <x-ui.navlist.item :label="__('Users | Customers')" icon="users" href="/users"
+                            :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::VIEW_USERS)
+                                && auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::VIEW_CUSTOMERS)
+                                && auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::VIEW_ROLES)" />
                         <x-ui.navlist.group :label="__('Settings')" icon="gear" collapsable href="/settings" :active="request()->is('settings')">
                             <x-ui.navlist.item :label="__('Contexts')" icon="tag" href="/settings/contexts"
                                 :active="request()->is('settings/contexts')" :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::VIEW_CONTEXTS)" />

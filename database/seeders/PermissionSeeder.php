@@ -21,6 +21,7 @@ class PermissionSeeder extends Seeder
 
         // Users — view list + customer management only
         PermissionEnum::VIEW_USERS,
+        PermissionEnum::VIEW_CUSTOMERS,
         PermissionEnum::CREATE_CUSTOMER,
         PermissionEnum::EDIT_CUSTOMER,
         PermissionEnum::REMOVE_CUSTOMER,
@@ -163,14 +164,24 @@ class PermissionSeeder extends Seeder
 
     private function seedRole(string $role, array $permissions, $allPermissions): void
     {
+        $desiredIds = [];
         foreach ($permissions as $permission) {
             $id = $allPermissions[$permission->value] ?? null;
             if ($id) {
+                $desiredIds[] = $id;
                 DB::table('role_permission')->updateOrInsert(
                     ['role' => $role, 'permission_id' => $id],
                     ['created_at' => now(), 'updated_at' => now()],
                 );
             }
         }
+
+        // Drop stale grants so system role definitions stay authoritative —
+        // shrinking a constant like WEB_PERMISSIONS now revokes the dropped
+        // permission instead of leaving it orphaned in role_permission.
+        DB::table('role_permission')
+            ->where('role', $role)
+            ->whereNotIn('permission_id', $desiredIds ?: [0])
+            ->delete();
     }
 }

@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 
 new #[Layout('layouts.app')] class extends Component {
 
-    public string $activeTab = 'users'; // 'users' | 'roles'
+    public string $activeTab = 'users'; // 'users' | 'customers' | 'roles'
 
     // ── User edit state ────────────────────────────────────────────
     public ?int $editingId = null;
@@ -44,16 +44,23 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function mount(): void
     {
-        abort_unless(auth()->user()->can('permission', PermissionEnum::VIEW_USERS), 403);
+        $auth = auth()->user();
+        $canAny = $auth->can('permission', PermissionEnum::VIEW_USERS)
+            || $auth->can('permission', PermissionEnum::VIEW_CUSTOMERS)
+            || $auth->can('permission', PermissionEnum::VIEW_ROLES);
+        abort_unless($canAny, 403);
+
+        // Land on the first tab the user is actually allowed to see.
+        $this->activeTab = $this->firstAllowedTab();
     }
 
     public function setTab(string $tab): void
     {
-        if (! \in_array($tab, ['users', 'roles'], true)) {
+        if (! \in_array($tab, ['users', 'customers', 'roles'], true)) {
             return;
         }
 
-        if ($tab === 'roles' && auth()->user()->cannot('permission', PermissionEnum::VIEW_ROLES)) {
+        if (! $this->canViewTab($tab)) {
             return;
         }
 
@@ -61,11 +68,36 @@ new #[Layout('layouts.app')] class extends Component {
         $this->cancelRoleForm();
     }
 
+    private function canViewTab(string $tab): bool
+    {
+        $perm = match ($tab) {
+            'users' => PermissionEnum::VIEW_USERS,
+            'customers' => PermissionEnum::VIEW_CUSTOMERS,
+            'roles' => PermissionEnum::VIEW_ROLES,
+            default => null,
+        };
+
+        return $perm !== null && auth()->user()->can('permission', $perm);
+    }
+
+    private function firstAllowedTab(): string
+    {
+        foreach (['users', 'customers', 'roles'] as $tab) {
+            if ($this->canViewTab($tab)) {
+                return $tab;
+            }
+        }
+        return 'users';
+    }
+
     // ── User editing ───────────────────────────────────────────────
 
     public function startEditing(int $userId): void
     {
         $user = User::findOrFail($userId);
+        $perm = $user->isCustomer() ? PermissionEnum::EDIT_CUSTOMER : PermissionEnum::EDIT_USER;
+        abort_unless(auth()->user()->can('permission', $perm), 403);
+
         $this->editingId = $user->id;
         $this->editName = $user->name;
         $this->editEmail = $user->email;
@@ -277,24 +309,32 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function with(): array
     {
+        $auth = auth()->user();
+        $canViewUsers = $auth->can('permission', PermissionEnum::VIEW_USERS);
+        $canViewCustomers = $auth->can('permission', PermissionEnum::VIEW_CUSTOMERS);
+
         // "Users" = anyone who isn't a customer and isn't an admin. The admin
         // user is intentionally hidden from the management UI so it can't be
         // edited or deleted; the `web` role is an implicit default for the
         // rest, so the filter checks on absence rather than presence.
-        $nonCustomers = User::query()
-            ->where(function ($q) {
-                $q->whereJsonDoesntContain('roles', UserRoleEnum::CUSTOMER->value)
-                    ->orWhereNull('roles');
-            })
-            ->where(function ($q) {
-                $q->whereJsonDoesntContain('roles', UserRoleEnum::ADMIN->value)
-                    ->orWhereNull('roles');
-            })
-            ->get();
+        $nonCustomers = $canViewUsers
+            ? User::query()
+                ->where(function ($q) {
+                    $q->whereJsonDoesntContain('roles', UserRoleEnum::CUSTOMER->value)
+                        ->orWhereNull('roles');
+                })
+                ->where(function ($q) {
+                    $q->whereJsonDoesntContain('roles', UserRoleEnum::ADMIN->value)
+                        ->orWhereNull('roles');
+                })
+                ->get()
+            : collect();
 
         return [
             'users' => $nonCustomers,
-            'customers' => User::whereJsonContains('roles', UserRoleEnum::CUSTOMER->value)->with('customerProfile')->get(),
+            'customers' => $canViewCustomers
+                ? User::whereJsonContains('roles', UserRoleEnum::CUSTOMER->value)->with('customerProfile')->get()
+                : collect(),
             // Chips on user rows: hide `customer` (created via /register only)
             // and `collaborator` (project-virtual). Also respect the per-row
             // `visible` flag so admins can hide structural roles from the UI.
@@ -318,22 +358,24 @@ new #[Layout('layouts.app')] class extends Component {
                 ->orderBy('slug')
                 ->get()
                 ->groupBy('group'),
-            'canViewRoles' => auth()->user()->can('permission', PermissionEnum::VIEW_ROLES),
+            'canViewRoles' => $auth->can('permission', PermissionEnum::VIEW_ROLES),
+            'canViewUsers' => $canViewUsers,
+            'canViewCustomers' => $canViewCustomers,
+            'canCreateUser' => $auth->can('permission', PermissionEnum::CREATE_USER),
+            'canEditUser' => $auth->can('permission', PermissionEnum::EDIT_USER),
+            'canRemoveUser' => $auth->can('permission', PermissionEnum::REMOVE_USER),
+            'canCreateCustomer' => $auth->can('permission', PermissionEnum::CREATE_CUSTOMER),
+            'canEditCustomer' => $auth->can('permission', PermissionEnum::EDIT_CUSTOMER),
+            'canRemoveCustomer' => $auth->can('permission', PermissionEnum::REMOVE_CUSTOMER),
         ];
     }
 };
 ?>
 
-<div class="p-6 space-y-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <x-ui.heading level="h1" size="xl">{{ __('Users & Customers') }}</x-ui.heading>
-            <x-ui.description class="mt-1">{{ __('Manage users, customer accounts, and access control.') }}</x-ui.description>
-        </div>
-        <x-ui.button href="{{ route('register') }}" variant="primary" icon="plus-circle" color="neutral"
-            :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::CREATE_USER) && auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::CREATE_CUSTOMER)">
-            {{ __('Add new user / customer') }}
-        </x-ui.button>
+<div class="p-6 flex flex-col h-full gap-6 min-h-0">
+    <div>
+        <x-ui.heading level="h1" size="xl">{{ __('Users & Customers') }}</x-ui.heading>
+        <x-ui.description class="mt-1">{{ __('Manage users, customer accounts, and access control.') }}</x-ui.description>
     </div>
 
     @if (session('success'))
@@ -356,10 +398,18 @@ new #[Layout('layouts.app')] class extends Component {
 
     {{-- Tabs --}}
     <div class="flex gap-1 bg-neutral-100 dark:bg-neutral-900 rounded-lg p-1 w-fit">
-        <button wire:click="setTab('users')"
-            class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors {{ $activeTab === 'users' ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-sm' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
-            {{ __('Users & Customers') }}
-        </button>
+        @if ($canViewUsers)
+            <button wire:click="setTab('users')"
+                class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors {{ $activeTab === 'users' ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-sm' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
+                {{ __('Users') }}
+            </button>
+        @endif
+        @if ($canViewCustomers)
+            <button wire:click="setTab('customers')"
+                class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors {{ $activeTab === 'customers' ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-sm' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
+                {{ __('Customers') }}
+            </button>
+        @endif
         @if ($canViewRoles)
             <button wire:click="setTab('roles')"
                 class="px-4 py-1.5 text-sm font-medium rounded-md transition-colors {{ $activeTab === 'roles' ? 'bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 shadow-sm' : 'text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-300' }}">
@@ -368,81 +418,91 @@ new #[Layout('layouts.app')] class extends Component {
         @endif
     </div>
 
-    {{-- ── Tab 1: Users & Customers ───────────────────────────────── --}}
-    @if ($activeTab === 'users')
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            {{-- Users column --}}
-            <x-ui.card size="full" class="pb-0">
-                <div class="flex items-center gap-2 mb-3">
+    {{-- ── Tab 1: Users ────────────────────────────────────────────── --}}
+    @if ($activeTab === 'users' && $canViewUsers)
+        <x-ui.card size="full" class="flex-1 min-h-0 flex flex-col">
+            <div class="flex items-center justify-between mb-3 shrink-0">
+                <div class="flex items-center gap-2">
                     <x-ui.icon name="users" />
                     <x-ui.heading level="h2" size="sm">{{ __('Users') }}</x-ui.heading>
                     <x-ui.badge variant="solid" color="blue" size="sm">{{ $users->count() }}</x-ui.badge>
                 </div>
+                @if ($canCreateUser)
+                <x-ui.button href="{{ route('register', ['type' => 'web']) }}" size="sm" variant="primary"
+                    icon="plus-circle" color="neutral">
+                    {{ __('Add User') }}
+                </x-ui.button>
+                @endif
+            </div>
 
-                @forelse ($users as $user)
-                    <div>
-                        @if ($editingId === $user->id)
-                            <form wire:submit="saveEdit" class="space-y-3">
-                                <x-ui.field>
-                                    <x-ui.label>{{ __('Name') }}</x-ui.label>
-                                    <x-ui.input wire:model="editName" :placeholder="__('Name...')" :invalid="$errors->has('editName')" />
-                                    <x-ui.error name="editName" />
-                                </x-ui.field>
-                                <x-ui.field>
-                                    <x-ui.label>{{ __('Email') }}</x-ui.label>
-                                    <x-ui.input wire:model="editEmail" type="email" :placeholder="__('Email...')" :invalid="$errors->has('editEmail')" />
-                                    <x-ui.error name="editEmail" />
-                                </x-ui.field>
-                                <x-ui.field>
-                                    <x-ui.label>{{ __('New Password') }}</x-ui.label>
-                                    <x-ui.input wire:model="editPassword" type="password" :placeholder="__('Leave blank to keep current...')" :invalid="$errors->has('editPassword')" />
-                                    <x-ui.error name="editPassword" />
-                                </x-ui.field>
-                                <x-ui.field>
-                                    <x-ui.label>{{ __('Confirm Password') }}</x-ui.label>
-                                    <x-ui.input wire:model="editPassword_confirmation" type="password" :placeholder="__('Confirm password...')" />
-                                </x-ui.field>
-                                <div class="flex gap-2">
-                                    <x-ui.button type="submit" size="xs" variant="primary">{{ __('Save') }}</x-ui.button>
-                                    <x-ui.button type="button" size="xs" variant="ghost" wire:click="cancelEditing">{{ __('Cancel') }}</x-ui.button>
-                                </div>
-                            </form>
-                        @else
-                            <div class="flex items-start gap-3 pt-4">
-                                <x-ui.avatar :name="$user->name" size="sm" />
-                                <div class="min-w-0 flex-1">
-                                    <p class="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">{{ $user->name }}</p>
-                                    <p class="text-xs text-neutral-500 dark:text-neutral-400 truncate">{{ $user->email }}</p>
-                                </div>
-                                <div class="flex shrink-0 gap-1">
-                                    <x-ui.button size="xs" variant="ghost" icon="pencil"
-                                        wire:click="startEditing({{ $user->id }})"
-                                        :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_USER)">{{ __('Edit') }}</x-ui.button>
-                                    <x-ui.modal.trigger :id="'delete-user-' . $user->id">
-                                        <x-ui.button size="xs" variant="ghost" icon="trash" color="red"
-                                            :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::REMOVE_USER)">{{ __('Delete') }}</x-ui.button>
-                                    </x-ui.modal.trigger>
-                                </div>
+            <div class="flex-1 min-h-0 overflow-y-auto -mx-4 px-4">
+            @forelse ($users as $user)
+                <div>
+                    @if ($editingId === $user->id)
+                        <form wire:submit="saveEdit" class="space-y-3">
+                            <x-ui.field>
+                                <x-ui.label>{{ __('Name') }}</x-ui.label>
+                                <x-ui.input wire:model="editName" :placeholder="__('Name...')" :invalid="$errors->has('editName')" />
+                                <x-ui.error name="editName" />
+                            </x-ui.field>
+                            <x-ui.field>
+                                <x-ui.label>{{ __('Email') }}</x-ui.label>
+                                <x-ui.input wire:model="editEmail" type="email" :placeholder="__('Email...')" :invalid="$errors->has('editEmail')" />
+                                <x-ui.error name="editEmail" />
+                            </x-ui.field>
+                            <x-ui.field>
+                                <x-ui.label>{{ __('New Password') }}</x-ui.label>
+                                <x-ui.input wire:model="editPassword" type="password" :placeholder="__('Leave blank to keep current...')" :invalid="$errors->has('editPassword')" />
+                                <x-ui.error name="editPassword" />
+                            </x-ui.field>
+                            <x-ui.field>
+                                <x-ui.label>{{ __('Confirm Password') }}</x-ui.label>
+                                <x-ui.input wire:model="editPassword_confirmation" type="password" :placeholder="__('Confirm password...')" />
+                            </x-ui.field>
+                            <div class="flex gap-2">
+                                <x-ui.button type="submit" size="xs" variant="primary">{{ __('Save') }}</x-ui.button>
+                                <x-ui.button type="button" size="xs" variant="ghost" wire:click="cancelEditing">{{ __('Cancel') }}</x-ui.button>
                             </div>
+                        </form>
+                    @else
+                        <div class="flex items-start gap-3 pt-4">
+                            <x-ui.avatar :name="$user->name" size="sm" />
+                            <div class="min-w-0 flex-1">
+                                <p class="font-medium text-sm text-neutral-900 dark:text-neutral-100 truncate">{{ $user->name }}</p>
+                                <p class="text-xs text-neutral-500 dark:text-neutral-400 truncate">{{ $user->email }}</p>
+                            </div>
+                            <div class="flex shrink-0 gap-1">
+                                @if ($canEditUser)
+                                    <x-ui.button size="xs" variant="ghost" icon="pencil"
+                                        wire:click="startEditing({{ $user->id }})">{{ __('Edit') }}</x-ui.button>
+                                @endif
+                                @if ($canRemoveUser)
+                                    <x-ui.modal.trigger :id="'delete-user-' . $user->id">
+                                        <x-ui.button size="xs" variant="ghost" icon="trash" color="red">{{ __('Delete') }}</x-ui.button>
+                                    </x-ui.modal.trigger>
+                                @endif
+                            </div>
+                        </div>
 
-                            @if ($canViewRoles && $assignableRoles->isNotEmpty())
-                                <div class="flex flex-wrap gap-1 mt-3">
-                                    @foreach ($assignableRoles as $role)
-                                        @php $assigned = \in_array($role->slug, $user->roles ?? [], true); @endphp
-                                        <button
-                                            wire:click="toggleUserRole({{ $user->id }}, '{{ $role->slug }}')"
-                                            :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::ASSIGN_ROLES)"
-                                            class="px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors {{ $assigned
-                                                ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900'
-                                                : 'bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800' }}">
-                                            {{ $role->label }}
-                                        </button>
-                                    @endforeach
-                                </div>
-                            @endif
+                        @if ($canViewRoles && $assignableRoles->isNotEmpty())
+                            <div class="flex flex-wrap gap-1 mt-3">
+                                @foreach ($assignableRoles as $role)
+                                    @php $assigned = \in_array($role->slug, $user->roles ?? [], true); @endphp
+                                    <button
+                                        wire:click="toggleUserRole({{ $user->id }}, '{{ $role->slug }}')"
+                                        :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::ASSIGN_ROLES)"
+                                        class="px-2 py-0.5 rounded-full text-[11px] font-medium border transition-colors {{ $assigned
+                                            ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900'
+                                            : 'bg-transparent text-neutral-500 border-neutral-200 dark:border-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-800' }}">
+                                        {{ $role->label }}
+                                    </button>
+                                @endforeach
+                            </div>
                         @endif
-                    </div>
+                    @endif
+                </div>
 
+                @if ($canRemoveUser)
                     <x-ui.modal :id="'delete-user-' . $user->id" :title="__('Delete User')" size="sm" centered>
                         <x-ui.text>{!! __('Are you sure you want to delete <strong>:name</strong>?', ['name' => $user->name]) !!}</x-ui.text>
                         <x-slot:footer>
@@ -450,28 +510,41 @@ new #[Layout('layouts.app')] class extends Component {
                             <x-ui.button variant="danger" wire:click="deleteUser({{ $user->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
                         </x-slot:footer>
                     </x-ui.modal>
+                @endif
 
-                    @if (! $loop->last)
-                        <x-ui.separator class="my-2" horizontal />
-                    @endif
-                @empty
-                    <x-ui.empty>
-                        <x-ui.empty.contents>
-                            <x-ui.text>{{ __('No users found.') }}</x-ui.text>
-                        </x-ui.empty.contents>
-                    </x-ui.empty>
-                @endforelse
-            </x-ui.card>
+                @if (! $loop->last)
+                    <x-ui.separator class="my-2" horizontal />
+                @endif
+            @empty
+                <x-ui.empty>
+                    <x-ui.empty.contents>
+                        <x-ui.text>{{ __('No users found.') }}</x-ui.text>
+                    </x-ui.empty.contents>
+                </x-ui.empty>
+            @endforelse
+            </div>
+        </x-ui.card>
+    @endif
 
-            {{-- Customers column --}}
-            <x-ui.card size="full" class="pb-0">
-                <div class="flex items-center gap-2 mb-2">
+    {{-- ── Tab 2: Customers ────────────────────────────────────────── --}}
+    @if ($activeTab === 'customers' && $canViewCustomers)
+        <x-ui.card size="full" class="flex-1 min-h-0 flex flex-col">
+            <div class="flex items-center justify-between mb-2 shrink-0">
+                <div class="flex items-center gap-2">
                     <x-ui.icon name="ps:buildings" />
                     <x-ui.heading level="h2" size="sm">{{ __('Customers') }}</x-ui.heading>
                     <x-ui.badge variant="solid" color="emerald" size="sm">{{ $customers->count() }}</x-ui.badge>
                 </div>
+                @if ($canCreateCustomer)
+                    <x-ui.button href="{{ route('register', ['type' => 'customer']) }}" size="sm" variant="primary"
+                        icon="plus-circle" color="neutral">
+                        {{ __('Add Customer') }}
+                    </x-ui.button>
+                @endif
+            </div>
 
-                @forelse ($customers as $customer)
+            <div class="flex-1 min-h-0 overflow-y-auto -mx-4 px-4">
+            @forelse ($customers as $customer)
                     <div>
                         @if ($editingId === $customer->id)
                             <form wire:submit="saveEdit" class="space-y-3">
@@ -515,25 +588,29 @@ new #[Layout('layouts.app')] class extends Component {
                                     @endif
                                 </div>
                                 <div class="flex shrink-0 gap-1">
-                                    <x-ui.button size="xs" variant="ghost" icon="pencil"
-                                        wire:click="startEditing({{ $customer->id }})"
-                                        :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_CUSTOMER)">{{ __('Edit') }}</x-ui.button>
-                                    <x-ui.modal.trigger :id="'delete-customer-' . $customer->id">
-                                        <x-ui.button size="xs" variant="ghost" icon="trash" color="red"
-                                            :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::REMOVE_CUSTOMER)">{{ __('Delete') }}</x-ui.button>
-                                    </x-ui.modal.trigger>
+                                    @if ($canEditCustomer)
+                                        <x-ui.button size="xs" variant="ghost" icon="pencil"
+                                            wire:click="startEditing({{ $customer->id }})">{{ __('Edit') }}</x-ui.button>
+                                    @endif
+                                    @if ($canRemoveCustomer)
+                                        <x-ui.modal.trigger :id="'delete-customer-' . $customer->id">
+                                            <x-ui.button size="xs" variant="ghost" icon="trash" color="red">{{ __('Delete') }}</x-ui.button>
+                                        </x-ui.modal.trigger>
+                                    @endif
                                 </div>
                             </div>
                         @endif
                     </div>
 
-                    <x-ui.modal :id="'delete-customer-' . $customer->id" :title="__('Delete Customer')" size="sm" centered>
-                        <x-ui.text>{!! __('Are you sure you want to delete <strong>:name</strong>?', ['name' => $customer->customerProfile?->company_name ?? $customer->name]) !!}</x-ui.text>
-                        <x-slot:footer>
-                            <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
-                            <x-ui.button variant="danger" wire:click="deleteUser({{ $customer->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
-                        </x-slot:footer>
-                    </x-ui.modal>
+                    @if ($canRemoveCustomer)
+                        <x-ui.modal :id="'delete-customer-' . $customer->id" :title="__('Delete Customer')" size="sm" centered>
+                            <x-ui.text>{!! __('Are you sure you want to delete <strong>:name</strong>?', ['name' => $customer->customerProfile?->company_name ?? $customer->name]) !!}</x-ui.text>
+                            <x-slot:footer>
+                                <x-ui.button variant="ghost" x-on:click="isOpen = false">{{ __('Cancel') }}</x-ui.button>
+                                <x-ui.button variant="danger" wire:click="deleteUser({{ $customer->id }})" x-on:click="isOpen = false">{{ __('Delete') }}</x-ui.button>
+                            </x-slot:footer>
+                        </x-ui.modal>
+                    @endif
 
                     @if (! $loop->last)
                         <x-ui.separator class="my-2" horizontal />
@@ -545,11 +622,11 @@ new #[Layout('layouts.app')] class extends Component {
                         </x-ui.empty.contents>
                     </x-ui.empty>
                 @endforelse
-            </x-ui.card>
-        </div>
+            </div>
+        </x-ui.card>
     @endif
 
-    {{-- ── Tab 2: Roles ──────────────────────────────────────────── --}}
+    {{-- ── Tab 3: Roles ──────────────────────────────────────────── --}}
     @if ($activeTab === 'roles' && $canViewRoles)
         @if (! $showRoleForm)
             <div class="flex items-center justify-between">

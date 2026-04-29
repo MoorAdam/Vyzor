@@ -14,8 +14,12 @@ new #[Layout('layouts.app')] class extends Component {
         $canCreateCustomer = auth()->user()->can('permission', PermissionEnum::CREATE_CUSTOMER);
         abort_unless($canCreateUser || $canCreateCustomer, 403);
 
-        // Default to customer if user can only create customers
-        if (!$canCreateUser) {
+        $requested = request()->query('type');
+        if ($requested === 'customer' && $canCreateCustomer) {
+            $this->type = 'customer';
+        } elseif ($requested === 'web' && $canCreateUser) {
+            $this->type = 'web';
+        } elseif (!$canCreateUser) {
             $this->type = 'customer';
         }
     }
