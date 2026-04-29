@@ -42,7 +42,17 @@ class AppServiceProvider extends ServiceProvider
                 } elseif (\in_array($user->id, $perm->collaborators ?? [])) {
                     $effectiveRoles = ['collaborator'];
                 } else {
-                    return false;
+                    // Not owner or collaborator — fall back to elevated all-projects permissions.
+                    $userPermissions = User::permissionsForRoles($effectiveRoles);
+
+                    if ($userPermissions->contains(PermissionEnum::EDIT_ALL_PROJECTS->value)) {
+                        // edit-all bypass — user acts as owner on any project.
+                    } elseif ($userPermissions->contains(PermissionEnum::VIEW_ALL_PROJECTS->value)
+                        && str_contains($permission->value, 'view')) {
+                        return true;
+                    } else {
+                        return false;
+                    }
                 }
             }
 

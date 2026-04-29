@@ -25,7 +25,7 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->reportLanguage = session('locale', config('app.locale', 'en'));
+        $this->reportLanguage = session('locale', config('app.locale', 'hu'));
     }
 
     /** Only presets tagged with "page_analyser". */

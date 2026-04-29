@@ -2,6 +2,7 @@
 
 namespace App\Modules\Users\Livewire;
 
+use App\Modules\Users\Enums\PermissionEnum;
 use App\Modules\Users\Enums\UserRoleEnum;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -24,8 +25,14 @@ class CustomerForm extends Component
 
     public string $password_confirmation = '';
 
+    public function mount(): void
+    {
+        abort_unless(auth()->user()->can('permission', PermissionEnum::CREATE_CUSTOMER), 403);
+    }
+
     public function save(): void
     {
+        abort_unless(auth()->user()->can('permission', PermissionEnum::CREATE_CUSTOMER), 403);
         $this->validate();
 
         DB::transaction(function () {

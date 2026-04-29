@@ -4,6 +4,7 @@ namespace App\Modules\Projects\Models;
 
 use App\Modules\Projects\Enums\ProjectStatusEnum;
 use App\Models\User;
+use App\Modules\Users\Enums\PermissionEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,6 +43,12 @@ class Project extends Model
     public function scopeAccessibleBy(Builder $query, User $user): Builder
     {
         if ($user->isAdmin()) {
+            return $query;
+        }
+
+        $userPermissions = User::permissionsForRoles($user->roles ?? []);
+        if ($userPermissions->contains(PermissionEnum::VIEW_ALL_PROJECTS->value)
+            || $userPermissions->contains(PermissionEnum::EDIT_ALL_PROJECTS->value)) {
             return $query;
         }
 

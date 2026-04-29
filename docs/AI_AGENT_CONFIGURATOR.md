@@ -131,7 +131,8 @@ A `ReportGeneratorService::buildPrompt()` átalakul: a slug-alapú lekéréseket
    - **(b)** `agent_configurations` verziózott (immutable revíziók), a `Report` egy `agent_configuration_revision_id`-t tárol.
    - **Javaslat:** v1-ben (a), mert a riportok átláthatók maradnak audit szempontból, és a tárhely nem szűk keresztmetszet.
 
-2. **Modell-kompatibilitás validáció szigorúsága.** A `scopeForModel()` jelenleg némán szűr. Mentésnél figyelmeztessünk, ha az aktív provider nem fedi a kiválasztott kontextusokat? Futáskor logoljunk warningot? **Javaslat:** mentésnél inline warning, futáskor néma kihagyás (jelenlegi viselkedés megtartása).
+2. **Modell-kompatibilitás validáció szigorúsága** 
+A `scopeForModel()` jelenleg némán szűr. Mentésnél figyelmeztessünk, ha az aktív provider nem fedi a kiválasztott kontextusokat? Futáskor logoljunk warningot? **Javaslat:** mentésnél inline warning, futáskor néma kihagyás (jelenlegi viselkedés megtartása).
 
 3. **Üres kötelező slot.** Ha valaki egy kötelező slotot üresen ment (pl. seedeléskor), futáskor mi történjen? **Javaslat:** mentésnél validáció blokkolja; futáskor exception.
 

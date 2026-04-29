@@ -3,6 +3,7 @@
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
+use App\Models\User;
 use App\Modules\Projects\Models\Project;
 use App\Modules\Users\Enums\PermissionEnum;
 use App\Modules\Projects\Enums\ProjectStatusEnum;
@@ -11,20 +12,32 @@ new #[Layout('layouts.app')] class extends Component {
 
     public string $tab = 'owned';
 
-    public function mount(): void
+    public function mount()
     {
-        abort_unless(auth()->user()->can('permission', PermissionEnum::VIEW_PROJECTS), 403);
+        if (auth()->user()->cannot('permission', PermissionEnum::VIEW_PROJECTS)) {
+            return redirect()->route('no-access');
+        }
     }
 
     private function projectQuery()
     {
-        if (auth()->user()->isAdmin()) {
+        $user = auth()->user();
+
+        if ($user->isAdmin() || $this->hasAllProjectsAccess($user)) {
             return Project::query();
         }
 
         return $this->tab === 'collaborating'
-            ? Project::collaboratingWith(auth()->user())
-            : Project::ownedBy(auth()->user());
+            ? Project::collaboratingWith($user)
+            : Project::ownedBy($user);
+    }
+
+    private function hasAllProjectsAccess(User $user): bool
+    {
+        $permissions = User::permissionsForRoles($user->roles ?? []);
+
+        return $permissions->contains(PermissionEnum::VIEW_ALL_PROJECTS->value)
+            || $permissions->contains(PermissionEnum::EDIT_ALL_PROJECTS->value);
     }
 
     public function setActiveProject(int $projectId): void
@@ -62,7 +75,8 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function with(): array
     {
-        $isAdmin = auth()->user()->isAdmin();
+        $user = auth()->user();
+        $unscoped = $user->isAdmin() || $this->hasAllProjectsAccess($user);
 
         return [
             'projects' => $this->projectQuery()
@@ -70,8 +84,8 @@ new #[Layout('layouts.app')] class extends Component {
                 ->latest('updated_at')
                 ->get(),
             'statuses' => ProjectStatusEnum::cases(),
-            'isAdmin' => $isAdmin,
-            'collabCount' => $isAdmin ? 0 : Project::collaboratingWith(auth()->user())->count(),
+            'isAdmin' => $unscoped,
+            'collabCount' => $unscoped ? 0 : Project::collaboratingWith($user)->count(),
         ];
     }
 

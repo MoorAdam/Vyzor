@@ -18,6 +18,7 @@ enum PermissionEnum: string
 
     // Project
     case VIEW_ALL_PROJECTS = 'project.view-all';
+    case EDIT_ALL_PROJECTS = 'project.edit-all';
     case VIEW_OWNED_PROJECTS = 'project.view-owned';
     case VIEW_COLLAB_PROJECTS = 'project.view-collab';
     case CHANGE_PROJECT_STATUS = 'project.change-status';
@@ -93,6 +94,7 @@ enum PermissionEnum: string
             self::EDIT_CUSTOMER => 'Edit existing customers',
             self::REMOVE_CUSTOMER => 'Remove customers',
             self::VIEW_ALL_PROJECTS => 'View all projects regardless of ownership',
+            self::EDIT_ALL_PROJECTS => 'Edit and act on any project regardless of ownership',
             self::VIEW_OWNED_PROJECTS => 'View own projects',
             self::VIEW_COLLAB_PROJECTS => 'View projects as collaborator',
             self::CHANGE_PROJECT_STATUS => 'Change project status',

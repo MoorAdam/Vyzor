@@ -22,17 +22,16 @@ class EnsureUserRole
         }
 
         // The user is logged in but doesn't hold the required role. Send them
-        // to a route they can actually access — and abort 403 if no such route
-        // applies, to avoid redirect loops when the request is already on the
-        // fallback route.
+        // to a route they can actually access — falling back to /no-access for
+        // users with no usable role so they can at least log out.
         $target = match (true) {
             $user?->isCustomer() => 'customer.dashboard',
             $user?->isUser() => 'projects',
-            default => null,
+            default => 'no-access',
         };
 
-        if ($target === null || $request->routeIs($target)) {
-            abort(403);
+        if ($request->routeIs($target)) {
+            return redirect()->route('no-access');
         }
 
         return redirect()->route($target);

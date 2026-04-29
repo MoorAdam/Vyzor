@@ -28,7 +28,7 @@ new class extends Component {
     {
         $this->dateFrom = now()->subDays(7)->format('Y-m-d');
         $this->dateTo = now()->format('Y-m-d');
-        $this->reportLanguage = session('locale', config('app.locale', 'en'));
+        $this->reportLanguage = session('locale', config('app.locale', 'hu'));
     }
 
     /** Only presets tagged with "clarity". */

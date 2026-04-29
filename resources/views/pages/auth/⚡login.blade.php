@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Modules\Users\Enums\PermissionEnum;
 use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
@@ -31,9 +32,15 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
 
         session()->regenerate();
 
-        $default = auth()->user()->isCustomer()
-            ? route('customer.dashboard')
-            : route('projects');
+        $authed = auth()->user();
+
+        if ($authed->isCustomer()) {
+            $default = route('customer.dashboard');
+        } elseif ($authed->isAdmin() || User::permissionsForRoles($authed->roles ?? [])->contains(PermissionEnum::VIEW_PROJECTS->value)) {
+            $default = route('projects');
+        } else {
+            $default = route('no-access');
+        }
 
         $this->redirectIntended(default: $default, navigate: true);
     }

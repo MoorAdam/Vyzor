@@ -99,6 +99,7 @@ new #[Layout('layouts.app')] class extends Component {
 
     public function toggleActive(int $id): void
     {
+        abort_unless(auth()->user()->can('permission', PermissionEnum::EDIT_CONTEXTS), 403);
         $context = AiContext::findOrFail($id);
         $context->update(['is_active' => !$context->is_active]);
     }
@@ -481,6 +482,7 @@ new #[Layout('layouts.app')] class extends Component {
                                         :color="$context->is_active ? 'neutral' : 'blue'"
                                         :icon="$context->is_active ? 'eye-slash' : 'eye'"
                                         wire:click="toggleActive({{ $context->id }})"
+                                        :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_CONTEXTS)"
                                     >
                                         {{ $context->is_active ? __('Disable') : __('Enable') }}
                                     </x-ui.button>

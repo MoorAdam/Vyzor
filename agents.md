@@ -25,7 +25,15 @@
 - Prefer native language features over external libraries where practical.
 - Keep frontend solutions concise and understandable. If needed, use previosu solutions as example
 - Always look for Sheaf UI components to use. If there isnt a right one, create a new component, or install from Sheaf UI.
-- Always create hun and en translations
+
+## Localization
+
+- **The app is primarily Hungarian.** Default `APP_LOCALE` and `APP_FALLBACK_LOCALE` are both `hu`. `lang/hu.json` is the primary translation file.
+- Translation **keys are still English** (e.g. `__('Save Report')`) — that's the convention Laravel's JSON translator uses, and it makes the code readable. Only the rendered output is Hungarian.
+- **Every new user-facing string MUST get a Hungarian translation in `lang/hu.json`.** If you add `__('New Thing')` in code, immediately add `"New Thing": "Új dolog"` to `hu.json`. A missing key falls back to the English key, which is a visible bug in production.
+- `lang/en.json` is intentionally empty (`{}`) — keys fall through to themselves, which IS the English text. Don't fill it in unless we're adding real English-only overrides for some reason.
+- Native Hungarian content (e.g. seeded AI prompts, preset names/descriptions in `database/seeders/AiContextSeeder.php`, the markdown files in `resources/ai-prompts/`) should be written in Hungarian directly. There is no `name_hu` / `description_hu` split anymore — it was removed in `2026_04_28_160311_drop_locale_fields_from_ai_contexts_table.php`.
+- The locale switcher (EN/HU buttons in the layout headers) writes `session('locale', ...)` and the `SetLocale` middleware applies it per request. The session value overrides `APP_LOCALE` when set.
 
 ## UI Components
 

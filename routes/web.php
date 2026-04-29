@@ -1,5 +1,7 @@
 <?php
 
+use App\Modules\Users\Enums\PermissionEnum;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -8,9 +10,17 @@ Route::get('/', function () {
         return redirect()->route('login');
     }
 
-    return Auth::user()->isCustomer()
-        ? redirect()->route('customer.dashboard')
-        : redirect()->route('projects');
+    $user = Auth::user();
+
+    if ($user->isCustomer()) {
+        return redirect()->route('customer.dashboard');
+    }
+
+    if (User::permissionsForRoles($user->roles ?? [])->contains(PermissionEnum::VIEW_PROJECTS->value) || $user->isAdmin()) {
+        return redirect()->route('projects');
+    }
+
+    return redirect()->route('no-access');
 });
 
 Route::middleware('guest')->group(function () {
@@ -18,6 +28,8 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::livewire('/no-access', 'pages::no-access')->name('no-access');
+
     Route::middleware('user_role:web')->group(function () {
         Route::livewire('/new-project', 'pages::project.create')->name('new-project');
         Route::livewire('/projects/{project}/edit', 'pages::project.edit')->name('project.edit');

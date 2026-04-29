@@ -41,7 +41,10 @@ new #[Layout('layouts.app')] class extends Component {
         abort_unless(auth()->user()->can('permission', [PermissionEnum::EDIT_PROJECT_DETAILS, $project]), 403);
 
         $this->project = $project;
-        $this->isOwner = auth()->user()->isAdmin() || $project->permission?->isOwner(auth()->user());
+        $user = auth()->user();
+        $hasEditAll = User::permissionsForRoles($user->roles ?? [])
+            ->contains(PermissionEnum::EDIT_ALL_PROJECTS->value);
+        $this->isOwner = $user->isAdmin() || $hasEditAll || $project->permission?->isOwner($user);
         $this->name = $project->name;
         $this->description = $project->description ?? '';
         $this->customer_id = (string) $project->customer_id;
