@@ -9,62 +9,46 @@ use App\Modules\Users\Enums\PermissionEnum;
 new #[Layout('layouts.app')] class extends Component {
 
     public ?string $error = null;
-    public string $datetime = '';
+    public ?string $fetchKey = null;
 
     public function mount(): void
     {
         abort_unless(auth()->user()->can('permission', [PermissionEnum::VIEW_CLARITY_SNAPSHOTS, \App\Modules\Projects\Models\Project::current()]), 403);
-        $this->datetime = $this->defaultDatetime();
+        $this->fetchKey = $this->defaultFetchKey();
     }
 
     #[On('current-project-changed')]
     public function onProjectChanged(): void
     {
-        // Re-snap to the latest fetch for the newly selected project.
-        $this->datetime = $this->defaultDatetime();
+        $this->fetchKey = $this->defaultFetchKey();
     }
 
     #[On('clarity-fetched')]
     public function onClarityFetched(): void
     {
-        // Snap the selector to the newest fetch so the freshly fetched data is shown.
-        $this->datetime = $this->defaultDatetime();
+        $this->fetchKey = $this->defaultFetchKey();
     }
 
-    private function defaultDatetime(): string
+    public function selectFetch(string $key): void
+    {
+        $this->fetchKey = $key;
+    }
+
+    private function defaultFetchKey(): ?string
     {
         $projectId = session('current_project_id');
+        if (!$projectId) return null;
 
-        if ($projectId) {
-            $latest = ClarityInsight::where('project_id', $projectId)->max('fetched_for');
-            if ($latest) {
-                return \Carbon\Carbon::parse($latest)->format('Y-m-d\TH:i');
-            }
-        }
+        $latest = ClarityInsight::where('project_id', $projectId)
+            ->orderByDesc('fetched_for')
+            ->first(['fetched_for', 'date_from', 'date_to']);
 
-        return now()->startOfHour()->format('Y-m-d\TH:i');
+        return $latest ? $this->keyFor($latest) : null;
     }
 
-    private function expandDateRanges(int $projectId): array
+    private function keyFor($row): string
     {
-        $ranges = ClarityInsight::where('project_id', $projectId)
-            ->select('date_from', 'date_to')
-            ->distinct()
-            ->get();
-
-        $dateSet = [];
-        foreach ($ranges as $range) {
-            $cursor = \Carbon\Carbon::parse($range->date_from);
-            $end = \Carbon\Carbon::parse($range->date_to);
-            while ($cursor->lte($end)) {
-                $dateSet[$cursor->format('Y-m-d')] = true;
-                $cursor->addDay();
-            }
-        }
-
-        $dates = array_keys($dateSet);
-        sort($dates);
-        return $dates;
+        return $row->fetched_for->toIso8601String() . '|' . $row->date_from->toDateString() . '|' . $row->date_to->toDateString();
     }
 
     public function with(): array
@@ -72,48 +56,53 @@ new #[Layout('layouts.app')] class extends Component {
         $projectId = session('current_project_id');
 
         if (!$projectId) {
-            $insights = collect();
-            $availableDates = [];
-            $hasTodayData = false;
-            $latestDate = null;
-        } else {
-            try {
-                $selectedDateTime = \Carbon\Carbon::parse($this->datetime);
-            } catch (\Throwable) {
-                $selectedDateTime = now()->startOfHour();
-            }
-            $selectedDate = $selectedDateTime->copy()->startOfDay()->toDateString();
-            $selectedEpoch = $selectedDateTime->getTimestamp();
-
-            // Prefer a fetch whose data range covers the selected day; fall back to
-            // the absolute closest fetch when no fetch covers it.
-            $covering = ClarityInsight::where('project_id', $projectId)
-                ->where('date_from', '<=', $selectedDate)
-                ->where('date_to', '>=', $selectedDate);
-
-            $closest = ($covering->exists() ? $covering : ClarityInsight::where('project_id', $projectId))
-                ->orderByRaw('ABS(EXTRACT(EPOCH FROM fetched_for) - ?)', [$selectedEpoch])
-                ->first(['fetched_for', 'date_from', 'date_to']);
-
-            $insights = $closest
-                ? ClarityInsight::where('project_id', $projectId)
-                    ->where('fetched_for', $closest->fetched_for)
-                    ->where('date_from', $closest->date_from)
-                    ->where('date_to', $closest->date_to)
-                    ->get()
-                    ->keyBy('metric_name')
-                : collect();
-
-            // Mark every day covered by any fetch's date range, not just the day it ran.
-            $availableDates = $this->expandDateRanges($projectId);
-
-            $hasTodayData = in_array(now()->format('Y-m-d'), $availableDates, true);
-            $latestDate = !empty($availableDates) ? collect($availableDates)->max() : null;
+            return [
+                'insights' => collect(),
+                'fetches' => collect(),
+                'selectedFetch' => null,
+                'hasTodayData' => false,
+                'latestDate' => null,
+            ];
         }
+
+        $fetches = ClarityInsight::where('project_id', $projectId)
+            ->whereNotNull('fetched_for')
+            ->select('fetched_for', 'date_from', 'date_to')
+            ->orderByDesc('fetched_for')
+            ->limit(120)
+            ->get()
+            ->unique(fn ($r) => $this->keyFor($r))
+            ->values();
+
+        $selectedFetch = $this->fetchKey
+            ? $fetches->first(fn ($f) => $this->keyFor($f) === $this->fetchKey)
+            : null;
+        if (!$selectedFetch && $fetches->isNotEmpty()) {
+            $selectedFetch = $fetches->first();
+            $this->fetchKey = $this->keyFor($selectedFetch);
+        }
+
+        $insights = $selectedFetch
+            ? ClarityInsight::where('project_id', $projectId)
+                ->where('fetched_for', $selectedFetch->fetched_for)
+                ->where('date_from', $selectedFetch->date_from)
+                ->where('date_to', $selectedFetch->date_to)
+                ->get()
+                ->keyBy('metric_name')
+            : collect();
+
+        $today = now()->toDateString();
+        $hasTodayData = $fetches->contains(
+            fn ($f) => $f->date_from->toDateString() <= $today && $f->date_to->toDateString() >= $today
+        );
+        $latestDate = $fetches->isNotEmpty()
+            ? $fetches->max(fn ($f) => $f->date_to->toDateString())
+            : null;
 
         return [
             'insights' => $insights,
-            'availableDates' => $availableDates,
+            'fetches' => $fetches,
+            'selectedFetch' => $selectedFetch,
             'hasTodayData' => $hasTodayData,
             'latestDate' => $latestDate,
         ];
@@ -136,7 +125,48 @@ new #[Layout('layouts.app')] class extends Component {
                     </span>
                 </div>
             @endif
-            <x-ui.date-picker type="datetime-local" wire:model.live="datetime" :available-dates="$availableDates" class="w-60" />
+            <div x-data="{ open: false }" class="relative">
+                <button
+                    type="button"
+                    x-ref="snapshotButton"
+                    x-on:click="open = !open"
+                    class="inline-flex items-center gap-2 border p-2 w-72 text-sm bg-white dark:bg-neutral-900 rounded-box shadow-xs border-black/10 dark:border-white/15 text-neutral-800 dark:text-neutral-300 transition-colors duration-200"
+                >
+                    <x-ui.icon name="clock" class="size-4 text-neutral-400 shrink-0" />
+                    @if ($selectedFetch)
+                        <span class="truncate flex-1 text-left">
+                            {{ $selectedFetch->date_from->format('M d') }} → {{ $selectedFetch->date_to->format('M d') }}
+                            <span class="text-neutral-500 dark:text-neutral-400">· {{ $selectedFetch->fetched_for->format('M d, H:i') }}</span>
+                        </span>
+                    @else
+                        <span class="text-neutral-400 flex-1 text-left">{{ __('No snapshots yet') }}</span>
+                    @endif
+                    <x-ui.icon name="caret-down" class="size-4 text-neutral-400 shrink-0" />
+                </button>
+
+                <div
+                    x-show="open"
+                    x-on:click.away="open = false"
+                    x-on:keydown.escape.window="open = false"
+                    x-anchor.bottom-end.offset.6="$refs.snapshotButton"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="transition ease-in duration-75"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
+                    style="display: none;"
+                    class="absolute z-50 w-80 bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-box shadow-lg p-2"
+                >
+                    <x-clarity-fetch-list
+                        :fetches="$fetches"
+                        selectable
+                        :selected="$fetchKey"
+                        wireClick="selectFetch"
+                        :emptyMessage="__('No snapshots yet — fetch one to get started.')"
+                    />
+                </div>
+            </div>
             <x-ui.separator class="my-1" vertical />
             <livewire:clarity-fetch-button />
         </div>
@@ -155,202 +185,17 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.empty>
                 <x-ui.empty.contents>
                     <x-ui.icon name="chart-bar" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>{{ __('No data available for') }} {{ \Carbon\Carbon::parse($datetime)->format('M d, Y H:i') }}.</x-ui.text>
+                    <x-ui.text>
+                        @if ($selectedFetch)
+                            {{ __('No data available for') }} {{ $selectedFetch->date_from->format('M d') }} → {{ $selectedFetch->date_to->format('M d') }}.
+                        @else
+                            {{ __('No snapshots yet — fetch Clarity data to get started.') }}
+                        @endif
+                    </x-ui.text>
                 </x-ui.empty.contents>
             </x-ui.empty>
         </x-ui.card>
     @else
-
-        <x-ui.heading level="h3" size="md" class="mb-3">{{ __('Overview') }}</x-ui.heading>
-
-        {{-- Overview Cards --}}
-        <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
-            @if ($traffic = $insights->get('Traffic'))
-                @php $t = $traffic->data[0] ?? []; @endphp
-                <x-ui.card size="full" class="border-l-4 border-l-blue-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <x-ui.icon name="users" class="size-4 text-blue-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Sessions') }}</x-ui.description>
-                    </div>
-                    <x-ui.heading level="h3" size="xl">{{ number_format($t['totalSessionCount'] ?? 0) }}</x-ui.heading>
-                    <x-ui.description class="text-xs! mt-1">{{ number_format($t['totalBotSessionCount'] ?? 0) }} {{ __('bots') }}</x-ui.description>
-                </x-ui.card>
-                <x-ui.card size="full" class="border-l-4 border-l-violet-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <x-ui.icon name="user" class="size-4 text-violet-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Unique Users') }}</x-ui.description>
-                    </div>
-                    <x-ui.heading level="h3" size="xl">{{ number_format($t['distinctUserCount'] ?? 0) }}</x-ui.heading>
-                </x-ui.card>
-                <x-ui.card size="full" class="border-l-4 border-l-emerald-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <x-ui.icon name="copy" class="size-4 text-emerald-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Pages / Session') }}</x-ui.description>
-                    </div>
-                    <x-ui.heading level="h3" size="xl">{{ number_format($t['pagesPerSessionPercentage'] ?? 0, 2) }}</x-ui.heading>
-                </x-ui.card>
-            @endif
-
-            @if ($scroll = $insights->get('ScrollDepth'))
-                @php $s = $scroll->data[0] ?? []; @endphp
-                <x-ui.card size="full" class="border-l-4 border-l-amber-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <x-ui.icon name="arrows-down-up" class="size-4 text-amber-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Avg Scroll Depth') }}</x-ui.description>
-                    </div>
-                    <x-ui.heading level="h3" size="xl">{{ number_format($s['averageScrollDepth'] ?? 0, 1) }}%</x-ui.heading>
-                </x-ui.card>
-            @endif
-        </div>
-
-        <x-ui.heading level="h3" size="md" class="mt-6 mb-3">{{ __('User Engagement') }}</x-ui.heading>
-
-        {{-- Engagement --}}
-        @if ($engagement = $insights->get('EngagementTime'))
-            @php $e = $engagement->data[0] ?? []; @endphp
-            <div class="grid grid-cols-2 lg:grid-cols-10 gap-4">
-                <x-ui.card size="full" class="border-l-4 border-l-cyan-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <x-ui.icon name="clock" class="size-4 text-cyan-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Total Time') }}</x-ui.description>
-                    </div>
-                    <x-ui.heading level="h3" size="xl">{{ $e['totalTime'] ?? 0 }}s</x-ui.heading>
-                </x-ui.card>
-                <x-ui.card size="full" class="border-l-4 border-l-teal-500">
-                    <div class="flex items-center gap-2 mb-1">
-                        <x-ui.icon name="timer" class="size-4 text-teal-500" />
-                        <x-ui.description class="uppercase tracking-wide text-xs!">{{ __('Active Time') }}</x-ui.description>
-                    </div>
-                    <x-ui.heading level="h3" size="xl">{{ $e['activeTime'] ?? 0 }}s</x-ui.heading>
-                </x-ui.card>
-            </div>
-        @endif
-
-        {{-- UX Signals --}}
-        @php
-            $signals = [
-                'DeadClickCount'   => ['label' => __('Dead Clicks'),      'color' => 'orange', 'icon' => 'cursor-click'],
-                'RageClickCount'   => ['label' => __('Rage Clicks'),      'color' => 'red',    'icon' => 'warning'],
-                'QuickbackClick'   => ['label' => __('Quick Backs'),      'color' => 'amber',  'icon' => 'arrow-u-up-left'],
-                'ExcessiveScroll'  => ['label' => __('Excessive Scroll'), 'color' => 'yellow', 'icon' => 'arrows-down-up'],
-                'ScriptErrorCount' => ['label' => __('Script Errors'),    'color' => 'rose',   'icon' => 'code'],
-                'ErrorClickCount'  => ['label' => __('Error Clicks'),     'color' => 'pink',   'icon' => 'x-circle'],
-            ];
-            $hasSignals = $insights->keys()->intersect(array_keys($signals))->isNotEmpty();
-        @endphp
-
-        @if ($hasSignals)
-            <div>
-                <x-ui.heading level="h2" size="md" class="mb-3">{{ __('UX Signals') }}</x-ui.heading>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                    @foreach ($signals as $key => $config)
-                        @if ($metric = $insights->get($key))
-                            @php
-                                $d = $metric->data[0] ?? [];
-                                $pct = $d['sessionsWithMetricPercentage'] ?? 0;
-                            @endphp
-                            <x-ui.card size="full" class="border-t-4 border-t-{{ $config['color'] }}-500">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <x-ui.icon name="{{ $config['icon'] }}" class="size-4 text-{{ $config['color'] }}-500" />
-                                    <x-ui.description class="uppercase tracking-wide text-xs!">{{ $config['label'] }}</x-ui.description>
-                                </div>
-                                <x-ui.heading level="h4" size="xl" class="{{ ($d['subTotal'] ?? 0) > 0 ? 'text-' . $config['color'] . '-600 dark:text-' . $config['color'] . '-400' : '' }}">{{ $d['subTotal'] ?? 0 }}</x-ui.heading>
-                                <div class="mt-2">
-                                    <div class="w-full h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
-                                        <div class="h-1.5 rounded-full bg-{{ $config['color'] }}-500" style="width: {{ min($pct, 100) }}%"></div>
-                                    </div>
-                                    <x-ui.description class="text-xs! mt-1">{{ $pct }}% {{ __('of sessions') }}</x-ui.description>
-                                </div>
-                            </x-ui.card>
-                        @endif
-                    @endforeach
-                </div>
-            </div>
-        @endif
-
-        {{-- Breakdowns --}}
-        @php
-            $dimensions = [
-                'Browser'     => ['label' => __('Browsers'),          'icon' => 'globe',         'color' => 'blue'],
-                'Device'      => ['label' => __('Devices'),           'icon' => 'device-mobile', 'color' => 'violet'],
-                'OS'          => ['label' => __('Operating Systems'), 'icon' => 'desktop',       'color' => 'emerald'],
-                'Country'     => ['label' => __('Countries'),         'icon' => 'map-pin',       'color' => 'amber'],
-                'ReferrerUrl' => ['label' => __('Referrers'),         'icon' => 'link',           'color' => 'cyan'],
-            ];
-            $pageTables = [
-                'PopularPages' => ['label' => __('Popular Pages'), 'icon' => 'chart-bar', 'color' => 'blue',   'col' => __('URL'),   'metric' => __('Visits')],
-                'PageTitle'    => ['label' => __('Page Titles'),   'icon' => 'text-aa',   'color' => 'violet', 'col' => __('Title'), 'metric' => __('Sessions')],
-            ];
-        @endphp
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            @foreach ($dimensions as $dim => $config)
-                @if ($metric = $insights->get($dim))
-                    @php $scrollable = count($metric->data) > 20; @endphp
-                    <x-ui.card size="full" @class(['flex flex-col', 'max-h-200' => $scrollable])>
-                        <div class="flex items-center gap-2 mb-3 shrink-0">
-                            <x-ui.icon name="{{ $config['icon'] }}" class="size-5 text-{{ $config['color'] }}-500" />
-                            <x-ui.heading level="h3" size="sm">{{ $config['label'] }}</x-ui.heading>
-                        </div>
-                        <div @class(['space-y-2', 'overflow-y-auto' => $scrollable])>
-                            @foreach ($metric->data as $row)
-                                @php
-                                    $count = (int) ($row['sessionsCount'] ?? 0);
-                                    $total = (int) ($insights->get('Traffic')?->data[0]['totalSessionCount'] ?? 1);
-                                    $pct = $total > 0 ? round(($count / $total) * 100, 1) : 0;
-                                @endphp
-                                <div>
-                                    <div class="flex justify-between text-sm mb-0.5">
-                                        <span class="text-neutral-700 dark:text-neutral-300 truncate">{{ $row['name'] ?? '—' }}</span>
-                                        <span class="text-neutral-500 dark:text-neutral-400 shrink-0 ml-2">{{ number_format($count) }}</span>
-                                    </div>
-                                    <div class="w-full h-1.5 rounded-full bg-neutral-200 dark:bg-neutral-700">
-                                        <div class="h-1.5 rounded-full bg-{{ $config['color'] }}-500" style="width: {{ min($pct, 100) }}%"></div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    </x-ui.card>
-                @endif
-            @endforeach
-
-            @foreach ($pageTables as $pt => $config)
-                @if ($metric = $insights->get($pt))
-                    @php $scrollable = count($metric->data) > 20; @endphp
-                    <x-ui.card size="full" @class(['overflow-hidden p-0! flex flex-col', 'max-h-200' => $scrollable])>
-                        <div class="flex items-center gap-2 px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/50 shrink-0">
-                            <x-ui.icon name="{{ $config['icon'] }}" class="size-5 text-{{ $config['color'] }}-500" />
-                            <x-ui.heading level="h3" size="sm">{{ $config['label'] }}</x-ui.heading>
-                        </div>
-                        <div @class([$scrollable ? 'overflow-y-auto' : ''])>
-                        <table class="w-full text-sm text-left table-fixed">
-                            <colgroup>
-                                <col />
-                                <col class="w-24" />
-                            </colgroup>
-                            <tbody class="divide-y divide-neutral-200 dark:divide-neutral-800">
-                                @foreach ($metric->data as $row)
-                                    <tr class="hover:bg-neutral-50 dark:hover:bg-neutral-900/30 transition-colors">
-                                        <td class="px-4 py-2.5 text-neutral-700 dark:text-neutral-300">
-                                            <div class="overflow-hidden text-ellipsis whitespace-nowrap" title="{{ $row['url'] ?? $row['name'] ?? '' }}">
-                                                @if ($pt === 'PopularPages')
-                                                    <x-ui.link href="{{ $row['url'] ?? '#' }}" openInNewTab :primary="false" class="text-sm!">{{ $row['url'] ?? '—' }}</x-ui.link>
-                                                @else
-                                                    {{ $row['name'] ?? '—' }}
-                                                @endif
-                                            </div>
-                                        </td>
-                                        <td class="px-4 py-2.5 text-right">
-                                            <x-ui.badge size="sm" color="{{ $config['color'] }}" variant="outline">{{ number_format($row['visitsCount'] ?? $row['sessionsCount'] ?? 0) }}</x-ui.badge>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                        </div>
-                    </x-ui.card>
-                @endif
-            @endforeach
-        </div>
+        <x-clarity-metrics :insights="$insights" />
     @endif
 </div>

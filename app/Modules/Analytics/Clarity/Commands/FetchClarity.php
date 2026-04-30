@@ -6,18 +6,22 @@ use App\Modules\Analytics\Clarity\Models\ClarityFetchCounter;
 use App\Modules\Analytics\Clarity\Models\ClarityInsight;
 use App\Modules\Projects\Models\Project;
 use Illuminate\Console\Command;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 class FetchClarity extends Command
 {
     protected $signature = 'app:fetch-clarity
         {project : The project ID to pull Clarity data for}
-        {--days=1 : Number of days to pull (1, 2, or 3)}
         {--dimension1= : First dimension (Browser, Device, Country/Region, OS, Source, Medium, Campaign, Channel, URL)}
         {--dimension2= : Second dimension}
         {--dimension3= : Third dimension}';
 
     protected $description = 'Pulls clarity data for a project and saves it to the database';
+
+    // Clarity's API supports 1/2/3-day windows but only returns one aggregated row per call;
+    // we always fetch the 1-day window so each snapshot represents a single day cleanly.
+    private const FETCH_DAYS = 1;
 
     private const VALID_DIMENSIONS = [
         'Browser',
@@ -45,15 +49,10 @@ class FetchClarity extends Command
             return self::FAILURE;
         }
 
-        $days = (int) $this->option('days');
+        $days = self::FETCH_DAYS;
         $dimension1 = $this->option('dimension1');
         $dimension2 = $this->option('dimension2');
         $dimension3 = $this->option('dimension3');
-
-        if (!in_array($days, [1, 2, 3])) {
-            $this->error('Days must be 1, 2, or 3.');
-            return self::FAILURE;
-        }
 
         $dimensions = array_filter([$dimension1, $dimension2, $dimension3]);
         foreach ($dimensions as $dim) {
@@ -66,10 +65,20 @@ class FetchClarity extends Command
 
         $this->info("Fetching Clarity data for \"{$project->name}\"...");
 
+        // Allow PHP to notice if the user navigated/cancelled while we were waiting on the API.
+        ignore_user_abort(false);
+
         $data = $this->fetchClarityData($project->clarity_api_key, $days, $dimension1, $dimension2, $dimension3);
 
         if ($data === null) {
             return self::FAILURE;
+        }
+
+        // If the client disconnected (e.g. user clicked Cancel) while Clarity was responding,
+        // don't waste a DB write — and don't burn a daily fetch slot.
+        if (connection_aborted()) {
+            $this->info('Client disconnected — discarding fetched data without saving.');
+            return self::SUCCESS;
         }
 
         $this->saveToDatabase($project, $data, $days, $dimension1, $dimension2, $dimension3);
@@ -119,16 +128,54 @@ class FetchClarity extends Command
             $params['dimension3'] = $dimension3;
         }
 
-        $response = Http::withToken($token)
-            ->acceptJson()
-            ->get(config('services.clarity.endpoint'), $params);
+        $connectTimeout = (int) config('services.clarity.connect_timeout', 10);
+        $timeout = (int) config('services.clarity.timeout', 90);
+
+        try {
+            $response = Http::withToken($token)
+                ->acceptJson()
+                ->connectTimeout($connectTimeout)
+                ->timeout($timeout)
+                ->get(config('services.clarity.endpoint'), $params);
+        } catch (ConnectionException $e) {
+            $this->error("Could not reach Clarity (after {$timeout}s): {$e->getMessage()}");
+            return null;
+        } catch (\Throwable $e) {
+            $this->error("Unexpected error contacting Clarity: {$e->getMessage()}");
+            return null;
+        }
 
         if ($response->failed()) {
-            $this->error("API returned {$response->status()}: {$response->body()}");
+            $this->error($this->formatUpstreamError($response->status(), $response->body()));
             return null;
         }
 
         return $response->json();
+    }
+
+    private function formatUpstreamError(int $status, string $body): string
+    {
+        $hint = match (true) {
+            in_array($status, [502, 503, 504], true) => __('Clarity is temporarily unavailable. Please try again in a minute.'),
+            $status === 429 => __('Clarity rate limit hit. Please wait before retrying.'),
+            $status === 401 || $status === 403 => __('Clarity rejected the API key for this project.'),
+            $status >= 500 => __('Clarity returned a server error. Please try again later.'),
+            default => null,
+        };
+
+        // Strip HTML tags / collapse whitespace so we never dump nginx error pages at users.
+        $clean = trim(preg_replace('/\s+/', ' ', strip_tags($body)));
+        if (mb_strlen($clean) > 200) {
+            $clean = mb_substr($clean, 0, 200) . '…';
+        }
+
+        if ($hint) {
+            return $clean === ''
+                ? "{$hint} (HTTP {$status})"
+                : "{$hint} (HTTP {$status}: {$clean})";
+        }
+
+        return "API returned {$status}" . ($clean === '' ? '' : ": {$clean}");
     }
 
     private function saveToDatabase(Project $project, array $data, int $days, ?string $dimension1, ?string $dimension2, ?string $dimension3): void

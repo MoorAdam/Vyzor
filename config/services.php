@@ -38,7 +38,18 @@ return [
     'clarity' => [
         'endpoint' => 'https://www.clarity.ms/export-data/api/v1/project-live-insights',
         'token' => env('CLARITY_KEY'),
-        'fetch_daily_limit' => 10
+        'fetch_daily_limit' => 10,
+        'connect_timeout' => env('CLARITY_CONNECT_TIMEOUT', 10),
+        'timeout' => env('CLARITY_TIMEOUT', 90),
+        'fetch_max_seconds' => env('CLARITY_FETCH_MAX_SECONDS', 180),
+
+        // Nightly auto-fetch — see app:fetch-clarity. Time is HH:MM in the app timezone.
+        // Schedule it just before midnight so numOfDays=1 (rolling 24h) lines up with the
+        // calendar day it represents.
+        'auto_fetch' => [
+            'enabled' => env('CLARITY_AUTO_FETCH_ENABLED', false),
+            'time' => env('CLARITY_AUTO_FETCH_TIME', '23:55'),
+        ],
     ],
 
     'htmlFetcher' => [

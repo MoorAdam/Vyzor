@@ -52,20 +52,19 @@ new #[Layout('layouts.app')] class extends Component {
         $start = Carbon::parse($this->dateFrom)->startOfDay();
         $end = Carbon::parse($this->dateTo)->endOfDay();
 
-        // Use date_from to find data covering the last 3 days
+        // Trends only make sense over consistent 1-day windows; legacy multi-day fetches
+        // would distort the chart since each point would cover a different span.
         $insights = ClarityInsight::where('project_id', $projectId)
             ->where('date_from', '>=', $start)
             ->where('date_to', '<=', $end)
+            ->whereColumn('date_from', 'date_to')
             ->whereNull('dimension1')
             ->orderBy('date_from')
             ->get();
 
-        // Group by the date range the data covers (date_from → date_to)
-        $grouped = $insights->groupBy(function ($i) {
-            $from = $i->date_from->format('M d');
-            $to = $i->date_to->format('M d');
-            return $from === $to ? $from : "{$from} – {$to}";
-        });
+        // Group by the day the data covers. With 1-day records this is always a single day,
+        // so the chart's x-axis becomes a clean per-day series.
+        $grouped = $insights->groupBy(fn ($i) => $i->date_from->format('M d'));
 
         $labels = $grouped->keys()->toArray();
 
@@ -147,6 +146,7 @@ new #[Layout('layouts.app')] class extends Component {
         $insight = ClarityInsight::where('project_id', $projectId)
             ->where('metric_name', $dimensionMetric)
             ->where('date_to', '<=', $end)
+            ->whereColumn('date_from', 'date_to')
             ->orderByDesc('date_from')
             ->first();
 

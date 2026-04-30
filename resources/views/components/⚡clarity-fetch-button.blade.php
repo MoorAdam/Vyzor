@@ -10,7 +10,6 @@ use App\Modules\Users\Enums\PermissionEnum;
 new class extends Component {
 
     public ?string $error = null;
-    public int $days = 1;
     public string $modalId = 'clarity-fetch-modal';
 
     public function getCounterProperty()
@@ -74,11 +73,6 @@ new class extends Component {
             return;
         }
 
-        if (!in_array($this->days, [1, 2, 3], true)) {
-            $this->error = __('Please select 1, 2, or 3 days.');
-            return;
-        }
-
         if ($this->remaining <= 0) {
             $this->error = __('Daily fetch limit reached.');
             return;
@@ -86,13 +80,21 @@ new class extends Component {
 
         $this->error = null;
 
-        $exitCode = Artisan::call('app:fetch-clarity', [
-            'project' => $project->id,
-            '--days' => $this->days,
-        ]);
+        // Clarity's API can take well over 30s for multi-day fetches; lift the per-request
+        // execution cap so the user gets a real success/error rather than a fatal timeout.
+        @set_time_limit((int) config('services.clarity.fetch_max_seconds', 180));
+
+        try {
+            $exitCode = Artisan::call('app:fetch-clarity', [
+                'project' => $project->id,
+            ]);
+        } catch (\Throwable $e) {
+            $this->error = __('Could not fetch Clarity data: :msg', ['msg' => $e->getMessage()]);
+            return;
+        }
 
         if ($exitCode !== 0) {
-            $this->error = trim(Artisan::output());
+            $this->error = trim(Artisan::output()) ?: __('Clarity fetch failed. Please try again.');
             return;
         }
 
@@ -158,42 +160,16 @@ new class extends Component {
                 </div>
             </div>
 
-            {{-- Days selector --}}
-            <x-ui.field>
-                <x-ui.label>{{ __('Days to fetch') }}</x-ui.label>
-                <x-ui.select wire:model="days">
-                    <x-ui.select.option value="1">{{ __('Previous 1 day') }}</x-ui.select.option>
-                    <x-ui.select.option value="2">{{ __('Previous 2 days') }}</x-ui.select.option>
-                    <x-ui.select.option value="3">{{ __('Previous 3 days') }}</x-ui.select.option>
-                </x-ui.select>
-            </x-ui.field>
+            <x-ui.description>
+                {{ __('Each fetch pulls Clarity\'s last 24 hours of data so every snapshot represents a single day.') }}
+            </x-ui.description>
 
             {{-- Recent fetches --}}
             <div>
                 <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100 mb-2">
                     {{ __('Recent fetches') }}
                 </div>
-                @if ($this->recentFetches->isEmpty())
-                    <div class="p-3 rounded-box border border-dashed border-neutral-200 dark:border-neutral-800 text-center">
-                        <x-ui.description>{{ __('No previous fetches for this project.') }}</x-ui.description>
-                    </div>
-                @else
-                    <ul class="divide-y divide-neutral-200 dark:divide-neutral-800 border border-neutral-200 dark:border-neutral-800 rounded-box overflow-hidden">
-                        @foreach ($this->recentFetches as $fetch)
-                            <li class="flex items-center justify-between gap-3 p-2.5 text-sm">
-                                <div class="flex items-center gap-2 min-w-0">
-                                    <x-ui.icon name="clock" class="size-4 text-neutral-400 shrink-0" />
-                                    <span class="text-neutral-700 dark:text-neutral-300 truncate">
-                                        {{ $fetch->fetched_for->format('M d, Y H:i') }}
-                                    </span>
-                                </div>
-                                <span class="text-xs text-neutral-500 dark:text-neutral-400 whitespace-nowrap">
-                                    {{ $fetch->date_from->format('M d') }} → {{ $fetch->date_to->format('M d') }}
-                                </span>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
+                <x-clarity-fetch-list :fetches="$this->recentFetches" />
             </div>
         </div>
 
@@ -202,7 +178,7 @@ new class extends Component {
                 type="button"
                 variant="outline"
                 color="neutral"
-                x-on:click="$dispatch('close-modal', { id: '{{ $modalId }}' })"
+                x-on:click="window.dispatchEvent(new CustomEvent('clarity-fetch-cancel', { detail: { id: @js($this->getId()) } })); $dispatch('close-modal', { id: '{{ $modalId }}' })"
             >
                 {{ __('Cancel') }}
             </x-ui.button>
@@ -222,3 +198,45 @@ new class extends Component {
     </x-ui.modal>
     @endif
 </div>
+
+@script
+<script>
+    // Track an AbortController for any in-flight Livewire request originating from this
+    // component, so the Cancel button can abort the (potentially slow) Clarity fetch.
+    let activeAborter = null;
+    const myId = $wire.id;
+
+    Livewire.hook('request', ({ payload, options, succeed, fail }) => {
+        const involvesUs = (payload?.components ?? []).some(c => {
+            try {
+                const snap = typeof c.snapshot === 'string' ? JSON.parse(c.snapshot) : c.snapshot;
+                return snap?.memo?.id === myId;
+            } catch (_) {
+                return false;
+            }
+        });
+        if (!involvesUs) return;
+
+        const controller = new AbortController();
+        options.signal = controller.signal;
+        let wasAborted = false;
+        controller.signal.addEventListener('abort', () => { wasAborted = true; });
+        activeAborter = controller;
+
+        succeed(() => { if (activeAborter === controller) activeAborter = null; });
+        fail(({ preventDefault }) => {
+            if (activeAborter === controller) activeAborter = null;
+            // Suppress Livewire's default error overlay when WE deliberately aborted.
+            if (wasAborted) preventDefault();
+        });
+    });
+
+    window.addEventListener('clarity-fetch-cancel', (event) => {
+        if (event?.detail?.id && event.detail.id !== myId) return;
+        if (activeAborter) {
+            activeAborter.abort();
+            activeAborter = null;
+        }
+    });
+</script>
+@endscript
