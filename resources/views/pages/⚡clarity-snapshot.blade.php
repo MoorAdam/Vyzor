@@ -45,6 +45,28 @@ new #[Layout('layouts.app')] class extends Component {
         return now()->startOfHour()->format('Y-m-d\TH:i');
     }
 
+    private function expandDateRanges(int $projectId): array
+    {
+        $ranges = ClarityInsight::where('project_id', $projectId)
+            ->select('date_from', 'date_to')
+            ->distinct()
+            ->get();
+
+        $dateSet = [];
+        foreach ($ranges as $range) {
+            $cursor = \Carbon\Carbon::parse($range->date_from);
+            $end = \Carbon\Carbon::parse($range->date_to);
+            while ($cursor->lte($end)) {
+                $dateSet[$cursor->format('Y-m-d')] = true;
+                $cursor->addDay();
+            }
+        }
+
+        $dates = array_keys($dateSet);
+        sort($dates);
+        return $dates;
+    }
+
     public function with(): array
     {
         $projectId = session('current_project_id');
@@ -55,27 +77,35 @@ new #[Layout('layouts.app')] class extends Component {
             $hasTodayData = false;
             $latestDate = null;
         } else {
-            $selectedTime = \Carbon\Carbon::parse($this->datetime)->startOfHour();
+            try {
+                $selectedDateTime = \Carbon\Carbon::parse($this->datetime);
+            } catch (\Throwable) {
+                $selectedDateTime = now()->startOfHour();
+            }
+            $selectedDate = $selectedDateTime->copy()->startOfDay()->toDateString();
+            $selectedEpoch = $selectedDateTime->getTimestamp();
 
-            // Find the fetch closest to the selected datetime
-            $closestFetch = ClarityInsight::where('project_id', $projectId)
-                ->orderByRaw('ABS(EXTRACT(EPOCH FROM (fetched_for - ?)))', [$selectedTime])
-                ->value('fetched_for');
+            // Prefer a fetch whose data range covers the selected day; fall back to
+            // the absolute closest fetch when no fetch covers it.
+            $covering = ClarityInsight::where('project_id', $projectId)
+                ->where('date_from', '<=', $selectedDate)
+                ->where('date_to', '>=', $selectedDate);
 
-            $insights = $closestFetch
+            $closest = ($covering->exists() ? $covering : ClarityInsight::where('project_id', $projectId))
+                ->orderByRaw('ABS(EXTRACT(EPOCH FROM fetched_for) - ?)', [$selectedEpoch])
+                ->first(['fetched_for', 'date_from', 'date_to']);
+
+            $insights = $closest
                 ? ClarityInsight::where('project_id', $projectId)
-                    ->where('fetched_for', $closestFetch)
+                    ->where('fetched_for', $closest->fetched_for)
+                    ->where('date_from', $closest->date_from)
+                    ->where('date_to', $closest->date_to)
                     ->get()
                     ->keyBy('metric_name')
                 : collect();
 
-            // Distinct dates (YYYY-MM-DD) that have data for this project
-            $availableDates = ClarityInsight::where('project_id', $projectId)
-                ->selectRaw('DISTINCT DATE(fetched_for) as d')
-                ->pluck('d')
-                ->map(fn ($d) => \Carbon\Carbon::parse($d)->format('Y-m-d'))
-                ->values()
-                ->all();
+            // Mark every day covered by any fetch's date range, not just the day it ran.
+            $availableDates = $this->expandDateRanges($projectId);
 
             $hasTodayData = in_array(now()->format('Y-m-d'), $availableDates, true);
             $latestDate = !empty($availableDates) ? collect($availableDates)->max() : null;

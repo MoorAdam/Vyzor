@@ -187,8 +187,8 @@ new #[Layout('layouts.app')] class extends Component {
         if ($roleId) {
             $role = Role::with('permissions')->findOrFail($roleId);
 
-            if ($role->slug === UserRoleEnum::ADMIN->value) {
-                session()->flash('error', __('The admin role cannot be edited.'));
+            if (\in_array($role->slug, [UserRoleEnum::ADMIN->value, UserRoleEnum::OVERSEER->value], true)) {
+                session()->flash('error', __('The :role role cannot be edited.', ['role' => $role->label]));
                 return;
             }
 
@@ -249,8 +249,8 @@ new #[Layout('layouts.app')] class extends Component {
         if ($this->editingRoleId) {
             $role = Role::findOrFail($this->editingRoleId);
 
-            if ($role->slug === UserRoleEnum::ADMIN->value) {
-                session()->flash('error', __('The admin role cannot be edited.'));
+            if (\in_array($role->slug, [UserRoleEnum::ADMIN->value, UserRoleEnum::OVERSEER->value], true)) {
+                session()->flash('error', __('The :role role cannot be edited.', ['role' => $role->label]));
                 return;
             }
 
@@ -642,7 +642,11 @@ new #[Layout('layouts.app')] class extends Component {
 
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 @foreach ($allRoles as $role)
-                    @php $isAdmin = $role->slug === UserRoleEnum::ADMIN->value; @endphp
+                    @php
+                        $isAdmin = $role->slug === UserRoleEnum::ADMIN->value;
+                        $isOverseer = $role->slug === UserRoleEnum::OVERSEER->value;
+                        $isLocked = $isAdmin || $isOverseer;
+                    @endphp
                     <div class="rounded-lg border border-black/10 dark:border-white/10 bg-white dark:bg-neutral-900 p-3 flex flex-col gap-1.5">
                         <div class="flex items-start justify-between gap-2">
                             <div class="min-w-0 flex-1">
@@ -653,12 +657,12 @@ new #[Layout('layouts.app')] class extends Component {
                                         <span class="text-[10px] px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-neutral-500 uppercase tracking-wide">{{ __('system') }}</span>
                                     @endif
                                     <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300">
-                                        {{ __(':n perms', ['n' => $role->permissions()->count()]) }}
+                                        {{ __(':n perms', ['n' => $isOverseer ? count(App\Modules\Users\Enums\PermissionEnum::cases()) : $role->permissions()->count()]) }}
                                     </span>
                                 </div>
                             </div>
                             <div class="flex items-center gap-0.5 shrink-0">
-                                @unless ($isAdmin)
+                                @unless ($isLocked)
                                     <button
                                         wire:click="openRoleForm({{ $role->id }})"
                                         :disabled="auth()->user()->cannot('permission', App\Modules\Users\Enums\PermissionEnum::EDIT_ROLES)"
@@ -684,6 +688,8 @@ new #[Layout('layouts.app')] class extends Component {
                         @endif
                         @if ($isAdmin)
                             <div class="text-[11px] text-neutral-400 italic mt-1">{{ __('Locked — bypasses all permission checks.') }}</div>
+                        @elseif ($isOverseer)
+                            <div class="text-[11px] text-neutral-400 italic mt-1">{{ __('Locked — implicitly holds every permission.') }}</div>
                         @endif
                     </div>
                 @endforeach

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Modules\Users\Enums\PermissionEnum;
 use App\Modules\Users\Enums\UserRoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -101,9 +102,18 @@ class User extends Authenticatable
 
     /**
      * Union of permission slugs across multiple roles.
+     *
+     * The overseer role short-circuits to every PermissionEnum case. This
+     * keeps overseer functionally admin-equivalent (without the Gate::before
+     * bypass) and means new permissions added to the enum are granted
+     * automatically — no re-seed required.
      */
     public static function permissionsForRoles(array $roles): Collection
     {
+        if (\in_array(UserRoleEnum::OVERSEER->value, $roles, true)) {
+            return collect(PermissionEnum::cases())->map(fn (PermissionEnum $p) => $p->value);
+        }
+
         return collect($roles)
             ->flatMap(fn (string $role) => static::permissionsForRole($role)->all())
             ->unique()

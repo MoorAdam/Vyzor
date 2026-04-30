@@ -8,9 +8,10 @@ enum UserRoleEnum: string
     // Only roles with hardcoded behavior in the codebase belong in this enum.
     // The full list of available roles lives in the `roles` table — anything
     // can be added via the Roles tab. This enum is a code-side reference for
-    // the three structural roles only:
+    // the structural roles only:
     //
     //   - ADMIN    — Gate::before permission bypass.
+    //   - OVERSEER — implicitly holds every permission via permissionsForRoles.
     //   - CUSTOMER — distinct profile model, registration flow, and layout.
     //   - WEB      — default permission seed for newly registered users.
     //
@@ -21,6 +22,7 @@ enum UserRoleEnum: string
     case WEB = 'web';
     case CUSTOMER = 'customer';
     case ADMIN = 'admin';
+    case OVERSEER = 'overseer';
 
     public function label(): string
     {
@@ -28,6 +30,7 @@ enum UserRoleEnum: string
             self::WEB => __('Web'),
             self::CUSTOMER => __('Customer'),
             self::ADMIN => __('Admin'),
+            self::OVERSEER => __('Overseer'),
         };
     }
 }

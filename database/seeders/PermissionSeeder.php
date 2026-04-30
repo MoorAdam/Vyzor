@@ -155,7 +155,10 @@ class PermissionSeeder extends Seeder
         $allPermissions = Permission::pluck('id', 'slug');
 
         $this->seedRole(UserRoleEnum::ADMIN->value, $this->allPermissions(), $allPermissions);
-        $this->seedRole('overseer', $this->allPermissions(), $allPermissions);
+        // Overseer is granted every permission implicitly via
+        // User::permissionsForRoles — no DB rows required. Keep the role row
+        // itself (seeded above) but skip the role_permission seed.
+        DB::table('role_permission')->where('role', UserRoleEnum::OVERSEER->value)->delete();
         $this->seedRole(UserRoleEnum::WEB->value, self::WEB_PERMISSIONS, $allPermissions);
         $this->seedRole('context_manager', self::CONTEXT_MANAGER_PERMISSIONS, $allPermissions);
         $this->seedRole('agent_manager', self::AGENT_MANAGER_PERMISSIONS, $allPermissions);
