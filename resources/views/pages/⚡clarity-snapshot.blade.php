@@ -4,17 +4,26 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use App\Modules\Analytics\Clarity\Models\ClarityInsight;
+use App\Modules\Analytics\Clarity\Services\ClarityAggregator;
 use App\Modules\Users\Enums\PermissionEnum;
+use Carbon\Carbon;
 
 new #[Layout('layouts.app')] class extends Component {
 
+    public string $mode = 'single';
+
     public ?string $error = null;
     public ?string $fetchKey = null;
+
+    public string $dateFrom = '';
+    public string $dateTo = '';
 
     public function mount(): void
     {
         abort_unless(auth()->user()->can('permission', [PermissionEnum::VIEW_CLARITY_SNAPSHOTS, \App\Modules\Projects\Models\Project::current()]), 403);
         $this->fetchKey = $this->defaultFetchKey();
+        $this->dateFrom = now()->subDays(6)->format('Y-m-d');
+        $this->dateTo = now()->format('Y-m-d');
     }
 
     #[On('current-project-changed')]
@@ -55,16 +64,30 @@ new #[Layout('layouts.app')] class extends Component {
     {
         $projectId = session('current_project_id');
 
+        $empty = [
+            'insights' => collect(),
+            'fetches' => collect(),
+            'selectedFetch' => null,
+            'hasTodayData' => false,
+            'latestDate' => null,
+            'periodInsights' => null,
+            'periodDaysWithData' => 0,
+            'periodTotalDays' => 0,
+            'compareCurrent' => null,
+            'comparePrevious' => null,
+            'compareCurrentFrom' => null,
+            'compareCurrentTo' => null,
+            'comparePreviousFrom' => null,
+            'comparePreviousTo' => null,
+        ];
+
         if (!$projectId) {
-            return [
-                'insights' => collect(),
-                'fetches' => collect(),
-                'selectedFetch' => null,
-                'hasTodayData' => false,
-                'latestDate' => null,
-            ];
+            return $empty;
         }
 
+        $aggregator = app(ClarityAggregator::class);
+
+        // ── Single mode (existing logic) ─────────────────────────────
         $fetches = ClarityInsight::where('project_id', $projectId)
             ->whereNotNull('fetched_for')
             ->select('fetched_for', 'date_from', 'date_to')
@@ -99,74 +122,153 @@ new #[Layout('layouts.app')] class extends Component {
             ? $fetches->max(fn ($f) => $f->date_to->toDateString())
             : null;
 
+        // ── Period mode ──────────────────────────────────────────────
+        $periodInsights = null;
+        $periodDaysWithData = 0;
+        $periodTotalDays = 0;
+
+        if ($this->mode === 'period' && $this->dateFrom && $this->dateTo) {
+            $from = Carbon::parse($this->dateFrom);
+            $to = Carbon::parse($this->dateTo);
+            $periodInsights = $aggregator->aggregate($projectId, $from, $to);
+            $periodDaysWithData = $aggregator->daysWithData($projectId, $from, $to);
+            $periodTotalDays = (int) $from->diffInDays($to) + 1;
+        }
+
+        // ── Compare mode ─────────────────────────────────────────────
+        $compareCurrent = null;
+        $comparePrevious = null;
+        $compareCurrentFrom = $compareCurrentTo = null;
+        $comparePreviousFrom = $comparePreviousTo = null;
+
+        if ($this->mode === 'compare' && $this->dateFrom && $this->dateTo) {
+            $compareCurrentFrom = Carbon::parse($this->dateFrom);
+            $compareCurrentTo = Carbon::parse($this->dateTo);
+            $rangeDays = (int) $compareCurrentFrom->diffInDays($compareCurrentTo) + 1;
+            // The previous period sits immediately before the current one and matches its length
+            // exactly, so % deltas read "vs an equivalent stretch of the past".
+            $comparePreviousTo = $compareCurrentFrom->copy()->subDay();
+            $comparePreviousFrom = $comparePreviousTo->copy()->subDays($rangeDays - 1);
+
+            $compareCurrent = $aggregator->aggregate($projectId, $compareCurrentFrom, $compareCurrentTo) ?? collect();
+            $comparePrevious = $aggregator->aggregate($projectId, $comparePreviousFrom, $comparePreviousTo) ?? collect();
+        }
+
         return [
             'insights' => $insights,
             'fetches' => $fetches,
             'selectedFetch' => $selectedFetch,
             'hasTodayData' => $hasTodayData,
             'latestDate' => $latestDate,
+            'periodInsights' => $periodInsights,
+            'periodDaysWithData' => $periodDaysWithData,
+            'periodTotalDays' => $periodTotalDays,
+            'compareCurrent' => $compareCurrent,
+            'comparePrevious' => $comparePrevious,
+            'compareCurrentFrom' => $compareCurrentFrom,
+            'compareCurrentTo' => $compareCurrentTo,
+            'comparePreviousFrom' => $comparePreviousFrom,
+            'comparePreviousTo' => $comparePreviousTo,
         ];
     }
 };
 ?>
 
 <div class="p-6 space-y-6">
-    <div class="flex items-center justify-between">
-        <div>
-            <x-ui.heading level="h1" size="xl">{{ __('Clarity Snapshot') }}</x-ui.heading>
-            <x-ui.description class="mt-1">{{ __('Single point-in-time Microsoft Clarity data for the current project.') }}</x-ui.description>
-        </div>
-        <div class="flex items-center gap-3">
-            @if (!$hasTodayData && $latestDate)
-                <div class="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400">
-                    <x-ui.icon name="warning" class="size-4 shrink-0" />
-                    <span class="whitespace-nowrap">
-                        {{ __('No data for today (:date)', ['date' => \Carbon\Carbon::now()->format('M d, Y')]) }}
-                    </span>
-                </div>
+    {{-- Title row — kept on its own row so heading + description own the full width
+         and don't get squeezed by the segmented control next to them. --}}
+    <div>
+        <x-ui.heading level="h1" size="xl">{{ __('Clarity Snapshot') }}</x-ui.heading>
+        <x-ui.description class="mt-1">
+            @if ($mode === 'single')
+                {{ __('Single point-in-time Microsoft Clarity data for the current project.') }}
+            @elseif ($mode === 'period')
+                {{ __('Aggregated Microsoft Clarity data over a date range.') }}
+            @else
+                {{ __('Compare two equal-length periods side by side.') }}
             @endif
-            <div x-data="{ open: false }" class="relative">
-                <button
-                    type="button"
-                    x-ref="snapshotButton"
-                    x-on:click="open = !open"
-                    class="inline-flex items-center gap-2 border p-2 w-72 text-sm bg-white dark:bg-neutral-900 rounded-box shadow-xs border-black/10 dark:border-white/15 text-neutral-800 dark:text-neutral-300 transition-colors duration-200"
-                >
-                    <x-ui.icon name="clock" class="size-4 text-neutral-400 shrink-0" />
-                    @if ($selectedFetch)
-                        <span class="truncate flex-1 text-left">
-                            {{ $selectedFetch->date_from->format('M d') }} → {{ $selectedFetch->date_to->format('M d') }}
-                            <span class="text-neutral-500 dark:text-neutral-400">· {{ $selectedFetch->fetched_for->format('M d, H:i') }}</span>
-                        </span>
-                    @else
-                        <span class="text-neutral-400 flex-1 text-left">{{ __('No snapshots yet') }}</span>
-                    @endif
-                    <x-ui.icon name="caret-down" class="size-4 text-neutral-400 shrink-0" />
-                </button>
+        </x-ui.description>
+    </div>
 
-                <div
-                    x-show="open"
-                    x-on:click.away="open = false"
-                    x-on:keydown.escape.window="open = false"
-                    x-anchor.bottom-end.offset.6="$refs.snapshotButton"
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0 scale-95"
-                    x-transition:enter-end="opacity-100 scale-100"
-                    x-transition:leave="transition ease-in duration-75"
-                    x-transition:leave-start="opacity-100 scale-100"
-                    x-transition:leave-end="opacity-0 scale-95"
-                    style="display: none;"
-                    class="absolute z-50 w-80 bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-box shadow-lg p-2"
-                >
-                    <x-clarity-fetch-list
-                        :fetches="$fetches"
-                        selectable
-                        :selected="$fetchKey"
-                        wireClick="selectFetch"
-                        :emptyMessage="__('No snapshots yet — fetch one to get started.')"
-                    />
+    {{-- Control row — mode switcher on the left, mode-specific controls + fetch button on the right. --}}
+    <div class="flex items-center justify-between gap-4 flex-wrap">
+        <x-ui.radio.group wire:model.live="mode" direction="horizontal" variant="segmented">
+            <x-ui.radio.item value="single" :label="__('Single day')" />
+            <x-ui.radio.item value="period" :label="__('Period summary')" />
+            <x-ui.radio.item value="compare" :label="__('Compare periods')" />
+        </x-ui.radio.group>
+
+        <div class="flex items-center gap-3 flex-wrap">
+            @if ($mode === 'single')
+                @if (!$hasTodayData && $latestDate)
+                    <div class="flex items-center gap-1.5 text-xs font-medium text-red-600 dark:text-red-400">
+                        <x-ui.icon name="warning" class="size-4 shrink-0" />
+                        <span class="whitespace-nowrap">
+                            {{ __('No data for today (:date)', ['date' => Carbon::now()->format('M d, Y')]) }}
+                        </span>
+                    </div>
+                @endif
+                <div x-data="{ open: false }" class="relative">
+                    <button
+                        type="button"
+                        x-ref="snapshotButton"
+                        x-on:click="open = !open"
+                        class="inline-flex items-center gap-2 border p-2 w-72 text-sm bg-white dark:bg-neutral-900 rounded-box shadow-xs border-black/10 dark:border-white/15 text-neutral-800 dark:text-neutral-300 transition-colors duration-200"
+                    >
+                        <x-ui.icon name="clock" class="size-4 text-neutral-400 shrink-0" />
+                        @if ($selectedFetch)
+                            <span class="truncate flex-1 text-left">
+                                {{ $selectedFetch->date_from->format('M d') }} → {{ $selectedFetch->date_to->format('M d') }}
+                                <span class="text-neutral-500 dark:text-neutral-400">· {{ $selectedFetch->fetched_for->format('M d, H:i') }}</span>
+                            </span>
+                        @else
+                            <span class="text-neutral-400 flex-1 text-left">{{ __('No snapshots yet') }}</span>
+                        @endif
+                        <x-ui.icon name="caret-down" class="size-4 text-neutral-400 shrink-0" />
+                    </button>
+
+                    <div
+                        x-show="open"
+                        x-on:click.away="open = false"
+                        x-on:keydown.escape.window="open = false"
+                        x-anchor.bottom-end.offset.6="$refs.snapshotButton"
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        x-transition:leave-start="opacity-100 scale-100"
+                        x-transition:leave-end="opacity-0 scale-95"
+                        style="display: none;"
+                        class="absolute z-50 w-80 bg-white dark:bg-neutral-900 border border-black/10 dark:border-white/10 rounded-box shadow-lg p-2"
+                    >
+                        <x-clarity-fetch-list
+                            :fetches="$fetches"
+                            selectable
+                            :selected="$fetchKey"
+                            wireClick="selectFetch"
+                            :emptyMessage="__('No snapshots yet — fetch one to get started.')"
+                        />
+                    </div>
                 </div>
-            </div>
+            @else
+                @php
+                    $rangeDays = $dateFrom && $dateTo
+                        ? (int) Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1
+                        : 0;
+                @endphp
+                <div class="flex items-center gap-2">
+                    <x-ui.label>{{ __('From') }}</x-ui.label>
+                    <x-ui.input type="date" wire:model.live="dateFrom" class="w-44" />
+                </div>
+                <div class="flex items-center gap-2">
+                    <x-ui.label>{{ __('To') }}</x-ui.label>
+                    <x-ui.input type="date" wire:model.live="dateTo" class="w-44" />
+                </div>
+                <span class="text-xs text-neutral-500 dark:text-neutral-400 tabular-nums whitespace-nowrap">
+                    {{ __(':n days', ['n' => $rangeDays]) }}
+                </span>
+            @endif
+
             <x-ui.separator class="my-1" vertical />
             <livewire:clarity-fetch-button />
         </div>
@@ -180,22 +282,54 @@ new #[Layout('layouts.app')] class extends Component {
         </x-ui.card>
     @endif
 
-    @if ($insights->isEmpty())
-        <x-ui.card>
-            <x-ui.empty>
-                <x-ui.empty.contents>
-                    <x-ui.icon name="chart-bar" class="size-10 text-neutral-300 dark:text-neutral-600" />
-                    <x-ui.text>
-                        @if ($selectedFetch)
-                            {{ __('No data available for') }} {{ $selectedFetch->date_from->format('M d') }} → {{ $selectedFetch->date_to->format('M d') }}.
-                        @else
-                            {{ __('No snapshots yet — fetch Clarity data to get started.') }}
-                        @endif
-                    </x-ui.text>
-                </x-ui.empty.contents>
-            </x-ui.empty>
-        </x-ui.card>
+    {{-- Body --}}
+    @if ($mode === 'single')
+        @if ($insights->isEmpty())
+            <x-ui.card>
+                <x-ui.empty>
+                    <x-ui.empty.contents>
+                        <x-ui.icon name="chart-bar" class="size-10 text-neutral-300 dark:text-neutral-600" />
+                        <x-ui.text>
+                            @if ($selectedFetch)
+                                {{ __('No data available for') }} {{ $selectedFetch->date_from->format('M d') }} → {{ $selectedFetch->date_to->format('M d') }}.
+                            @else
+                                {{ __('No snapshots yet — fetch Clarity data to get started.') }}
+                            @endif
+                        </x-ui.text>
+                    </x-ui.empty.contents>
+                </x-ui.empty>
+            </x-ui.card>
+        @else
+            <x-clarity-ux-score :insights="$insights" />
+            <x-clarity-metrics :insights="$insights" />
+        @endif
+    @elseif ($mode === 'period')
+        <x-clarity-period-summary
+            :insights="$periodInsights"
+            :date-from="Carbon::parse($dateFrom)"
+            :date-to="Carbon::parse($dateTo)"
+            :days-with-data="$periodDaysWithData"
+            :total-days="$periodTotalDays"
+        />
     @else
-        <x-clarity-metrics :insights="$insights" />
+        @if (($compareCurrent?->isEmpty() ?? true) && ($comparePrevious?->isEmpty() ?? true))
+            <x-ui.card>
+                <x-ui.empty>
+                    <x-ui.empty.contents>
+                        <x-ui.icon name="git-diff" class="size-10 text-neutral-300 dark:text-neutral-600" />
+                        <x-ui.text>{{ __('No Clarity data in either period — try a wider date range.') }}</x-ui.text>
+                    </x-ui.empty.contents>
+                </x-ui.empty>
+            </x-ui.card>
+        @else
+            <x-clarity-period-compare
+                :current="$compareCurrent"
+                :previous="$comparePrevious"
+                :current-from="$compareCurrentFrom"
+                :current-to="$compareCurrentTo"
+                :previous-from="$comparePreviousFrom"
+                :previous-to="$comparePreviousTo"
+            />
+        @endif
     @endif
 </div>

@@ -5,8 +5,6 @@ namespace App\Modules\Analytics\Clarity\Commands;
 use App\Modules\Projects\Models\Project;
 use Illuminate\Console\Command;
 
-use function Laravel\Prompts\info;
-
 class FetchAllClarity extends Command
 {
     /**
@@ -37,7 +35,6 @@ class FetchAllClarity extends Command
                 $this->info("Fetching Clarity insights for project ID: {$projectId}...");
                 $this->call('app:fetch-clarity', [
                     'project' => $projectId,
-                    '--days' => 1,
                 ]);
             }
             $this->info('Finished fetching Clarity insights for all projects.');

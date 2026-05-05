@@ -62,6 +62,17 @@ new #[Layout('layouts.app')] class extends Component {
             ->orderBy('date_from')
             ->get();
 
+        // If a day had multiple fetches, keep only the latest one — otherwise
+        // firstWhere() below would pick whichever happened to come first in the
+        // result set, making the chart values wobble between fetches.
+        $insights = $insights
+            ->groupBy(fn ($i) => $i->date_from->format('Y-m-d'))
+            ->flatMap(function ($rows) {
+                $latestTs = $rows->max(fn ($r) => $r->fetched_for->timestamp);
+                return $rows->filter(fn ($r) => $r->fetched_for->timestamp === $latestTs);
+            })
+            ->values();
+
         // Group by the day the data covers. With 1-day records this is always a single day,
         // so the chart's x-axis becomes a clean per-day series.
         $grouped = $insights->groupBy(fn ($i) => $i->date_from->format('M d'));
@@ -148,6 +159,7 @@ new #[Layout('layouts.app')] class extends Component {
             ->where('date_to', '<=', $end)
             ->whereColumn('date_from', 'date_to')
             ->orderByDesc('date_from')
+            ->orderByDesc('fetched_for')
             ->first();
 
         if (!$insight || empty($insight->data)) {
