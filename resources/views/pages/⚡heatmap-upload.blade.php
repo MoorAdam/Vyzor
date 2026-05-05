@@ -4,7 +4,9 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Validate;
 use Livewire\WithFileUploads;
-use App\Modules\Analytics\Heatmaps\Models\Heatmap;
+use App\Modules\Analytics\Clarity\Heatmaps\Exceptions\ClarityHeatmapException;
+use App\Modules\Analytics\Clarity\Heatmaps\Models\Heatmap;
+use App\Modules\Analytics\Clarity\Heatmaps\Services\ClarityHeatmapValidator;
 use App\Modules\Users\Enums\PermissionEnum;
 
 new #[Layout('layouts.app')] class extends Component {
@@ -25,29 +27,37 @@ new #[Layout('layouts.app')] class extends Component {
     {
         $this->errorMessage = null;
 
-        if ($this->csvFile) {
-            $ext = strtolower($this->csvFile->getClientOriginalExtension());
-            if (!in_array($ext, ['csv', 'txt'])) {
-                $this->addError('csvFile', __('The file must be a CSV or TXT file.'));
+        if (!$this->csvFile) {
+            return;
+        }
+
+        $ext = strtolower($this->csvFile->getClientOriginalExtension());
+        if (!in_array($ext, ['csv', 'txt'])) {
+            $this->addError('csvFile', __('The file must be a CSV or TXT file.'));
+            $this->csvFile = null;
+            return;
+        }
+
+        // Run the Clarity signature check at upload time so the user sees the
+        // problem immediately, not after pressing Save.
+        try {
+            $content = @file_get_contents($this->csvFile->getRealPath());
+            if ($content === false) {
+                $this->errorMessage = __('Could not read the uploaded file. Please try again.');
                 $this->csvFile = null;
+                return;
             }
+            app(ClarityHeatmapValidator::class)->validate(
+                $this->csvFile->getClientOriginalName(),
+                $content,
+            );
+        } catch (ClarityHeatmapException $e) {
+            $this->errorMessage = $this->mapValidationError($e);
+            $this->csvFile = null;
+        } catch (\Throwable $e) {
+            $this->errorMessage = __('Failed to validate heatmap: :msg', ['msg' => $e->getMessage()]);
+            $this->csvFile = null;
         }
-    }
-
-    private function parseDateFromCsv(string $content): ?string
-    {
-        $lines = array_map('str_getcsv', explode("\n", $content));
-
-        foreach ($lines as $row) {
-            if (isset($row[0]) && trim($row[0], "\xEF\xBB\xBF \"") === 'Date range' && isset($row[1])) {
-                $range = trim($row[1], '" ');
-                $startDateStr = trim(explode(' - ', $range)[0] ?? '');
-                $parsed = \DateTime::createFromFormat('m/d/Y g:i A', $startDateStr);
-                return $parsed ? $parsed->format('Y-m-d') : null;
-            }
-        }
-
-        return null;
     }
 
     public function save(): void
@@ -76,14 +86,17 @@ new #[Layout('layouts.app')] class extends Component {
                 return;
             }
 
-            $content = file_get_contents($this->csvFile->getRealPath());
-            $filename = $this->csvFile->getClientOriginalName();
-
-            $date = $this->parseDateFromCsv($content);
-            if (!$date) {
-                $this->errorMessage = __('Could not find a valid "Date range" row in the CSV file.');
+            $content = @file_get_contents($this->csvFile->getRealPath());
+            if ($content === false) {
+                $this->errorMessage = __('Could not read the uploaded file. Please try again.');
                 return;
             }
+            $filename = $this->csvFile->getClientOriginalName();
+
+            // Re-validate at save time. The temp file could have been swapped
+            // between updatedCsvFile and save (and the validator is the single
+            // source of truth for both signature and parsed date).
+            $date = app(ClarityHeatmapValidator::class)->validate($filename, $content);
 
             Heatmap::create([
                 'project_id' => $projectId,
@@ -94,9 +107,31 @@ new #[Layout('layouts.app')] class extends Component {
             ]);
 
             $this->redirect(route('heatmaps'), navigate: true);
+        } catch (ClarityHeatmapException $e) {
+            $this->errorMessage = $this->mapValidationError($e);
         } catch (\Throwable $e) {
             $this->errorMessage = __('Failed to upload heatmap: ') . $e->getMessage();
         }
+    }
+
+    /**
+     * Translate a stable error code from the validator into a user-facing
+     * sentence. Kept inside the component so the wording can be tuned per
+     * surface without touching the service.
+     */
+    private function mapValidationError(ClarityHeatmapException $e): string
+    {
+        return match ($e->reason) {
+            ClarityHeatmapException::REASON_EMPTY => __('The uploaded file is empty.'),
+            ClarityHeatmapException::REASON_TOO_LARGE => __('The uploaded file is larger than the :n KB limit.', [
+                'n' => $e->context['limit_kb'] ?? 2048,
+            ]),
+            ClarityHeatmapException::REASON_BINARY => __('The uploaded file looks like a binary file (e.g. an image or PDF), not a Clarity CSV export.'),
+            ClarityHeatmapException::REASON_NO_DATE_RANGE => __('Could not find a valid "Date range" row in the CSV — only Microsoft Clarity heatmap exports are accepted here.'),
+            ClarityHeatmapException::REASON_INVALID_DATE => __('The "Date range" row does not match the format Clarity emits (e.g. "12/01/2024 12:00 AM"). Please re-export the heatmap from Clarity.'),
+            ClarityHeatmapException::REASON_SIGNATURE_MISMATCH => __('This does not look like a Clarity heatmap export. Expected metadata fields (URL, Heatmap type, Device type, Filters, …) are missing.'),
+            default => __('The file could not be validated as a Clarity heatmap.'),
+        };
     }
 };
 ?>

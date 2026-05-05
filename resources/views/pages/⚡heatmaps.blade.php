@@ -4,7 +4,7 @@ use Livewire\Component;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\WithPagination;
-use App\Modules\Analytics\Heatmaps\Models\Heatmap;
+use App\Modules\Analytics\Clarity\Heatmaps\Models\Heatmap;
 use App\Modules\Users\Enums\PermissionEnum;
 
 new #[Layout('layouts.app')] class extends Component {

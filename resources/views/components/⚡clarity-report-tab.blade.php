@@ -4,7 +4,7 @@ use Livewire\Component;
 use App\Modules\Ai\Contexts\Enums\AiContextType;
 use App\Modules\Ai\Contexts\Enums\ContextTag;
 use App\Modules\Ai\Contexts\Models\AiContext;
-use App\Modules\Analytics\Heatmaps\Models\Heatmap;
+use App\Modules\Analytics\Clarity\Heatmaps\Models\Heatmap;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Reports\Enums\ReportStatusEnum;
 use App\Modules\Reports\Jobs\GenerateAiReport;

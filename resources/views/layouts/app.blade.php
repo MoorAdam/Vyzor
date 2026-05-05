@@ -127,18 +127,18 @@
                                 :active="request()->is('clarity/clarity-report')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::CREATE_REPORT, $currentProject])" />
                             <x-ui.navlist.item :label="__('Page Report')" icon="browser" href="/clarity/page-report"
                                 :active="request()->is('clarity/page-report')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::CREATE_REPORT, $currentProject])" />
+                            {{-- Heatmaps live under Clarity because the heatmap CSVs are exported from
+                                 Microsoft Clarity itself — they're a Clarity feature, not a separate product. --}}
+                            <x-ui.navlist.item :label="__('All Heatmaps')" icon="fire" href="/heatmaps"
+                                :active="request()->is('heatmaps') && !request()->is('heatmaps/*')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_HEATMAPS, $currentProject])" />
+                            <x-ui.navlist.item :label="__('Upload Heatmap')" icon="upload-simple" href="/heatmaps/upload"
+                                :active="request()->is('heatmaps/upload')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::UPLOAD_HEATMAP, $currentProject])" />
                         </x-ui.navlist.group>
                         <x-ui.navlist.group :label="__('Reports')" collapsable>
                             <x-ui.navlist.item :label="__('Write Report')" icon="pencil-simple" href="/ai-reports"
                                 :active="request()->is('ai-reports')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::CREATE_REPORT, $currentProject])" />
                             <x-ui.navlist.item :label="__('All Reports')" icon="book-bookmark" href="/reports"
                                 :active="request()->is('reports') || request()->is('reports/*')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_REPORTS, $currentProject])" />
-                        </x-ui.navlist.group>
-                        <x-ui.navlist.group :label="__('Heatmaps')" collapsable>
-                            <x-ui.navlist.item :label="__('Upload')" icon="upload-simple" href="/heatmaps/upload"
-                                :active="request()->is('heatmaps/upload')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::UPLOAD_HEATMAP, $currentProject])" />
-                            <x-ui.navlist.item :label="__('All Heatmaps')" icon="fire" href="/heatmaps"
-                                :active="request()->is('heatmaps') && !request()->is('heatmaps/*')" :disabled="$noProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_HEATMAPS, $currentProject])" />
                         </x-ui.navlist.group>
                         <x-ui.navlist.item disabled :label="__('Presentations')" icon="projector-screen-chart" />
                     </x-ui.navlist.group>

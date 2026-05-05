@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Modules\Analytics\Heatmaps\Models;
+namespace App\Modules\Analytics\Clarity\Heatmaps\Models;
 
 use App\Modules\Projects\Models\Project;
 use App\Models\User;
