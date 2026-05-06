@@ -22,6 +22,18 @@ new #[Layout('layouts.app')] class extends Component {
     /** Selected country for region/city drill-down — null = pick the top country automatically. */
     public ?string $selectedCountry = null;
 
+    /**
+     * Gates the GA fetch in with(). Initial render keeps this false so the
+     * page paints instantly with a skeleton; wire:init flips it on the first
+     * AJAX round-trip, after which every subsequent render fetches normally.
+     */
+    public bool $loaded = false;
+
+    public function loadData(): void
+    {
+        $this->loaded = true;
+    }
+
     public function mount(): void
     {
         abort_unless(
@@ -82,6 +94,13 @@ new #[Layout('layouts.app')] class extends Component {
         ];
 
         if (!$project || !$project->hasGoogleAnalytics()) {
+            return $base;
+        }
+
+        // Skeleton-first: skip the heavy 2-batch GA call on the initial paint.
+        // wire:init triggers loadData() right after hydration, which flips
+        // $loaded=true and brings us back here for the real fetch.
+        if (!$this->loaded) {
             return $base;
         }
 
@@ -234,7 +253,7 @@ new #[Layout('layouts.app')] class extends Component {
 };
 ?>
 
-<div class="p-6 space-y-6">
+<div class="p-6 space-y-6" wire:init="loadData">
     <div>
         <x-ui.heading level="h1" size="xl">{{ __('Google Analytics — Audience') }}</x-ui.heading>
         <x-ui.description class="mt-1">
@@ -314,6 +333,96 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.card>
                 <x-ui.error :messages="[$error]" />
             </x-ui.card>
+        @elseif (!$loaded)
+            {{-- Skeleton: mirrors the loaded layout (demographics row, devices row,
+                 geography drill-down). wire:init triggers loadData() right after
+                 hydration; on the next render this branch is replaced with data. --}}
+            <div class="animate-pulse space-y-6" aria-busy="true" aria-label="{{ __('Loading analytics') }}">
+                {{-- Demographics row --}}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    @for ($c = 0; $c < 2; $c++)
+                        <x-ui.card size="full">
+                            <div class="h-5 w-32 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
+                            <div class="space-y-3">
+                                @for ($r = 0; $r < 5; $r++)
+                                    <div>
+                                        <div class="flex items-center justify-between mb-1">
+                                            <div class="h-3 w-24 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                            <div class="h-3 w-16 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                        </div>
+                                        <div class="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded overflow-hidden">
+                                            <div class="h-full bg-neutral-200 dark:bg-neutral-700 rounded" style="width: {{ rand(20, 90) }}%"></div>
+                                        </div>
+                                    </div>
+                                @endfor
+                            </div>
+                        </x-ui.card>
+                    @endfor
+                </div>
+
+                {{-- Devices + browsers row --}}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <x-ui.card size="full">
+                        <div class="h-5 w-44 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
+                        <div class="space-y-3">
+                            @for ($r = 0; $r < 5; $r++)
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <div class="h-3 w-28 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                        <div class="h-3 w-20 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                    </div>
+                                    <div class="h-1.5 bg-neutral-100 dark:bg-neutral-800 rounded overflow-hidden">
+                                        <div class="h-full bg-neutral-200 dark:bg-neutral-700 rounded" style="width: {{ rand(20, 90) }}%"></div>
+                                    </div>
+                                </div>
+                            @endfor
+                        </div>
+                    </x-ui.card>
+
+                    <x-ui.card size="full">
+                        <div class="h-5 w-48 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
+                        <div class="space-y-3">
+                            @for ($r = 0; $r < 6; $r++)
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex gap-3">
+                                        <div class="h-3 w-20 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                        <div class="h-3 w-20 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <div class="h-3 w-12 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                        <div class="h-3 w-12 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                    </div>
+                                </div>
+                            @endfor
+                        </div>
+                    </x-ui.card>
+                </div>
+
+                {{-- Geography card --}}
+                <x-ui.card size="full">
+                    <div class="h-5 w-32 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        @for ($col = 0; $col < 3; $col++)
+                            <div>
+                                <div class="h-3 w-20 bg-neutral-200 dark:bg-neutral-700 rounded mb-3"></div>
+                                <div class="space-y-2">
+                                    @for ($r = 0; $r < 6; $r++)
+                                        <div>
+                                            <div class="flex items-center justify-between mb-1">
+                                                <div class="h-3 w-24 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                                <div class="h-3 w-12 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                            </div>
+                                            <div class="h-1 bg-neutral-100 dark:bg-neutral-800 rounded overflow-hidden">
+                                                <div class="h-full bg-neutral-200 dark:bg-neutral-700 rounded" style="width: {{ rand(15, 85) }}%"></div>
+                                            </div>
+                                        </div>
+                                    @endfor
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+                </x-ui.card>
+            </div>
         @else
             {{-- Demographics row: age + gender side by side --}}
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">

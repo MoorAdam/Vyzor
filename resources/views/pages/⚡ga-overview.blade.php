@@ -19,6 +19,13 @@ new #[Layout('layouts.app')] class extends Component {
     public string $dateFrom = '';
     public string $dateTo = '';
 
+    /**
+     * Gates the GA fetch in with(). Initial render keeps this false so the
+     * page paints instantly with a skeleton; wire:init flips it on the first
+     * AJAX round-trip, after which every subsequent render fetches normally.
+     */
+    public bool $loaded = false;
+
     public function mount(): void
     {
         abort_unless(
@@ -31,6 +38,11 @@ new #[Layout('layouts.app')] class extends Component {
         $today = now();
         $this->dateFrom = $today->copy()->subDays(6)->format('Y-m-d');
         $this->dateTo   = $today->format('Y-m-d');
+    }
+
+    public function loadData(): void
+    {
+        $this->loaded = true;
     }
 
     #[On('current-project-changed')]
@@ -83,6 +95,13 @@ new #[Layout('layouts.app')] class extends Component {
 
         if (!$project || !$project->hasGoogleAnalytics()) {
             return $base;
+        }
+
+        // Skeleton-first: skip the heavy batchRunReports call on the initial
+        // paint. wire:init triggers loadData() right after hydration, which
+        // flips $loaded=true and brings us back here for the real fetch.
+        if (!$this->loaded) {
+            return [...$base, ...$this->viewHelpers()];
         }
 
         try {
@@ -197,7 +216,7 @@ new #[Layout('layouts.app')] class extends Component {
 };
 ?>
 
-<div class="p-6 space-y-6">
+<div class="p-6 space-y-6" wire:init="loadData">
     <div>
         <x-ui.heading level="h1" size="xl">{{ __('Google Analytics — Overview') }}</x-ui.heading>
         <x-ui.description class="mt-1">
@@ -281,6 +300,62 @@ new #[Layout('layouts.app')] class extends Component {
             <x-ui.card>
                 <x-ui.error :messages="[$error]" />
             </x-ui.card>
+        @elseif (!$loaded)
+            {{-- Skeleton: same layout as the loaded view, animated placeholders.
+                 wire:init triggers loadData() right after hydration; on the
+                 next render this branch is replaced with the real data. --}}
+            <div class="animate-pulse space-y-6" aria-busy="true" aria-label="{{ __('Loading analytics') }}">
+                {{-- KPI tile placeholders --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                    @for ($i = 0; $i < 5; $i++)
+                        <x-ui.card size="full">
+                            <div class="flex flex-col gap-2">
+                                <div class="h-3 w-20 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                <div class="h-7 w-24 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                <div class="h-3 w-28 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                            </div>
+                        </x-ui.card>
+                    @endfor
+                </div>
+
+                {{-- Acquisition + Devices placeholders --}}
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    @for ($c = 0; $c < 2; $c++)
+                        <x-ui.card size="full">
+                            <div class="h-5 w-40 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
+                            <div class="space-y-2">
+                                @for ($r = 0; $r < 5; $r++)
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="h-3 w-32 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                        <div class="flex gap-3">
+                                            <div class="h-3 w-10 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                            <div class="h-3 w-10 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                            <div class="h-3 w-10 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                        </div>
+                                    </div>
+                                @endfor
+                            </div>
+                        </x-ui.card>
+                    @endfor
+                </div>
+
+                {{-- Top pages placeholder --}}
+                <x-ui.card size="full">
+                    <div class="h-5 w-32 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
+                    <div class="space-y-2">
+                        @for ($r = 0; $r < 6; $r++)
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="h-3 w-1/2 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                <div class="flex gap-3">
+                                    <div class="h-3 w-12 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                    <div class="h-3 w-12 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                    <div class="h-3 w-12 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+                </x-ui.card>
+            </div>
         @else
             {{-- KPI tiles --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

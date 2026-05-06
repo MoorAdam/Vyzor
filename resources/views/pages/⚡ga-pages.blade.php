@@ -29,6 +29,18 @@ new #[Layout('layouts.app')] class extends Component {
     public string $deviceFilter = '';
     public string $channelFilter = '';
 
+    /**
+     * Gates the GA fetch in with(). Initial render keeps this false so the
+     * page paints instantly with a skeleton; wire:init flips it on the first
+     * AJAX round-trip, after which every subsequent render fetches normally.
+     */
+    public bool $loaded = false;
+
+    public function loadData(): void
+    {
+        $this->loaded = true;
+    }
+
     public function mount(): void
     {
         abort_unless(
@@ -92,6 +104,13 @@ new #[Layout('layouts.app')] class extends Component {
 
         if (!$project || !$project->hasGoogleAnalytics()) {
             return $base;
+        }
+
+        // Skeleton-first: skip the GA call on the initial paint. wire:init
+        // triggers loadData() right after hydration, which flips $loaded=true
+        // and brings us back here for the real fetch.
+        if (!$this->loaded) {
+            return [...$base, ...$this->viewHelpers()];
         }
 
         try {
@@ -180,7 +199,7 @@ new #[Layout('layouts.app')] class extends Component {
 };
 ?>
 
-<div class="p-6 space-y-6">
+<div class="p-6 space-y-6" wire:init="loadData">
     <div>
         <x-ui.heading level="h1" size="xl">{{ __('Google Analytics — Pages') }}</x-ui.heading>
         <x-ui.description class="mt-1">
@@ -280,6 +299,37 @@ new #[Layout('layouts.app')] class extends Component {
         @if ($error)
             <x-ui.card>
                 <x-ui.error :messages="[$error]" />
+            </x-ui.card>
+        @elseif (!$loaded)
+            {{-- Skeleton: matches the table layout, animated placeholders.
+                 wire:init triggers loadData() right after hydration; on the
+                 next render this branch is replaced with the real data. --}}
+            <x-ui.card size="full">
+                <div class="animate-pulse" aria-busy="true" aria-label="{{ __('Loading analytics') }}">
+                    <div class="flex items-center justify-between border-b border-black/5 dark:border-white/5 pb-2 mb-2">
+                        <div class="h-3 w-24 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                        <div class="flex gap-3">
+                            @for ($h = 0; $h < 5; $h++)
+                                <div class="h-3 w-14 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                            @endfor
+                        </div>
+                    </div>
+                    <div class="space-y-3 pt-1">
+                        @for ($r = 0; $r < 12; $r++)
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="space-y-1.5 w-1/2">
+                                    <div class="h-3 w-3/4 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                    <div class="h-2 w-1/2 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                </div>
+                                <div class="flex gap-3">
+                                    @for ($c = 0; $c < 5; $c++)
+                                        <div class="h-3 w-12 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                    @endfor
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+                </div>
             </x-ui.card>
         @elseif ($result->isEmpty())
             <x-ui.card>

@@ -8,12 +8,25 @@ use Livewire\Attributes\Layout;
 use Livewire\Component;
 
 new #[Layout('layouts.app')] class extends Component {
+    /**
+     * Gates the GA fetch in with(). Initial render keeps this false so the
+     * page paints instantly with a skeleton; wire:init flips it on the first
+     * AJAX round-trip, after which every subsequent render (including the
+     * 30-second poll) fetches normally.
+     */
+    public bool $loaded = false;
+
     public function mount(): void
     {
         abort_unless(
             auth()->user()->can('permission', [PermissionEnum::VIEW_GOOGLE_ANALYTICS, Project::current()]),
             403,
         );
+    }
+
+    public function loadData(): void
+    {
+        $this->loaded = true;
     }
 
     public function with(): array
@@ -23,9 +36,17 @@ new #[Layout('layouts.app')] class extends Component {
             'project'    => $project,
             'configured' => $project?->hasGoogleAnalytics() ?? false,
             'error'      => null,
+            'formatNumber' => fn ($n) => number_format((float) $n, 0, '.', ' '),
         ];
 
         if (!$project || !$project->hasGoogleAnalytics()) {
+            return $base;
+        }
+
+        // Skeleton-first: skip the realtime API call on the initial paint.
+        // wire:init flips $loaded=true; subsequent polls keep $loaded=true so
+        // they refresh data normally without flashing the skeleton.
+        if (!$this->loaded) {
             return $base;
         }
 
@@ -33,13 +54,11 @@ new #[Layout('layouts.app')] class extends Component {
             $svc = app(GoogleAnalyticsQueryService::class);
             return [
                 ...$base,
-                'formatNumber' => fn ($n) => number_format((float) $n, 0, '.', ' '),
                 'snapshot' => $svc->getRealtimeUsers($project),
             ];
         } catch (GoogleAnalyticsException $e) {
             return [
                 ...$base,
-                'formatNumber' => fn ($n) => number_format((float) $n, 0, '.', ' '),
                 'error' => $e->getMessage(),
             ];
         }
@@ -48,8 +67,10 @@ new #[Layout('layouts.app')] class extends Component {
 ?>
 
 {{-- wire:poll.30s matches the realtime cache TTL — frequent enough to feel "live"
-     without burning realtime API quota every few seconds. --}}
-<div class="p-6 space-y-6" wire:poll.30s>
+     without burning realtime API quota every few seconds. wire:init defers the
+     first realtime fetch off the initial paint so the page shows a skeleton
+     immediately and fills in once the API responds. --}}
+<div class="p-6 space-y-6" wire:poll.30s wire:init="loadData">
     <div>
         <x-ui.heading level="h1" size="xl">{{ __('Google Analytics — Realtime') }}</x-ui.heading>
         <x-ui.description class="mt-1">
@@ -86,6 +107,37 @@ new #[Layout('layouts.app')] class extends Component {
         <x-ui.card>
             <x-ui.error :messages="[$error]" />
         </x-ui.card>
+    @elseif (!$loaded)
+        {{-- Skeleton: mirrors the active-users counter and the 3-column breakdown.
+             wire:init triggers loadData() right after hydration; on the next
+             render this branch is replaced with the real realtime snapshot. --}}
+        <div class="animate-pulse space-y-6" aria-busy="true" aria-label="{{ __('Loading realtime data') }}">
+            <x-ui.card size="full">
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div class="space-y-2">
+                        <div class="h-3 w-24 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                        <div class="h-12 w-20 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                    </div>
+                    <div class="h-3 w-40 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                </div>
+            </x-ui.card>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                @for ($c = 0; $c < 3; $c++)
+                    <x-ui.card size="full">
+                        <div class="h-5 w-28 bg-neutral-200 dark:bg-neutral-700 rounded mb-4"></div>
+                        <ul class="space-y-2.5">
+                            @for ($r = 0; $r < 5; $r++)
+                                <li class="flex items-center justify-between gap-3">
+                                    <div class="h-3 w-2/3 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                    <div class="h-3 w-8 bg-neutral-200 dark:bg-neutral-700 rounded"></div>
+                                </li>
+                            @endfor
+                        </ul>
+                    </x-ui.card>
+                @endfor
+            </div>
+        </div>
     @else
         {{-- Big counter --}}
         <x-ui.card size="full">
