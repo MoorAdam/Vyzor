@@ -265,5 +265,5 @@ Ha visszatérsz egy feladathoz, ezeket a fájlokat érdemes először megnézni:
 - **Layout / sidebar**: [`resources/views/layouts/app.blade.php`](../../resources/views/layouts/app.blade.php)
 - **Routes**: [`routes/web.php`](../../routes/web.php)
 - **Tervek**: ez a fájl + [`google-analytics-integration.md`](google-analytics-integration.md)
-- **Architektúra leírás**: [`docs/PROJECT_STRUCTURE.md`](../PROJECT_STRUCTURE.md)
+- **Architektúra leírás**: [`docs/dev/project-structure.md`](../dev/project-structure.md)
 - **Tesztek**: [`tests/Unit/GoogleAnalytics/`](../../tests/Unit/GoogleAnalytics) és [`tests/Feature/GoogleAnalytics/`](../../tests/Feature/GoogleAnalytics)

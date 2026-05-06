@@ -20,6 +20,7 @@ class ReportAnalyst implements Agent, HasTools
 
     public function __construct(
         public readonly ?Project $project = null,
+        public readonly string $instructionsSlug = 'report-analyst-instructions',
     ) {}
 
     public function instructions(): Stringable|string
@@ -27,7 +28,7 @@ class ReportAnalyst implements Agent, HasTools
         $context = AiContext::active()
             ->ofType(AiContextType::SYSTEM)
             ->forModel()
-            ->where('slug', 'report-analyst-instructions')
+            ->where('slug', $this->instructionsSlug)
             ->first();
 
         return $context?->context ?? '';

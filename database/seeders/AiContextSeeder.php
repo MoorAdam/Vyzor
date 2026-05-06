@@ -203,6 +203,86 @@ class AiContextSeeder extends Seeder
                 'sort_order' => 14,
                 'context' => file_get_contents(resource_path('ai-prompts/presets/conversion-optimisation.md')),
             ],
+
+            // ── Google Analytics ───────────────────────────────────────
+
+            // System instructions for reports — distinct from Clarity's
+            // because GA4 has different metric semantics, terminology and
+            // recommended workflows (engaged sessions, channel groups, etc.).
+            [
+                'name' => 'Elemző utasítások',
+                'slug' => 'ga-analyst-instructions',
+                'type' => AiContextType::SYSTEM,
+                'models' => ['all'],
+                'tags' => [ContextTag::GA->value],
+                'icon' => 'chart-bar',
+                'label_color' => '#f59e0b',
+                'description' => 'Az AI Google Analytics riport-elemző ágens alapvető rendszerutasításai.',
+                'sort_order' => 0,
+                'context' => file_get_contents(resource_path('ai-prompts/ga-analyst-instructions.md')),
+            ],
+
+            // GA preset templates — what the user picks when requesting a report.
+            [
+                'name' => 'Forgalmi áttekintés',
+                'slug' => 'ga-traffic-overview',
+                'type' => AiContextType::PRESET,
+                'models' => ['all'],
+                'tags' => [ContextTag::GA->value],
+                'icon' => 'chart-line-up',
+                'label_color' => '#3b82f6',
+                'description' => 'Átfogó forgalom-, engagement- és csatorna-áttekintés időszakos összehasonlítással.',
+                'sort_order' => 20,
+                'context' => file_get_contents(resource_path('ai-prompts/presets/ga-traffic-overview.md')),
+            ],
+            [
+                'name' => 'Konverziós szűk keresztmetszetek',
+                'slug' => 'ga-conversion-funnel',
+                'type' => AiContextType::PRESET,
+                'models' => ['all'],
+                'tags' => [ContextTag::GA->value],
+                'icon' => 'funnel',
+                'label_color' => '#f43f5e',
+                'description' => 'Hol esnek le a felhasználók a konverziós úton — landing pages, csatornák, eszköz × konverzió.',
+                'sort_order' => 21,
+                'context' => file_get_contents(resource_path('ai-prompts/presets/ga-conversion-funnel.md')),
+            ],
+            [
+                'name' => 'Közönség-elemzés',
+                'slug' => 'ga-audience-insights',
+                'type' => AiContextType::PRESET,
+                'models' => ['all'],
+                'tags' => [ContextTag::GA->value],
+                'icon' => 'users-three',
+                'label_color' => '#8b5cf6',
+                'description' => 'Demográfia, eszközök, felbontások, böngészők és földrajzi eloszlás targetálási javaslatokkal.',
+                'sort_order' => 22,
+                'context' => file_get_contents(resource_path('ai-prompts/presets/ga-audience-insights.md')),
+            ],
+            [
+                'name' => 'Deploy / kampány hatás',
+                'slug' => 'ga-deploy-impact',
+                'type' => AiContextType::PRESET,
+                'models' => ['all'],
+                'tags' => [ContextTag::GA->value],
+                'icon' => 'git-diff',
+                'label_color' => '#06b6d4',
+                'description' => 'Időszak-összehasonlítás: mi változott a deploy / kampány óta, és miért.',
+                'sort_order' => 23,
+                'context' => file_get_contents(resource_path('ai-prompts/presets/ga-deploy-impact.md')),
+            ],
+            [
+                'name' => 'Forgalmi csatorna teljesítmény',
+                'slug' => 'ga-acquisition-channels',
+                'type' => AiContextType::PRESET,
+                'models' => ['all'],
+                'tags' => [ContextTag::GA->value],
+                'icon' => 'compass',
+                'label_color' => '#22c55e',
+                'description' => 'Csatorna-mix elemzése: melyik forgalmi forrás ér valamit, hol van potenciál.',
+                'sort_order' => 24,
+                'context' => file_get_contents(resource_path('ai-prompts/presets/ga-acquisition-channels.md')),
+            ],
         ];
 
         foreach ($contexts as $context) {

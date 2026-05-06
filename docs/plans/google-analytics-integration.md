@@ -412,7 +412,7 @@ A query service minden public metódusa kapuzhat egy `abort_unless` ellenőrzés
 - `app/Modules/Ai/Agents/ReportAnalyst.php` → opcionálisan registrálja a `GaInsightsTool`-t function calling-hez
 - `app/Modules/Users/Enums/PermissionEnum.php` → új permission case-ek
 - `database/seeders/AiContextSeeder.php` (vagy ennek megfelelője) → új preset-ek
-- `docs/PROJECT_STRUCTURE.md` → modul leírása
+- `docs/dev/project-structure.md` → modul leírása
 - `docs/plans/google-analytics-integration.md` → ennek a tervnek a végleges helye
 
 ### Újrahasznált meglévő pattern-ek
@@ -437,7 +437,7 @@ A query service minden public metódusa kapuzhat egy `abort_unless` ellenőrzés
 8. **AI integráció A (statikus)** — `ReportGeneratorService::renderGaContext()`, `Report.include_ga` flag, új AI Context preset-ek.
 9. **AI integráció B (function calling)** — `GaInsightsTool`, regisztráció a `ReportAnalyst`-ben.
 10. **Tesztek** — unit (cache tier resolver, DateRange), feature (query service `Http::fake` / mockolt SDK kliens).
-11. **Dokumentáció** — `docs/PROJECT_STRUCTURE.md` frissítése, ennek a tervnek átmásolása `docs/plans/`-ba.
+11. **Dokumentáció** — `docs/dev/project-structure.md` frissítése, ennek a tervnek átmásolása `docs/plans/`-ba.
 
 ### Mit hagyunk explicit a következő iterációra (data display UI)
 

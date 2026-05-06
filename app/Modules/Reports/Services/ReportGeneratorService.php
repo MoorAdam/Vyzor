@@ -5,6 +5,7 @@ namespace App\Modules\Reports\Services;
 use App\Modules\Ai\Agents\PageAnalyst;
 use App\Modules\Ai\Agents\ReportAnalyst;
 use App\Modules\Ai\Contexts\Enums\AiContextType;
+use App\Modules\Ai\Contexts\Enums\ContextTag;
 use App\Modules\Ai\Contexts\Models\AiContext;
 use App\Modules\Analytics\Clarity\Models\ClarityInsight;
 use App\Modules\Analytics\Clarity\Heatmaps\Models\Heatmap;
@@ -21,14 +22,11 @@ class ReportGeneratorService
         $report->update(['status' => ReportStatusEnum::GENERATING]);
 
         try {
-            $prompt = $this->buildPrompt($report);
-            $provider = config('ai.default', 'openai');
-
-            // Use PageAnalyst for page URL reports, ReportAnalyst for analytics reports.
-            // ReportAnalyst is project-aware so it can expose GA tools to the LLM.
-            $agent = $report->page_url
-                ? PageAnalyst::make()
-                : new ReportAnalyst($report->project);
+            $provider       = config('ai.default', 'openai');
+            $preset         = $this->loadPreset($report, $provider);
+            $flavor         = $this->resolveFlavor($report, $preset);
+            $agent          = $this->resolveAgent($flavor, $report->project);
+            $prompt         = $this->buildPrompt($report, $flavor, $preset, $provider);
 
             $response = $agent->prompt($prompt, provider: $provider);
 
@@ -47,32 +45,72 @@ class ReportGeneratorService
         return $report->refresh();
     }
 
-    protected function buildPrompt(Report $report): string
+    /**
+     * Load the preset row once. The same row is used to pick a flavor (via its
+     * tags) and to render its content into the prompt — fetching it twice was
+     * wasteful.
+     */
+    protected function loadPreset(Report $report, string $provider): ?AiContext
     {
-        // Branch into two distinct flows based on report type.
-        return $report->page_url
-            ? $this->buildPagePrompt($report)
-            : $this->buildClarityPrompt($report);
+        if (! $report->preset) {
+            return null;
+        }
+
+        return AiContext::active()
+            ->ofType(AiContextType::PRESET)
+            ->forModel($provider)
+            ->where('slug', $report->preset)
+            ->first();
+    }
+
+    /**
+     * Flavor split so the agent + prompt builder stay in sync:
+     *   page    — specific URL analysis (PageAnalyst)
+     *   ga      — GA4-driven report (ReportAnalyst with GA system instructions)
+     *   clarity — Clarity-driven report (ReportAnalyst, default)
+     *
+     * Keyed off preset tags, not a column on Report — adding a flavor needs
+     * only a new tag, not a migration.
+     */
+    protected function resolveFlavor(Report $report, ?AiContext $preset): string
+    {
+        if ($report->page_url) {
+            return 'page';
+        }
+
+        if ($preset && in_array(ContextTag::GA->value, $preset->tags ?? [], true)) {
+            return 'ga';
+        }
+
+        return 'clarity';
+    }
+
+    protected function resolveAgent(string $flavor, $project)
+    {
+        return match ($flavor) {
+            'page'  => PageAnalyst::make(),
+            'ga'    => new ReportAnalyst($project, instructionsSlug: 'ga-analyst-instructions'),
+            default => new ReportAnalyst($project),
+        };
+    }
+
+    protected function buildPrompt(Report $report, string $flavor, ?AiContext $preset, string $provider): string
+    {
+        return match ($flavor) {
+            'page'  => $this->buildPagePrompt($report, $preset, $provider),
+            'ga'    => $this->buildGaPrompt($report, $preset, $provider),
+            default => $this->buildClarityPrompt($report, $preset, $provider),
+        };
     }
 
     // ── Page Analysis prompt ───────────────────────────────────────
 
-    protected function buildPagePrompt(Report $report): string
+    protected function buildPagePrompt(Report $report, ?AiContext $preset, string $provider): string
     {
-        $provider = config('ai.default', 'openai');
         $parts = [];
 
-        // Preset context (page_analyser-tagged)
-        if ($report->preset) {
-            $preset = AiContext::active()
-                ->ofType(AiContextType::PRESET)
-                ->forModel($provider)
-                ->where('slug', $report->preset)
-                ->first();
-
-            if ($preset) {
-                $parts[] = $preset->context;
-            }
+        if ($preset) {
+            $parts[] = $preset->context;
         }
 
         // The target URL + fetched page content.
@@ -102,22 +140,12 @@ class ReportGeneratorService
 
     // ── Clarity Report prompt ──────────────────────────────────────
 
-    protected function buildClarityPrompt(Report $report): string
+    protected function buildClarityPrompt(Report $report, ?AiContext $preset, string $provider): string
     {
-        $provider = config('ai.default', 'openai');
         $parts = [];
 
-        // Preset context (clarity-tagged)
-        if ($report->preset) {
-            $preset = AiContext::active()
-                ->ofType(AiContextType::PRESET)
-                ->forModel($provider)
-                ->where('slug', $report->preset)
-                ->first();
-
-            if ($preset) {
-                $parts[] = $preset->context;
-            }
+        if ($preset) {
+            $parts[] = $preset->context;
         }
 
         // Custom prompt
@@ -181,6 +209,41 @@ class ReportGeneratorService
         $this->appendLanguageInstruction($parts, $report);
 
         // Output format
+        $this->appendOutputFormat($parts, $provider);
+
+        return implode("\n", $parts);
+    }
+
+    // ── Google Analytics report prompt ─────────────────────────────
+
+    /**
+     * GA-flavored report: no Clarity data, GA block is always included
+     * (not gated on include_ga), no heatmaps. The GA-specific system context
+     * is supplied by ReportAnalyst via its instructionsSlug.
+     */
+    protected function buildGaPrompt(Report $report, ?AiContext $preset, string $provider): string
+    {
+        $parts = [];
+
+        if ($preset) {
+            $parts[] = $preset->context;
+        }
+
+        if ($report->custom_prompt) {
+            $parts[] = "\n## Additional Instructions\n" . $report->custom_prompt;
+        }
+
+        if ($report->project && $report->project->hasGoogleAnalytics()) {
+            $gaContext = $this->renderGaContext($report);
+            if ($gaContext !== null) {
+                $parts[] = $gaContext;
+            }
+        } else {
+            $parts[] = "\n## Note\nNo Google Analytics property is configured for this project. " .
+                "Provide a general analytical framework based on the preset context.";
+        }
+
+        $this->appendLanguageInstruction($parts, $report);
         $this->appendOutputFormat($parts, $provider);
 
         return implode("\n", $parts);

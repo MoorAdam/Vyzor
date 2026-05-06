@@ -2,8 +2,9 @@
 
 ## Documentation
 
-- On every change, update `docs.md` to reflect the current state of the codebase. Documentation must always be up to date.
-- When a new library or dependency is introduced, update the technologies list in `docs.md` immediately.
+- Documentation lives under `docs/` — see [docs/README.md](docs/README.md) for the layout.
+- When code structure changes, update `docs/dev/project-structure.md`. When a new library or dependency is introduced, update `docs/dev/tech.md`.
+- New docs go into `docs/dev/` (current state), `docs/plans/` (proposals / future work), or `docs/usage/` (end-user). Don't drop loose `*.md` at the repo root.
 
 ## Git
 
