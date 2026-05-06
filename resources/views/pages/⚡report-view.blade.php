@@ -2,6 +2,8 @@
 
 use Livewire\Component;
 use Livewire\Attributes\Layout;
+use App\Modules\Projects\Models\Project;
+use App\Modules\Reports\Jobs\GenerateAiReport;
 use App\Modules\Reports\Models\Report;
 use App\Modules\Reports\Enums\ReportStatusEnum;
 use Illuminate\Support\Str;
@@ -56,6 +58,28 @@ new #[Layout('layouts.app')] class extends Component {
         abort_unless(auth()->user()->can('permission', [PermissionEnum::DELETE_REPORT, \App\Modules\Projects\Models\Project::current()]), 403);
         $this->report->delete();
         $this->redirect('/reports', navigate: true);
+    }
+
+    /**
+     * Re-run the AI generation for a failed AI report. Resets status + content
+     * and re-dispatches the job; the existing wire:poll on PENDING/GENERATING
+     * picks up the status flip without a hard reload.
+     */
+    public function retry(): void
+    {
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::CREATE_REPORT, Project::current()]), 403);
+
+        if (! $this->report->is_ai || $this->report->status !== ReportStatusEnum::FAILED) {
+            return;
+        }
+
+        $this->report->update([
+            'content'       => null,
+            'ai_model_name' => null,
+            'status'        => ReportStatusEnum::PENDING,
+        ]);
+
+        GenerateAiReport::dispatch($this->report);
     }
 };
 ?>
@@ -175,14 +199,32 @@ new #[Layout('layouts.app')] class extends Component {
     @endif
 
     @if ($report->status === ReportStatusEnum::FAILED)
-        <div class="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4 space-y-2">
-            <div class="flex items-center gap-2">
-                <x-ui.icon name="warning" class="size-5 text-red-600 dark:text-red-400" />
-                <span class="text-sm font-medium text-red-700 dark:text-red-300">{{ __('This report failed to generate. You can try requesting a new one.') }}</span>
+        <div class="rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4">
+            <div class="flex items-start justify-between gap-3">
+                <div class="flex items-start gap-2 min-w-0 flex-1">
+                    <x-ui.icon name="warning" class="size-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                    <div class="space-y-2 min-w-0">
+                        <span class="block text-sm font-medium text-red-700 dark:text-red-300">{{ __('This report failed to generate.') }}</span>
+                        @if ($report->content && str_starts_with($report->content, 'Error:'))
+                            <pre class="text-xs text-red-600/80 dark:text-red-400/80 whitespace-pre-wrap wrap-break-word">{{ Str::after($report->content, 'Error: ') }}</pre>
+                        @endif
+                    </div>
+                </div>
+                @if ($report->is_ai)
+                    <x-ui.button
+                        variant="outline"
+                        color="red"
+                        size="sm"
+                        icon="arrow-clockwise"
+                        wire:click="retry"
+                        wire:loading.attr="disabled"
+                        wire:target="retry"
+                        :disabled="auth()->user()->cannot('permission', [PermissionEnum::CREATE_REPORT, \App\Modules\Projects\Models\Project::current()])"
+                    >
+                        {{ __('Retry') }}
+                    </x-ui.button>
+                @endif
             </div>
-            @if ($report->content && str_starts_with($report->content, 'Error:'))
-                <pre class="text-xs text-red-600/80 dark:text-red-400/80 whitespace-pre-wrap wrap-break-word mt-1 ml-7">{{ $report->content }}</pre>
-            @endif
         </div>
     @endif
 

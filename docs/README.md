@@ -20,6 +20,7 @@ A kódbázis **jelenlegi állapotának** leírása. Akkor olvasd, ha új vagy a 
 | [`dev/tech.md`](dev/tech.md) | Tech-stack inventár (PHP, Laravel, Livewire, AI providerek, …) |
 | [`dev/roles.md`](dev/roles.md) | Szerepkörök és jogosultsági modell — `Gate::before`, `UserRoleEnum`, collaborator pattern |
 | [`dev/reports-ui.md`](dev/reports-ui.md) | Riport-oldalak újrahasználható komponensei (preset-grid, preset-preview, recent-reports, …) |
+| [`dev/ga-ai-reports.md`](dev/ga-ai-reports.md) | A GA AI riport pipeline — page → form → job → service → AI agent + tool, failure handling, retry |
 
 ## [plans/](plans/) — Tervek és proposalok
 

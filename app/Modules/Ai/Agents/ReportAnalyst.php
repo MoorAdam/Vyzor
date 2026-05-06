@@ -36,11 +36,16 @@ class ReportAnalyst implements Agent, HasTools
 
     public function tools(): iterable
     {
+        // Return a plain array, not a Generator — the OpenAI gateway's
+        // generateText() type-hints `array $tools` even though the HasTools
+        // contract says `iterable`, so a `yield` here blows up at runtime.
         if ($this->project && $this->project->hasGoogleAnalytics()) {
-            yield new GoogleAnalyticsTool(
+            return [new GoogleAnalyticsTool(
                 project: $this->project,
                 query:   app(GoogleAnalyticsQueryService::class),
-            );
+            )];
         }
+
+        return [];
     }
 }
