@@ -44,6 +44,36 @@ app/
     │   ├── Heatmaps/                                #    Almodul: Heatmap kezelés
     │   │   └── Models/
     │   │       └── Heatmap.php                      #    Feltöltött heatmap CSV adatok
+    │   ├── GoogleAnalytics/                         #    Almodul: GA4 Data API integráció (on-demand + cache)
+    │   │   ├── Auth/
+    │   │   │   └── ServiceAccountClientFactory.php  #    Service account JSON → BetaAnalyticsDataClient
+    │   │   ├── Services/
+    │   │   │   ├── GoogleAnalyticsClient.php        #    Low-level wrapper a Data SDK kliens köré
+    │   │   │   ├── GoogleAnalyticsCache.php         #    Réteges TTL stratégia, kulcsképzés
+    │   │   │   └── GoogleAnalyticsQueryService.php  #    Domain API: getTrafficOverview, getTopPages, comparePeriod, ...
+    │   │   ├── Queries/
+    │   │   │   ├── DateRange.php                    #    Immutable dátum-tartomány value object
+    │   │   │   ├── ReportRequest.php                #    runReport DTO + cacheSignature()
+    │   │   │   └── RealtimeRequest.php              #    runRealtimeReport DTO
+    │   │   ├── DTOs/
+    │   │   │   ├── ReportResult.php                 #    Kollekciós eredmény + oszlop-metaadatok + fetchedAt
+    │   │   │   ├── MetricRow.php                    #    Egy sor: dimensions + metrics
+    │   │   │   ├── TrafficOverview.php              #    High-level traffic snapshot DTO
+    │   │   │   ├── PeriodComparison.php             #    Két időszak deltákkal
+    │   │   │   └── RealtimeSnapshot.php             #    Élő aktív userek + bontások
+    │   │   ├── Enums/
+    │   │   │   ├── GaMetric.php                     #    GA4 metrika nevek + UI format hint
+    │   │   │   ├── GaDimension.php                  #    GA4 dimenzió nevek
+    │   │   │   └── GaCacheTier.php                  #    TODAY | YESTERDAY | RECENT | HISTORICAL | REALTIME
+    │   │   ├── Tools/
+    │   │   │   └── GoogleAnalyticsTool.php          #    AI function-calling tool (action discriminator)
+    │   │   ├── Commands/
+    │   │   │   └── TestGoogleAnalyticsConnection.php #   `app:ga:test {project}` — hitelesítés-ellenőrző
+    │   │   ├── Exceptions/
+    │   │   │   ├── GoogleAnalyticsException.php
+    │   │   │   ├── PropertyNotConfiguredException.php
+    │   │   │   └── ServiceAccountNotConfiguredException.php
+    │   │   └── GoogleAnalyticsServiceProvider.php   #    Singletonok + commandok regisztrációja
     │   └── AnalyticsServiceProvider.php             #    Clarity commandok regisztrálása
     │
     ├── Ai/                                          # ── AI MODUL ──
@@ -53,9 +83,9 @@ app/
     │   │   │   └── LLMContextPreset.php             #    Legacy preset model (deprecated)
     │   │   └── Enums/
     │   │       ├── AiContextType.php                #    PRESET | SYSTEM | INSTRUCTION
-    │   │       └── ContextTag.php                   #    CLARITY | PAGE_ANALYSER
+    │   │       └── ContextTag.php                   #    CLARITY | PAGE_ANALYSER | GA
     │   ├── Agents/                                  #    Almodul: Laravel AI ágentek
-    │   │   ├── ReportAnalyst.php                    #    Clarity riportokhoz
+    │   │   ├── ReportAnalyst.php                    #    Analytics riportokhoz, projekt-tudatos GA tool-lal
     │   │   └── PageAnalyst.php                      #    Oldalelemzés riportokhoz
     │   └── AiServiceProvider.php
     │
@@ -75,7 +105,7 @@ app/
     │
     ├── Projects/                                    # ── PROJECTS MODUL ──
     │   ├── Models/
-    │   │   ├── Project.php                          #    Projekt titkosított Clarity API kulccsal
+    │   │   ├── Project.php                          #    Projekt titkosított Clarity API kulccsal és GA property ID-vel
     │   │   └── ProjectPermission.php                #    Tulajdonos + együttműködők (JSON user ID tömb)
     │   ├── Enums/
     │   │   └── ProjectStatusEnum.php                #    ACTIVE | ABORTED | POSTPONED | COMPLETED | PRESENTATION
@@ -275,6 +305,72 @@ A Microsoft Clarity adatokat az `app:fetch-clarity` command kérdezi le a Clarit
 
 ---
 
+## Google Analytics 4 integráció
+
+A GA Data API integráció **on-demand modell**-t használ — nem napi snapshot DB-be, mint a Clarity. A magas API quota (50k req/nap) miatt valós időben kérdezünk le, és réteges TTL-lel cache-elünk.
+
+### Hitelesítés
+
+- **Service account** alapú: a `storage/app/ga-service-account.json` (vagy `GA_SERVICE_ACCOUNT_JSON` env) tárolja a JSON kulcsot, amit a felhasználó hozzáad **Viewer** jogkörrel a saját GA4 property-jéhez.
+- **Per-projekt property ID**: `Project.ga_property_id` (encrypted) tárolja a `properties/123456789` formátumot.
+- **Egyszer beállítva**: minden új property-hez csak Viewer jogot kell adni, nincs külön kulcs vagy onboarding kód.
+
+### Rétegek
+
+| Réteg | Felelősség |
+|-------|-----------|
+| `BetaAnalyticsDataClient` (SDK) | Google PHP SDK — alacsony szintű gRPC kliens |
+| `ServiceAccountClientFactory` | JSON kulcs feloldása (path vagy raw env), kliens cache-elés |
+| `GoogleAnalyticsClient` | Vékony wrapper — exception normalizálás, jövőbeli logging/retry chokepoint |
+| `GoogleAnalyticsCache` | TTL tier választás `DateRange` alapján, kulcsképzés |
+| `GoogleAnalyticsQueryService` | Domain API — tipusos metódusok (`getTrafficOverview`, `getTopPages`, ...) |
+
+### Cache TTL tierek (`GaCacheTier`)
+
+| Tier | Mikor | TTL (default) |
+|------|-------|---------------|
+| `Today`     | Tartomány tartalmazza a mai napot | 15 min |
+| `Yesterday` | Csak tegnap | 2 óra |
+| `Recent`    | 2–7 napja zárult tartomány | 12 óra |
+| `Historical`| 8+ napja zárult tartomány | 7 nap |
+| `Realtime`  | Realtime API (utolsó 30 perc) | 30 mp |
+
+A `services.google_analytics.cache.*_ttl` config kulcsokon konfigurálhatók.
+
+### Public API (`GoogleAnalyticsQueryService`)
+
+- `getTrafficOverview(Project, DateRange)` → `TrafficOverview` (sessions, users, engagement totals)
+- `getTopPages / getLandingPages(Project, DateRange, limit, offset)` → `ReportResult`
+- `getAcquisitionBreakdown / getDeviceBreakdown / getGeoBreakdown(Project, DateRange)` → `ReportResult`
+- `getEvents(Project, DateRange, eventName?, limit)` → `ReportResult`
+- `getDailyTimeline(Project, DateRange, metrics)` → `ReportResult` (date × metric)
+- `comparePeriod(Project, current, previous, metrics)` → `PeriodComparison` (deltákkal)
+- `getRealtimeUsers / getRealtimeEvents(Project)` → `RealtimeSnapshot` / `ReportResult`
+- `runCustomReport(Project, ReportRequest)` → `ReportResult` (escape hatch tetszőleges dim/metric kombóhoz)
+
+### AI integráció — két szinten
+
+**A) Statikus prompt augmentáció**: ha a `Report.include_ga = true`, a `ReportGeneratorService::renderGaContext()` előre lekérdez egy snapshot-ot (overview + compare + top pages + acquisition + device) és JSON blokként a promptba illeszti.
+
+**B) Function calling tool**: a `ReportAnalyst` agent felveszi a `GoogleAnalyticsTool`-t a tools listájába, amikor a riport projektje GA-konfigurált. A tool egy egyesített `query` action discriminator-on keresztül teszi elérhetővé az összes query service metódust az AI-nak. Ez a "bármikor hozzáférés" futási időben — az AI menet közben mélyíthet, ha kell.
+
+### UI réteg (következő iteráció)
+
+A query service már UI-fogyasztásra felkészített DTO-kat ad vissza (paginálás, oszlop-formattolási hint, `fetchedAt`). A 2. iterációs adatkijelző felületek:
+
+- **Livewire oldal-komponensek** (pl. `pages::ga-overview`, `pages::ga-realtime`) reaktív dashboard-okhoz, a Clarity ⚡-prefixű oldalak mintájára.
+- **Sheaf UI alapú részkomponensek** a meglévő `resources/views/components/ui/*` primitívekből építve (card, button, badge, table, separator). Plain Blade `<x-ga-...>` komponensek nem készülnek — Livewire reaktivitásra, Sheaf UI statikus kompozícióra.
+
+### Verifikáció
+
+```bash
+php artisan app:ga:test {project}
+```
+
+Lefuttat egy traffic overview + top 5 pages + realtime check lekérdezést, és frissíti a `Project.ga_last_verified_at`-et.
+
+---
+
 ## AI kontextus rendszer
 
 Az `AiContext` model újrafelhasználható prompt-részleteket tárol az AI riport promptok összeállításához.
@@ -292,6 +388,7 @@ Az `AiContext` model újrafelhasználható prompt-részleteket tárol az AI ripo
 A tagek kategorizálják a preseteket riport típus szerint:
 - `CLARITY` — Clarity adat riportokhoz
 - `PAGE_ANALYSER` — oldalelemzés riportokhoz
+- `GA` — Google Analytics riportokhoz
 
 ### Model kompatibilitás
 

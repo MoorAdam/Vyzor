@@ -32,6 +32,11 @@ enum PermissionEnum: string
     case VIEW_CLARITY_TRENDS = 'project.clarity.view-trends';
     case FETCH_CLARITY_DATA = 'project.clarity.fetch-data';
 
+    // Google Analytics
+    case VIEW_GOOGLE_ANALYTICS = 'project.ga.view';
+    case CONFIGURE_GOOGLE_ANALYTICS = 'project.ga.configure';
+    case USE_GOOGLE_ANALYTICS_IN_REPORTS = 'project.ga.use-in-reports';
+
     // Report
     case VIEW_REPORTS = 'project.report.view';
     case CREATE_REPORT = 'project.report.create';
@@ -73,6 +78,7 @@ enum PermissionEnum: string
             str_starts_with($this->value, 'basics.') => 'basics',
             str_starts_with($this->value, 'users.') => 'users',
             str_starts_with($this->value, 'project.clarity.') => 'project.clarity',
+            str_starts_with($this->value, 'project.ga.') => 'project.ga',
             str_starts_with($this->value, 'project.report.') => 'project.report',
             str_starts_with($this->value, 'project.heatmap.') => 'project.heatmap',
             str_starts_with($this->value, 'project.') => 'project',
@@ -106,6 +112,9 @@ enum PermissionEnum: string
             self::VIEW_CLARITY_SNAPSHOTS => 'View Clarity snapshots',
             self::VIEW_CLARITY_TRENDS => 'View Clarity trends',
             self::FETCH_CLARITY_DATA => 'Fetch Clarity data',
+            self::VIEW_GOOGLE_ANALYTICS => 'View Google Analytics data',
+            self::CONFIGURE_GOOGLE_ANALYTICS => 'Configure the GA property ID for projects',
+            self::USE_GOOGLE_ANALYTICS_IN_REPORTS => 'Include GA data in AI reports',
             self::VIEW_REPORTS => 'View reports',
             self::CREATE_REPORT => 'Create or request reports',
             self::EDIT_REPORT => 'Edit reports',

@@ -38,6 +38,10 @@ Route::middleware('auth')->group(function () {
         Route::livewire('/clarity/trends', 'pages::clarity-trends')->name('clarity.trends');
         Route::livewire('/clarity/clarity-report', 'pages::clarity-clarity-report')->name('clarity.clarity-report');
         Route::livewire('/clarity/page-report', 'pages::clarity-page-report')->name('clarity.page-report');
+        Route::livewire('/google-analytics/overview', 'pages::ga-overview')->name('ga.overview');
+        Route::livewire('/google-analytics/pages', 'pages::ga-pages')->name('ga.pages');
+        Route::livewire('/google-analytics/audience', 'pages::ga-audience')->name('ga.audience');
+        Route::livewire('/google-analytics/realtime', 'pages::ga-realtime')->name('ga.realtime');
         Route::livewire('/ai-reports', 'pages::ai-reports')->name('ai-reports');
         Route::livewire('/reports', 'pages::reports')->name('reports');
         Route::livewire('/reports/{report}', 'pages::report-view')->name('report.view');

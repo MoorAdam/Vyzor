@@ -57,4 +57,27 @@ return [
         'max_body_bytes' => env('HTML_FETCHER_MAX_BODY_BYTES', 2 * 1024 * 1024), // 2 MB
     ],
 
+    'google_analytics' => [
+        // Service account credentials. Either a path to a JSON file on disk, OR raw JSON.
+        // The path form is preferred for local/server deployments; the JSON form is for
+        // serverless environments where you cannot mount a file.
+        'service_account_path' => env('GA_SERVICE_ACCOUNT_PATH', storage_path('app/ga-service-account.json')),
+        'service_account_json' => env('GA_SERVICE_ACCOUNT_JSON'),
+
+        // Cache TTLs (seconds) — TTL is chosen by the GoogleAnalyticsCache based on
+        // how recent the queried date range is. Recent data changes; old data does not.
+        'cache' => [
+            'today_ttl'      => env('GA_CACHE_TODAY_TTL', 60 * 15),         // 15 min
+            'yesterday_ttl'  => env('GA_CACHE_YESTERDAY_TTL', 60 * 60 * 2), // 2 h
+            'recent_ttl'     => env('GA_CACHE_RECENT_TTL', 60 * 60 * 12),   // 12 h
+            'historical_ttl' => env('GA_CACHE_HISTORICAL_TTL', 60 * 60 * 24 * 7), // 7 days
+            'realtime_ttl'   => env('GA_CACHE_REALTIME_TTL', 30),           // 30 s
+        ],
+
+        'limits' => [
+            'max_rows_per_query' => 10_000,
+            'default_top_n'      => 50,
+        ],
+    ],
+
 ];

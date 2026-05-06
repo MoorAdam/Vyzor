@@ -20,6 +20,8 @@ class Project extends Model
         'status',
         'domain',
         'clarity_api_key',
+        'ga_property_id',
+        'ga_last_verified_at',
     ];
 
     protected function casts(): array
@@ -27,6 +29,8 @@ class Project extends Model
         return [
             'status' => ProjectStatusEnum::class,
             'clarity_api_key' => 'encrypted',
+            'ga_property_id' => 'encrypted',
+            'ga_last_verified_at' => 'datetime',
         ];
     }
 
@@ -88,5 +92,20 @@ class Project extends Model
     public function hasClarityKey(): bool
     {
         return filled($this->clarity_api_key);
+    }
+
+    public function hasGoogleAnalytics(): bool
+    {
+        return filled($this->ga_property_id);
+    }
+
+    public function gaPropertyResource(): ?string
+    {
+        if (!$this->hasGoogleAnalytics()) {
+            return null;
+        }
+
+        $id = $this->ga_property_id;
+        return str_starts_with($id, 'properties/') ? $id : 'properties/' . $id;
     }
 }

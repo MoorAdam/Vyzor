@@ -39,6 +39,11 @@ class PermissionSeeder extends Seeder
         PermissionEnum::VIEW_CLARITY_TRENDS,
         PermissionEnum::FETCH_CLARITY_DATA,
 
+        // Google Analytics
+        PermissionEnum::VIEW_GOOGLE_ANALYTICS,
+        PermissionEnum::CONFIGURE_GOOGLE_ANALYTICS,
+        PermissionEnum::USE_GOOGLE_ANALYTICS_IN_REPORTS,
+
         // Report
         PermissionEnum::VIEW_REPORTS,
         PermissionEnum::CREATE_REPORT,
@@ -68,6 +73,9 @@ class PermissionSeeder extends Seeder
         PermissionEnum::VIEW_CLARITY_SNAPSHOTS,
         PermissionEnum::VIEW_CLARITY_TRENDS,
         PermissionEnum::FETCH_CLARITY_DATA,
+
+        PermissionEnum::VIEW_GOOGLE_ANALYTICS,
+        PermissionEnum::USE_GOOGLE_ANALYTICS_IN_REPORTS,
 
         PermissionEnum::VIEW_REPORTS,
         PermissionEnum::CREATE_REPORT,

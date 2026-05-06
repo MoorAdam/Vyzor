@@ -22,6 +22,7 @@ class Report extends Model
         'custom_prompt',
         'page_url',
         'include_heatmaps',
+        'include_ga',
         'aspect_date_from',
         'aspect_date_to',
         'ai_model_name',
@@ -34,6 +35,7 @@ class Report extends Model
         return [
             'is_ai' => 'boolean',
             'include_heatmaps' => 'boolean',
+            'include_ga' => 'boolean',
             'aspect_date_from' => 'date',
             'aspect_date_to' => 'date',
             'status' => ReportStatusEnum::class,

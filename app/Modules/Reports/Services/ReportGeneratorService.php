@@ -8,6 +8,9 @@ use App\Modules\Ai\Contexts\Enums\AiContextType;
 use App\Modules\Ai\Contexts\Models\AiContext;
 use App\Modules\Analytics\Clarity\Models\ClarityInsight;
 use App\Modules\Analytics\Clarity\Heatmaps\Models\Heatmap;
+use App\Modules\Analytics\GoogleAnalytics\Exceptions\GoogleAnalyticsException;
+use App\Modules\Analytics\GoogleAnalytics\Queries\DateRange;
+use App\Modules\Analytics\GoogleAnalytics\Services\GoogleAnalyticsQueryService;
 use App\Modules\Reports\Enums\ReportStatusEnum;
 use App\Modules\Reports\Models\Report;
 
@@ -21,10 +24,11 @@ class ReportGeneratorService
             $prompt = $this->buildPrompt($report);
             $provider = config('ai.default', 'openai');
 
-            // Use PageAnalyst for page URL reports, ReportAnalyst for Clarity reports.
+            // Use PageAnalyst for page URL reports, ReportAnalyst for analytics reports.
+            // ReportAnalyst is project-aware so it can expose GA tools to the LLM.
             $agent = $report->page_url
                 ? PageAnalyst::make()
-                : ReportAnalyst::make();
+                : new ReportAnalyst($report->project);
 
             $response = $agent->prompt($prompt, provider: $provider);
 
@@ -140,6 +144,14 @@ class ReportGeneratorService
                 "Please provide a general analysis framework and recommendations based on the preset context.";
         }
 
+        // Google Analytics data (only when toggled on)
+        if ($report->include_ga && $report->project && $report->project->hasGoogleAnalytics()) {
+            $gaContext = $this->renderGaContext($report);
+            if ($gaContext !== null) {
+                $parts[] = $gaContext;
+            }
+        }
+
         // Heatmap data (only when toggled on)
         if ($report->include_heatmaps) {
             $heatmaps = Heatmap::where('project_id', $report->project_id)
@@ -172,6 +184,47 @@ class ReportGeneratorService
         $this->appendOutputFormat($parts, $provider);
 
         return implode("\n", $parts);
+    }
+
+    // ── Google Analytics context ──────────────────────────────────
+
+    protected function renderGaContext(Report $report): ?string
+    {
+        $range = $this->resolveGaRange($report);
+        $project = $report->project;
+
+        try {
+            $svc = app(GoogleAnalyticsQueryService::class);
+
+            $overview    = $svc->getTrafficOverview($project, $range);
+            $previous    = $range->previousPeriod();
+            $compare     = $svc->comparePeriod($project, $range, $previous, [
+                'sessions', 'totalUsers', 'engagedSessions', 'screenPageViews',
+                'engagementRate', 'bounceRate',
+            ]);
+            $topPages    = $svc->getTopPages($project, $range, 10);
+            $acquisition = $svc->getAcquisitionBreakdown($project, $range);
+            $devices     = $svc->getDeviceBreakdown($project, $range);
+        } catch (GoogleAnalyticsException $e) {
+            return "\n## Google Analytics\nGA data could not be loaded: {$e->getMessage()}\n";
+        }
+
+        $section = "\n## Google Analytics ({$range->signature()})\n";
+        $section .= "\n### Traffic overview\n```json\n" . json_encode($overview->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n```\n";
+        $section .= "\n### Period comparison (vs. {$previous->signature()})\n```json\n" . json_encode($compare->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n```\n";
+        $section .= "\n### Top 10 pages\n```json\n" . json_encode($topPages->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n```\n";
+        $section .= "\n### Acquisition by channel\n```json\n" . json_encode($acquisition->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n```\n";
+        $section .= "\n### Device breakdown\n```json\n" . json_encode($devices->toArray(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n```\n";
+
+        return $section;
+    }
+
+    private function resolveGaRange(Report $report): DateRange
+    {
+        if ($report->aspect_date_from && $report->aspect_date_to) {
+            return DateRange::between($report->aspect_date_from, $report->aspect_date_to);
+        }
+        return DateRange::last7Days();
     }
 
     // ── Shared helpers ─────────────────────────────────────────────
