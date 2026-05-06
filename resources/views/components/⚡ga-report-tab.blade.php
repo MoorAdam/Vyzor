@@ -3,10 +3,11 @@
 use App\Modules\Ai\Contexts\Enums\AiContextType;
 use App\Modules\Ai\Contexts\Enums\ContextTag;
 use App\Modules\Ai\Contexts\Models\AiContext;
-use App\Modules\Analytics\Clarity\Heatmaps\Models\Heatmap;
+use App\Modules\Projects\Models\Project;
 use App\Modules\Reports\Enums\ReportStatusEnum;
 use App\Modules\Reports\Jobs\GenerateAiReport;
 use App\Modules\Reports\Models\Report;
+use App\Modules\Users\Enums\PermissionEnum;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -16,8 +17,7 @@ new class extends Component {
     public string $customPrompt = '';
     public string $dateFrom = '';
     public string $dateTo = '';
-    public bool $includeHeatmaps = false;
-    public string $reportLanguage = 'en';
+    public string $reportLanguage = 'hu';
 
     public bool $showPresetPreview = false;
     public string $presetPreviewContent = '';
@@ -25,7 +25,8 @@ new class extends Component {
 
     public function mount(): void
     {
-        $this->dateFrom = now()->subDays(7)->format('Y-m-d');
+        // GA data is more meaningful over longer windows than Clarity's typical 1-7 day scope.
+        $this->dateFrom = now()->subDays(29)->format('Y-m-d');
         $this->dateTo = now()->format('Y-m-d');
         $this->reportLanguage = session('locale', config('app.locale', 'hu'));
     }
@@ -34,20 +35,9 @@ new class extends Component {
     {
         return AiContext::active()
             ->ofType(AiContextType::PRESET)
-            ->whereJsonContains('tags', ContextTag::CLARITY->value)
+            ->whereJsonContains('tags', ContextTag::GA->value)
             ->ordered()
             ->get();
-    }
-
-    public function getAvailableHeatmapCountProperty(): int
-    {
-        $projectId = session('current_project_id');
-        if (!$projectId) return 0;
-
-        return Heatmap::where('project_id', $projectId)
-            ->when($this->dateFrom, fn($q) => $q->where('date', '>=', $this->dateFrom))
-            ->when($this->dateTo, fn($q) => $q->where('date', '<=', $this->dateTo))
-            ->count();
     }
 
     public function previewPreset(string $slug): void
@@ -74,9 +64,19 @@ new class extends Component {
             'dateTo' => 'required|date|after_or_equal:dateFrom',
         ]);
 
-        $projectId = session('current_project_id');
-        if (!$projectId) {
+        $project = Project::current();
+        if (!$project) {
             $this->addError('project', __('Please select a project first.'));
+            return;
+        }
+
+        // Re-check the action-level permission at submit time. Page mount
+        // already gated VIEW_GOOGLE_ANALYTICS; this protects against direct
+        // wire:click attempts that bypass the page mount.
+        abort_unless(auth()->user()->can('permission', [PermissionEnum::CREATE_REPORT, $project]), 403);
+
+        if (!$project->hasGoogleAnalytics()) {
+            $this->addError('project', __('No Google Analytics property configured for this project.'));
             return;
         }
 
@@ -84,14 +84,15 @@ new class extends Component {
         $presetTitle = $presetModel?->name ?? Str::title(str_replace('-', ' ', $this->preset));
 
         $report = Report::create([
-            'project_id' => $projectId,
+            'project_id' => $project->id,
             'user_id' => auth()->id(),
             'title' => $presetTitle . ' - ' . \Carbon\Carbon::parse($this->dateFrom)->format('M d') . ' to ' . \Carbon\Carbon::parse($this->dateTo)->format('M d, Y'),
             'content' => null,
             'is_ai' => true,
             'preset' => $this->preset,
             'custom_prompt' => $this->customPrompt ?: null,
-            'include_heatmaps' => $this->includeHeatmaps,
+            'include_heatmaps' => false,
+            'include_ga' => true,
             'aspect_date_from' => $this->dateFrom,
             'aspect_date_to' => $this->dateTo,
             'ai_model_name' => null,
@@ -110,14 +111,18 @@ new class extends Component {
     <div class="lg:col-span-2 space-y-6">
         <x-ui.card size="full">
             <div class="flex items-center gap-2 mb-4">
-                <x-ui.icon name="robot" class="size-5 text-blue-500" />
-                <x-ui.heading level="h3" size="md">{{ __('Clarity Report') }}</x-ui.heading>
+                <x-ui.icon name="chart-bar" class="size-5 text-amber-500" />
+                <x-ui.heading level="h3" size="md">{{ __('Google Analytics Report') }}</x-ui.heading>
             </div>
 
             <form wire:submit="requestAiReport" class="space-y-5">
                 <x-ui.field required>
                     <x-ui.label>{{ __('Report Preset') }}</x-ui.label>
-                    <x-reports.preset-grid :presets="$this->presets" :selected="$preset" />
+                    <x-reports.preset-grid
+                        :presets="$this->presets"
+                        :selected="$preset"
+                        :emptyMessage="__('No GA presets available. Create a preset with the Google Analytics tag in settings.')"
+                    />
                     <x-ui.error name="preset" />
                 </x-ui.field>
 
@@ -133,14 +138,6 @@ new class extends Component {
                         <x-ui.error name="dateTo" />
                     </x-ui.field>
                 </div>
-
-                <x-ui.field>
-                    <x-ui.checkbox
-                        wire:model.live="includeHeatmaps"
-                        :label="__('Include Heatmap Data') . ' ' . ($this->availableHeatmapCount > 0 ? '(' . $this->availableHeatmapCount . ' ' . __('available in date range') . ')' : '(' . __('none available in date range') . ')')"
-                        :description="__('When enabled, click/tap heatmap data from Microsoft Clarity will be included for the AI to analyse user interaction patterns.')"
-                    />
-                </x-ui.field>
 
                 <x-ui.field>
                     <x-ui.label>{{ __('Report Language') }}</x-ui.label>
@@ -162,7 +159,7 @@ new class extends Component {
                 </x-ui.field>
 
                 <div class="flex items-center justify-end pt-2">
-                    <x-ui.button type="submit" color="blue" icon="paper-plane-tilt">
+                    <x-ui.button type="submit" color="amber" icon="paper-plane-tilt">
                         {{ __('Request Report') }}
                     </x-ui.button>
                 </div>
@@ -175,7 +172,7 @@ new class extends Component {
             :visible="$showPresetPreview"
             :name="$presetPreviewName"
             :content="$presetPreviewContent"
-            accent="blue"
+            accent="amber"
         />
     </div>
 </div>

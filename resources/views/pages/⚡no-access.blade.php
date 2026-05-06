@@ -11,7 +11,7 @@ new #[Layout('layouts.app', ['layoutVariant' => 'bare'])] class extends Componen
 <div>
     <div class="h-screen flex flex-col items-center justify-center px-6">
         <div class="mb-10 flex flex-col items-center gap-3">
-            <img src="/favicon.svg" alt="Vyzor Logo" class="h-16 w-auto pl-2 dark:filter-[brightness(0)_invert(1)]" />
+            <x-ui.logo class="h-16 w-auto pl-2 text-black dark:text-white" />
             <div class="text-center">
                 <h1 class="text-3xl font-semibold tracking-tight text-neutral-900 dark:text-white">Vyzor</h1>
                 <span class="text-[10px] text-neutral-400 dark:text-neutral-500 tracking-widest uppercase">By Morgens</span>

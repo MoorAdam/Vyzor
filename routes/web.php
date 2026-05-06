@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
         Route::livewire('/google-analytics/overview', 'pages::ga-overview')->name('ga.overview');
         Route::livewire('/google-analytics/pages', 'pages::ga-pages')->name('ga.pages');
         Route::livewire('/google-analytics/audience', 'pages::ga-audience')->name('ga.audience');
+        Route::livewire('/google-analytics/report', 'pages::ga-report')->name('ga.report');
         Route::livewire('/google-analytics/realtime', 'pages::ga-realtime')->name('ga.realtime');
         Route::livewire('/ai-reports', 'pages::ai-reports')->name('ai-reports');
         Route::livewire('/reports', 'pages::reports')->name('reports');

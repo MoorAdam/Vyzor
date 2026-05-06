@@ -79,14 +79,46 @@ class Project extends Model
 
     /**
      * The currently active project for the session, or null if none is set.
+     * Falls back to a long-lived cookie so the first render after login already
+     * knows the project — without this the navlist briefly disables every
+     * project-scoped item until the client hydrates the session.
      * Memoized per-request via once().
      */
     public static function current(): ?self
     {
         return once(function () {
             $id = session('current_project_id');
-            return $id ? self::find($id) : null;
+
+            if (!$id) {
+                $cookieId = (int) request()->cookie('current_project_id');
+                if (!$cookieId || !auth()->check()) {
+                    return null;
+                }
+
+                $project = self::accessibleBy(auth()->user())->find($cookieId);
+                if (!$project) {
+                    cookie()->queue(cookie()->forget('current_project_id'));
+                    return null;
+                }
+
+                session(['current_project_id' => $project->id]);
+                return $project;
+            }
+
+            return self::find($id);
         });
+    }
+
+    public static function setCurrent(?int $id): void
+    {
+        if ($id === null) {
+            session()->forget('current_project_id');
+            cookie()->queue(cookie()->forget('current_project_id'));
+            return;
+        }
+
+        session(['current_project_id' => $id]);
+        cookie()->queue('current_project_id', (string) $id, 60 * 24 * 365);
     }
 
     public function hasClarityKey(): bool

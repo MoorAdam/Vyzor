@@ -1,15 +1,15 @@
 <?php
 
-use Livewire\Component;
 use App\Modules\Ai\Contexts\Enums\AiContextType;
 use App\Modules\Ai\Contexts\Enums\ContextTag;
 use App\Modules\Ai\Contexts\Models\AiContext;
 use App\Modules\Analytics\Clarity\Models\ClarityInsight;
 use App\Modules\Projects\Models\Project;
-use App\Modules\Reports\Models\Report;
 use App\Modules\Reports\Enums\ReportStatusEnum;
 use App\Modules\Reports\Jobs\GenerateAiReport;
+use App\Modules\Reports\Models\Report;
 use Illuminate\Support\Str;
+use Livewire\Component;
 
 new class extends Component {
 
@@ -18,7 +18,6 @@ new class extends Component {
     public string $customPrompt = '';
     public string $reportLanguage = 'en';
 
-    // Preset preview state
     public bool $showPresetPreview = false;
     public string $presetPreviewContent = '';
     public string $presetPreviewName = '';
@@ -28,7 +27,6 @@ new class extends Component {
         $this->reportLanguage = session('locale', config('app.locale', 'hu'));
     }
 
-    /** Only presets tagged with "page_analyser". */
     public function getPresetsProperty()
     {
         return AiContext::active()
@@ -44,7 +42,6 @@ new class extends Component {
         $projectId = session('current_project_id');
         if (!$projectId) return [];
 
-        // Grab the most recent PopularPages insight for this project.
         $insight = ClarityInsight::where('project_id', $projectId)
             ->where('metric_name', 'PopularPages')
             ->orderByDesc('fetched_for')
@@ -65,7 +62,6 @@ new class extends Component {
         return (bool) Project::current()?->hasClarityKey();
     }
 
-    /** Fill the URL field when a page is clicked. */
     public function selectPage(string $url): void
     {
         $this->pageUrl = $url;
@@ -124,7 +120,6 @@ new class extends Component {
 };
 ?>
 
-{{-- Page analysis report form — uses page_analyser-tagged presets + URL input + project page list --}}
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2 space-y-6">
         <x-ui.card size="full">
@@ -134,7 +129,6 @@ new class extends Component {
             </div>
 
             <form wire:submit="requestPageReport" class="space-y-5">
-                {{-- URL Input --}}
                 <x-ui.field required>
                     <x-ui.label>{{ __('Page URL') }}</x-ui.label>
                     <x-ui.input
@@ -151,20 +145,17 @@ new class extends Component {
                     <x-ui.label class="mb-2">{{ __('Project Pages') }}</x-ui.label>
 
                     @if (!$this->hasClarityKey)
-                        {{-- No Clarity key at all — cannot fetch pages --}}
                         <div class="p-3 rounded-box border border-dashed border-neutral-200 dark:border-neutral-800 text-center">
                             <x-ui.description>
                                 {{ __('There are no pages in the current project. Add a Clarity key and fetch a snapshot to view them.') }}
                             </x-ui.description>
                         </div>
                     @elseif (empty($this->projectPages))
-                        {{-- Clarity key exists but no pages fetched yet --}}
                         <div class="flex items-center justify-between gap-3 p-3 rounded-box border border-dashed border-neutral-200 dark:border-neutral-800">
                             <x-ui.description>{{ __('No pages to display. Fetch data to get a list.') }}</x-ui.description>
                             <livewire:clarity-fetch-button />
                         </div>
                     @else
-                        {{-- Clickable page list --}}
                         <div class="max-h-48 overflow-y-auto rounded-box border border-neutral-200 dark:border-neutral-800 divide-y divide-neutral-200 dark:divide-neutral-800">
                             @foreach ($this->projectPages as $url)
                                 <button
@@ -184,52 +175,16 @@ new class extends Component {
                     @endif
                 </div>
 
-                {{-- Preset Selection --}}
                 <x-ui.field required>
                     <x-ui.label>{{ __('Report Preset') }}</x-ui.label>
-                    @if ($this->presets->isEmpty())
-                        <div class="p-3 rounded-box border border-dashed border-neutral-200 dark:border-neutral-800 text-center">
-                            <x-ui.description>{{ __('No presets available. Create a preset with the Page Analyser tag.') }}</x-ui.description>
-                        </div>
-                    @else
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                            @foreach ($this->presets as $presetOption)
-                                <label
-                                    class="relative flex items-center gap-3 p-3 rounded-box border border-black/10 dark:border-white/10 cursor-pointer transition-all hover:border-black/20 dark:hover:border-white/20"
-                                    @if ($preset === $presetOption->slug)
-                                        style="border-color: {{ $presetOption->label_color }}; background-color: {{ $presetOption->label_color }}10; box-shadow: 0 0 0 1px {{ $presetOption->label_color }}80"
-                                    @endif
-                                >
-                                    <input type="radio" wire:model.live="preset" value="{{ $presetOption->slug }}" class="sr-only" />
-                                    <div
-                                        class="shrink-0 flex items-center justify-center size-9 rounded-field"
-                                        style="background-color: {{ $presetOption->label_color }}15; color: {{ $presetOption->label_color }}"
-                                    >
-                                        <x-ui.icon :name="$presetOption->icon" class="size-5" />
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <span class="block text-sm font-medium text-neutral-900 dark:text-neutral-100">{{ $presetOption->name }}</span>
-                                        <span class="block text-xs text-neutral-400 mt-0.5">{{ $presetOption->description }}</span>
-                                    </div>
-                                    @if ($preset === $presetOption->slug)
-                                        <button
-                                            type="button"
-                                            wire:click="previewPreset('{{ $presetOption->slug }}')"
-                                            class="shrink-0 text-neutral-400 hover:opacity-80 transition-colors"
-                                            style="color: {{ $presetOption->label_color }}"
-                                            title="{{ __('Preview preset') }}"
-                                        >
-                                            <x-ui.icon name="eye" class="size-4" />
-                                        </button>
-                                    @endif
-                                </label>
-                            @endforeach
-                        </div>
-                    @endif
+                    <x-reports.preset-grid
+                        :presets="$this->presets"
+                        :selected="$preset"
+                        :emptyMessage="__('No presets available. Create a preset with the Page Analyser tag.')"
+                    />
                     <x-ui.error name="preset" />
                 </x-ui.field>
 
-                {{-- Report Language --}}
                 <x-ui.field>
                     <x-ui.label>{{ __('Report Language') }}</x-ui.label>
                     <x-ui.radio.group wire:model.live="reportLanguage" direction="horizontal" variant="segmented">
@@ -239,7 +194,6 @@ new class extends Component {
                     <x-ui.description>{{ __('The AI will generate the report in the selected language.') }}</x-ui.description>
                 </x-ui.field>
 
-                {{-- Custom Prompt --}}
                 <x-ui.field>
                     <x-ui.label>{{ __('Additional Instructions') }} <span class="text-neutral-400 font-normal">({{ __('optional') }})</span></x-ui.label>
                     <textarea
@@ -259,25 +213,12 @@ new class extends Component {
         </x-ui.card>
     </div>
 
-    {{-- Preset Preview Sidebar --}}
     <div class="lg:col-span-1">
-        @if ($showPresetPreview)
-            <x-ui.card size="full" class="border-l-4 border-l-emerald-500 sticky top-6">
-                <div class="flex items-center justify-between mb-3">
-                    <x-ui.heading level="h4" size="sm">{{ $presetPreviewName }}</x-ui.heading>
-                    <button wire:click="closePreview" class="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300">
-                        <x-ui.icon name="x" class="size-4" />
-                    </button>
-                </div>
-                <pre class="whitespace-pre-wrap text-xs text-neutral-700 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-900 rounded-lg p-3 overflow-auto max-h-96">{{ $presetPreviewContent }}</pre>
-            </x-ui.card>
-        @else
-            <x-ui.card size="full" class="border-l-4 border-l-neutral-300 dark:border-l-neutral-700">
-                <div class="flex flex-col items-center justify-center py-8 text-center">
-                    <x-ui.icon name="eye" class="size-8 text-neutral-300 dark:text-neutral-600 mb-3" />
-                    <x-ui.description>{{ __('Click the eye icon on a preset to preview its instructions.') }}</x-ui.description>
-                </div>
-            </x-ui.card>
-        @endif
+        <x-reports.preset-preview
+            :visible="$showPresetPreview"
+            :name="$presetPreviewName"
+            :content="$presetPreviewContent"
+            accent="emerald"
+        />
     </div>
 </div>

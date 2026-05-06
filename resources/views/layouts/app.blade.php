@@ -7,7 +7,7 @@
 
     <title>{{ $title ?? config('app.name') }}</title>
 
-    <link rel="icon" href="/favicon.svg?v=2" type="image/svg+xml">
+    <link rel="icon" href="/favicon.svg?v=3" type="image/svg+xml">
     <link rel="alternate icon" href="/favicon.ico">
 
     <script>
@@ -144,6 +144,8 @@
                                 :active="request()->is('google-analytics/pages')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_GOOGLE_ANALYTICS, $currentProject])" />
                             <x-ui.navlist.item wire:navigate :label="__('Audience')" icon="users-three" href="/google-analytics/audience"
                                 :active="request()->is('google-analytics/audience')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_GOOGLE_ANALYTICS, $currentProject])" />
+                            <x-ui.navlist.item wire:navigate :label="__('GA Report')" icon="robot" href="/google-analytics/report"
+                                :active="request()->is('google-analytics/report')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_GOOGLE_ANALYTICS, $currentProject]) || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::CREATE_REPORT, $currentProject])" />
                             <x-ui.navlist.item wire:navigate :label="__('Realtime')" icon="pulse" href="/google-analytics/realtime"
                                 :active="request()->is('google-analytics/realtime')" :disabled="!$currentProject || auth()->user()->cannot('permission', [App\Modules\Users\Enums\PermissionEnum::VIEW_GOOGLE_ANALYTICS, $currentProject])" />
                         </x-ui.navlist.group>

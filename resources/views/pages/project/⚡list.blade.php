@@ -43,8 +43,7 @@ new #[Layout('layouts.app')] class extends Component {
     public function setActiveProject(int $projectId): void
     {
         $this->projectQuery()->findOrFail($projectId);
-        session(['current_project_id' => $projectId]);
-        $this->js("localStorage.setItem('current_project_" . auth()->id() . "', '" . $projectId . "')");
+        Project::setCurrent($projectId);
         $this->js("window.location.reload()");
     }
 
@@ -68,7 +67,7 @@ new #[Layout('layouts.app')] class extends Component {
         $project->delete();
 
         if (session('current_project_id') == $projectId) {
-            session()->forget('current_project_id');
+            Project::setCurrent(null);
             $this->dispatch('current-project-changed', projectId: null);
         }
     }

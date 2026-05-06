@@ -74,7 +74,7 @@ new #[Layout('layouts.app')] class extends Component {
             'collaborators' => array_map('intval', $this->collaborator_ids),
         ]);
 
-        session(['current_project_id' => $project->id]);
+        Project::setCurrent($project->id);
         $this->dispatch('current-project-changed', projectId: $project->id);
 
         $this->redirect(route('projects'), navigate: true);
